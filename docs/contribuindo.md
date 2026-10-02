@@ -33,8 +33,8 @@ PAPO_LOG=iroh_gossip=debug,iroh=info target/debug/papo status
 Para testar dois perfis na mesma máquina sem mexer no seu `~/.papo`, use `PAPO_HOME`:
 
 ```sh
-PAPO_HOME=/tmp/a target/debug/papo new --name ana
-PAPO_HOME=/tmp/b target/debug/papo join <convite> --name bob
+PAPO_HOME=/tmp/a target/debug/papo new --name voce
+PAPO_HOME=/tmp/b target/debug/papo join <convite> --name colega
 ```
 
 ## Testes

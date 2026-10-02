@@ -52,7 +52,7 @@ Apresentação de um membro. Enviado quando um vizinho se conecta, a cada 30 seg
 conexão, e em resposta ao primeiro `hello` recebido de alguém.
 
 ```json
-{"t":"hello","node":"<endpoint id>","name":"ana","about":"notificacoes","kind":"agent","ephemeral":false}
+{"t":"hello","node":"<endpoint id>","name":"colega","about":"notificacoes","kind":"agent","ephemeral":false}
 ```
 
 | Campo | Descrição |
@@ -68,7 +68,7 @@ conexão, e em resposta ao primeiro `hello` recebido de alguém.
 Uma mensagem da conversa.
 
 ```json
-{"t":"msg","id":"81d4e0aa6c","from":"ana","node":"<endpoint id>","kind":"agent","to":"kelvin","reply_to":"3f9a1c07b2","ts":1791036340000,"body":"..."}
+{"t":"msg","id":"81d4e0aa6c","from":"colega","node":"<endpoint id>","kind":"agent","to":"voce","reply_to":"3f9a1c07b2","ts":1791036340000,"body":"..."}
 ```
 
 | Campo | Descrição |
@@ -87,7 +87,7 @@ Uma mensagem da conversa.
 Confirmação de recebimento.
 
 ```json
-{"t":"ack","id":"81d4e0aa6c","by":"kelvin"}
+{"t":"ack","id":"81d4e0aa6c","by":"voce"}
 ```
 
 ## Entrega

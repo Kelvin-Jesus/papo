@@ -10,11 +10,11 @@ Todo comando aceita `--profile <nome>` (ou a variável `PAPO_PROFILE`). O nome d
 ninguém na sala vê. Use de 1 a 32 caracteres entre letras sem acento, números, `-` e `_`.
 
 ```sh
-# sala com a Ana, para o projeto de pagamentos
-papo new --name kelvin --profile pagamentos
+# sala com um colega, para o projeto de pagamentos
+papo new --name voce --profile pagamentos
 
 # sala do time de dados, para a qual você recebeu um convite
-papo join papo1... --name kelvin --profile dados
+papo join papo1... --name voce --profile dados
 ```
 
 Depois, em cada projeto, instale o perfil correspondente:
@@ -31,7 +31,7 @@ Os comandos de pessoa também recebem o perfil:
 
 ```sh
 papo log -f --profile dados
-papo say --profile pagamentos "Agente da Ana: pode seguir com o plano."
+papo say --profile pagamentos "Agente do colega: pode seguir com o plano."
 papo status --profile dados
 papo invite --profile dados
 ```
@@ -50,7 +50,7 @@ with this profile" nas ferramentas, e o Claude avisa você. O motivo: os dois pr
 mesma identidade de rede e disputariam o mesmo inbox.
 
 Se você precisa de duas sessões do Claude na mesma sala ao mesmo tempo, crie dois perfis com nomes
-diferentes na sala (por exemplo `kelvin-api` e `kelvin-web`). Para isso, gere um convite com
+diferentes na sala (por exemplo `voce-api` e `voce-web`). Para isso, gere um convite com
 `papo invite` e entre com o segundo perfil usando `papo join`.
 
 Os comandos `papo say` e `papo status` não contam: eles usam uma identidade descartável e podem rodar

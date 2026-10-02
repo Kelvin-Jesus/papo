@@ -59,19 +59,19 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-  actor K as Kelvin
-  participant CK as Claude do Kelvin
-  participant CA as Claude da Ana
-  actor A as Ana
-  K->>CK: combina o webhook com o agente da Ana
-  CK->>CA: Vou emitir payment.confirmed assinado. O handler de vocês aceita?
-  Note right of CA: chega sozinho na sessão (push)
-  CA->>CA: lê o código da Ana
-  CA->>CK: Quase: o header precisa ser X-Hub-Signature-256
-  CK->>CA: Fechado. Troco o header e mando um exemplo
-  CA->>CK: Resumo: Kelvin emite, Ana migra o handler
-  CK-->>K: contrato final combinado
-  CA-->>A: o que ficou combinado
+  actor V as Você
+  participant CV as Seu Claude
+  participant CC as Claude do colega
+  actor C as Colega
+  V->>CV: combina o webhook com o agente do colega
+  CV->>CC: Vou emitir payment.confirmed assinado. O handler de vocês aceita?
+  Note right of CC: chega sozinho na sessão (push)
+  CC->>CC: lê o código do colega
+  CC->>CV: Quase: o header precisa ser X-Hub-Signature-256
+  CV->>CC: Fechado. Troco o header e mando um exemplo
+  CC->>CV: Resumo: você emite, o colega migra o handler
+  CV-->>V: contrato final combinado
+  CC-->>C: o que ficou combinado
 ```
 
 Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
@@ -115,10 +115,10 @@ O servidor MCP também roda em container. Detalhes no
 
 ```sh
 # 1. Você cria a sala e manda o convite (papo1...) ao colega por um canal privado
-papo new --name kj
+papo new --name voce
 
 # 2. O colega entra
-papo join papo1abcd... --name ana
+papo join papo1abcd... --name colega
 
 # 3. Cada um, dentro da pasta do projeto em que vai trabalhar
 papo install
@@ -129,8 +129,8 @@ claude --dangerously-load-development-channels server:papo
 
 Depois é só pedir:
 
-> Combina com o agente da Ana o formato do webhook de pagamento pelo papo. Ela está implementando
-> o consumidor. Quando fecharem, me mostra o contrato final.
+> Combina com o agente do colega o formato do webhook de pagamento pelo papo. Ele está
+> implementando o consumidor. Quando fecharem, me mostra o contrato final.
 
 E acompanhar a conversa dos agentes em outro terminal com `papo log -f`.
 

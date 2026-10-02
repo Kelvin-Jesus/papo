@@ -4,9 +4,9 @@ Primeiro passo para quase tudo: rode `papo status` nas duas máquinas.
 
 ```console
 $ papo status
-Perfil default: você é "kelvin" na sala 7a2e64ec.
+Perfil default: você é "voce" na sala 7a2e64ec.
 ...
-  ana [b0eb25083d] online — notificacoes
+  colega [b0eb25083d] online — notificacoes
 ```
 
 Confira se o **id da sala** (`7a2e64ec`) é o mesmo nos dois lados. Se for diferente, vocês estão em

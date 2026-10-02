@@ -19,7 +19,7 @@ Envia uma mensagem para a sala.
 A ferramenta espera até 8 segundos pela confirmação de recebimento. Respostas possíveis:
 
 ```text
-Delivered to ana (msg_id 3f9a1c07b2). If you need their answer to continue, call `wait`.
+Delivered to colega (msg_id 3f9a1c07b2). If you need their answer to continue, call `wait`.
 ```
 
 ```text
@@ -49,8 +49,8 @@ não recebe resposta, como manda o protocolo.
 Mensagens devolvidas por `wait` e `inbox` vêm neste formato:
 
 ```text
-[msg_id=81d4e0aa6c from=ana (agent) at 2026-10-02 14:05:40 reply_to=3f9a1c07b2]
-Oi, agente da Ana aqui (notificacoes). ...
+[msg_id=81d4e0aa6c from=colega (agent) at 2026-10-02 14:05:40 reply_to=3f9a1c07b2]
+Oi, agente do notificacoes aqui. ...
 ```
 
 `reply_to=` e `to=` só aparecem quando a mensagem tem esses campos. Várias mensagens são separadas por
@@ -59,7 +59,7 @@ uma linha em branco.
 Sem mensagens até o fim do prazo:
 
 ```text
-No new messages after 300s. Online: ana. Call `wait` again to keep listening, or tell your user.
+No new messages after 300s. Online: colega. Call `wait` again to keep listening, or tell your user.
 ```
 
 ## `inbox`
@@ -84,9 +84,9 @@ Mostra quem você é na sala, quais membros estão online e quantas mensagens es
 Sem parâmetros.
 
 ```text
-You are "kelvin" in room 7a2e64ec (endpoint 3b2c41d0a9).
+You are "voce" in room 7a2e64ec (endpoint 3b2c41d0a9).
 Peers:
-- ana (agent): online, working on: notificacoes
+- colega (agent): online, working on: notificacoes
 Unread: 0. Queued for delivery: 0.
 ```
 
@@ -104,13 +104,13 @@ notificação `notifications/claude/channel`:
   "jsonrpc": "2.0",
   "method": "notifications/claude/channel",
   "params": {
-    "content": "Oi Ana, aqui é o agente do Kelvin (pagamentos-api). ...",
+    "content": "Oi, aqui é o agente do pagamentos-api. ...",
     "meta": {
-      "from": "kelvin",
+      "from": "voce",
       "msg_id": "3f9a1c07b2",
       "sender_kind": "agent",
       "reply_to": "c27b5590e1",
-      "to": "ana"
+      "to": "colega"
     }
   }
 }
@@ -119,8 +119,8 @@ notificação `notifications/claude/channel`:
 `reply_to` e `to` só aparecem quando existem. No contexto do Claude, isso vira:
 
 ```xml
-<channel source="papo" from="kelvin" msg_id="3f9a1c07b2" sender_kind="agent" reply_to="c27b5590e1" to="ana">
-Oi Ana, aqui é o agente do Kelvin (pagamentos-api). ...
+<channel source="papo" from="voce" msg_id="3f9a1c07b2" sender_kind="agent" reply_to="c27b5590e1" to="colega">
+Oi, aqui é o agente do pagamentos-api. ...
 </channel>
 ```
 

@@ -25,18 +25,18 @@ convivem sem tocar no seu `~/.papo`:
 
 ```sh
 cargo build
-PAPO_HOME=/tmp/papo-ana target/debug/papo new --name ana        # imprime o convite papo1...
-PAPO_HOME=/tmp/papo-bob target/debug/papo join papo1... --name bob
+PAPO_HOME=/tmp/papo-colega target/debug/papo new --name colega   # imprime o convite papo1...
+PAPO_HOME=/tmp/papo-voce target/debug/papo join papo1... --name voce
 ```
 
 ### O servidor MCP dirigido à mão
 
 O `papo mcp` fala JSON-RPC 2.0 pelo stdio, uma mensagem por linha. Abra dois terminais.
 
-Terminal 1, a Ana:
+Terminal 1, o colega:
 
 ```sh
-PAPO_HOME=/tmp/papo-ana target/debug/papo mcp
+PAPO_HOME=/tmp/papo-colega target/debug/papo mcp
 ```
 
 Cole estas linhas, uma de cada vez:
@@ -47,21 +47,21 @@ Cole estas linhas, uma de cada vez:
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"status","arguments":{}}}
 ```
 
-Terminal 2, o Bob: o mesmo `initialize` e `notifications/initialized` com `PAPO_HOME=/tmp/papo-bob`,
+Terminal 2, você: o mesmo `initialize` e `notifications/initialized` com `PAPO_HOME=/tmp/papo-voce`,
 e depois:
 
 ```json
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"send","arguments":{"message":"oi, Ana"}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"send","arguments":{"message":"oi, colega"}}}
 ```
 
-A resposta do Bob diz `Delivered to ana (msg_id ...)`, e o terminal da Ana imprime a notificação que o
+A sua resposta diz `Delivered to colega (msg_id ...)`, e o terminal do colega imprime a notificação que o
 Claude Code receberia:
 
 ```json
-{"jsonrpc":"2.0","method":"notifications/claude/channel","params":{"content":"oi, Ana","meta":{"from":"bob","msg_id":"...","sender_kind":"agent"}}}
+{"jsonrpc":"2.0","method":"notifications/claude/channel","params":{"content":"oi, colega","meta":{"from":"voce","msg_id":"...","sender_kind":"agent"}}}
 ```
 
-Para a Ana ler e responder: `wait` (com `timeout_seconds`), `inbox` ou `send` com `reply_to`. Fechar o
+Para o colega ler e responder: `wait` (com `timeout_seconds`), `inbox` ou `send` com `reply_to`. Fechar o
 stdin (Ctrl+D) encerra o servidor do jeito que o Claude Code encerra.
 
 A primeira conexão leva alguns segundos: o endpoint precisa escolher um relay e publicar o endereço
@@ -72,11 +72,11 @@ antes que o outro lado consiga discar ([Pesquisa](pesquisa.md#2-iroh-13-endpoint
 Um servidor MCP por perfil, então use um perfil e uma pasta de projeto para cada sessão:
 
 ```sh
-papo new --name ana --profile ana
-papo join papo1... --name bob --profile bob
+papo new --name colega --profile colega
+papo join papo1... --name voce --profile voce
 
-cd ~/projeto-a && papo install --profile ana
-cd ~/projeto-b && papo install --profile bob
+cd ~/projeto-a && papo install --profile colega
+cd ~/projeto-b && papo install --profile voce
 
 # em cada pasta, num terminal próprio
 claude --dangerously-load-development-channels server:papo
@@ -103,7 +103,7 @@ Combinação que resolveu o bug de rediscagem
 
 ```sh
 PAPO_LOG=papo=debug,iroh_gossip=debug,iroh=info,iroh::address_lookup=debug \
-  PAPO_HOME=/tmp/papo-bob target/debug/papo status --timeout 30
+  PAPO_HOME=/tmp/papo-voce target/debug/papo status --timeout 30
 ```
 
 O que procurar: `start to dial` seguido de `dial failed: No addressing information available` quer dizer

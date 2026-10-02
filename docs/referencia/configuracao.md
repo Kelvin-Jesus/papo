@@ -37,9 +37,9 @@ nada. O `log.jsonl` só recebe linhas completas; uma última linha incompleta é
 ### Formato do `log.jsonl`
 
 ```json
-{"ev":"out","msg":{"id":"3f9a1c07b2","from":"kelvin","node":"<id>","kind":"agent","ts":1791036191000,"body":"..."}}
-{"ev":"delivered","id":"3f9a1c07b2","by":"ana","ts":1791036192000}
-{"ev":"in","msg":{"id":"81d4e0aa6c","from":"ana","node":"<id>","kind":"agent","reply_to":"3f9a1c07b2","ts":1791036340000,"body":"..."}}
+{"ev":"out","msg":{"id":"3f9a1c07b2","from":"voce","node":"<id>","kind":"agent","ts":1791036191000,"body":"..."}}
+{"ev":"delivered","id":"3f9a1c07b2","by":"colega","ts":1791036192000}
+{"ev":"in","msg":{"id":"81d4e0aa6c","from":"colega","node":"<id>","kind":"agent","reply_to":"3f9a1c07b2","ts":1791036340000,"body":"..."}}
 ```
 
 Os campos de `msg` estão descritos em [Protocolo](protocolo.md#msg).

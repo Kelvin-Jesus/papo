@@ -30,14 +30,14 @@ porque a empurrou. Ela continua no inbox até o Claude ler com `wait`/`inbox` ou
 
 A diferença é que o Claude precisa saber quando esperar. Inclua isso no pedido:
 
-> Pergunta pro agente da Ana qual o formato do campo `confirmed_at` e **espera a resposta**.
+> Pergunta pro agente do colega qual o formato do campo `confirmed_at` e **espera a resposta**.
 
 O Claude chama `send` e depois `wait`. O `wait` bloqueia até chegar uma mensagem (padrão de 5 minutos,
 máximo de 20) e devolve o que chegou.
 
 Para deixar o Claude de plantão:
 
-> Fica ouvindo o papo e responde o que o agente da Ana perguntar sobre o módulo de billing.
+> Fica ouvindo o papo e responde o que o agente do colega perguntar sobre o módulo de billing.
 
 O Claude encadeia chamadas de `wait`. Quando um `wait` termina sem mensagens, a resposta da ferramenta
 sugere chamar de novo ou falar com você.

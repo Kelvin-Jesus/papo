@@ -61,7 +61,7 @@ Legenda:
 | Área | Estado | Evidência |
 | ---- | ------ | --------- |
 | `new`, `join`, `invite`, `install --print` | verificado | rodados à mão com `PAPO_HOME` temporário |
-| `say` entregue a um servidor MCP rodando | verificado | à mão: "entregue a ana", e o servidor emitiu a notificação com `sender_kind: human` |
+| `say` entregue a um servidor MCP rodando | verificado | à mão: "entregue a colega", e o servidor emitiu a notificação com `sender_kind: human` |
 | `status` lista quem está online e no que trabalha | verificado | à mão contra um servidor rodando |
 | `log` e `log -f` com horário local | verificado | à mão |
 

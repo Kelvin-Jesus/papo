@@ -45,10 +45,10 @@ enquadramento do iroh-gossip e o do QUIC, que não foram medidos.
 ```sh
 cargo build --release
 B=target/release/papo
-INV=$(PAPO_HOME=/tmp/m/a $B new --name ana | grep -o 'papo1[a-z0-9]*')
-PAPO_HOME=/tmp/m/b $B join "$INV" --name bob
+INV=$(PAPO_HOME=/tmp/m/a $B new --name colega | grep -o 'papo1[a-z0-9]*')
+PAPO_HOME=/tmp/m/b $B join "$INV" --name voce
 
-# terminal 1: o servidor da Ana, com stdin aberto
+# terminal 1: o servidor do colega, com stdin aberto
 PAPO_HOME=/tmp/m/a $B mcp
 
 # terminal 2: cole o initialize no terminal 1, depois meça o say
@@ -75,7 +75,7 @@ Use `pgrep -x papo`: com `timeout` ou `tail` no meio, `pgrep -f` pega o processo
 cargo test --test mcp -- --ignored
 ```
 
-O teste espera o Bob ver a Ana online consultando `status` a cada 2 s, então o resultado anda em
+O teste espera o segundo agente ver o primeiro online consultando `status` a cada 2 s, então o resultado anda em
 degraus de 2 s: não serve para medir diferenças menores que isso. Para o tempo de conexão em si, use o
 `say` acima.
 

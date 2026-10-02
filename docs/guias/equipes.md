@@ -21,10 +21,10 @@ consiga entrar mesmo que você esteja offline no momento. O novato roda `papo jo
 - **Com `to`**: só o membro com aquele nome guarda e confirma a mensagem. A comparação ignora
   maiúsculas e minúsculas.
 
-O Claude escolhe sozinho, mas você pode pedir: "pergunta só para o agente do Bruno". Pela CLI:
+O Claude escolhe sozinho, mas você pode pedir: "pergunta só para o agente do front". Pela CLI:
 
 ```sh
-papo say --to bruno "Agente do Bruno: a Ana precisa do schema até amanhã."
+papo say --to front "Agente do front: o colega da API precisa do schema até amanhã."
 ```
 
 ## Como a confirmação funciona em grupo
@@ -32,8 +32,8 @@ papo say --to bruno "Agente do Bruno: a Ana precisa do schema até amanhã."
 Uma mensagem sai da fila do remetente no **primeiro** recebimento confirmado:
 
 - Com `to`, quem confirma é o destinatário. A mensagem fica na fila até ele estar online.
-- Sem `to`, basta um membro qualquer confirmar. Se o Bruno estava offline quando a Ana confirmou, o
-  Bruno não recebe aquela mensagem depois.
+- Sem `to`, basta um membro qualquer confirmar. Se o `front` estava offline quando o `colega`
+  confirmou, o `front` não recebe aquela mensagem depois.
 
 Por isso, em salas com mais de duas pessoas, use `to` sempre que a entrega para alguém específico
 importar. Entrega garantida para todos os membros de um grupo está no roadmap, não implementada.
@@ -51,5 +51,5 @@ intervalos crescentes, de 1 a 10 segundos, até alguém responder.
 ## Nomes
 
 Cada membro escolhe o nome no `papo new`/`papo join`. O papo não impede nomes repetidos, então combine
-nomes distintos no grupo. Um agente e uma pessoa com o mesmo nome (o Claude do Kelvin e o Kelvin
-usando `papo say`) são diferenciados pelo `sender_kind` (`agent` ou `human`).
+nomes distintos no grupo. Um agente e uma pessoa com o mesmo nome (o seu Claude e você usando
+`papo say`, os dois como `voce`) são diferenciados pelo `sender_kind` (`agent` ou `human`).

@@ -84,26 +84,26 @@ destrava esse estado, e o protocolo do gossip é simétrico. Detalhes na
 
 ```mermaid
 sequenceDiagram
-  participant CK as Claude do Kelvin
-  participant NK as papo do Kelvin
-  participant NA as papo da Ana
-  participant CA as Claude da Ana
-  CK->>NK: send(mensagem)
-  NK->>NK: grava na outbox (antes de difundir)
-  alt Ana online
-    NK->>NA: msg (selada com a chave da sala)
-    NA->>NA: descarta se não é para ela ou se é duplicata
-    NA->>NA: grava inbox e log
-    NA-->>NK: ack
-    NK->>NK: tira da outbox, log "delivered"
-    NK-->>CK: "Delivered to ana"
-    NA->>CA: notifications/claude/channel (push)
-  else Ana offline
-    NK-->>CK: "queued" (sem erro)
-    Note over NK: a outbox espera
-    NA->>NK: Ana volta: conexão + hello
-    NK->>NA: reenvia a outbox
-    NA-->>NK: ack
+  participant CV as Seu Claude
+  participant NV as Seu papo
+  participant NC as papo do colega
+  participant CC as Claude do colega
+  CV->>NV: send(mensagem)
+  NV->>NV: grava na outbox (antes de difundir)
+  alt colega online
+    NV->>NC: msg (selada com a chave da sala)
+    NC->>NC: descarta se não é para ele ou se é duplicata
+    NC->>NC: grava inbox e log
+    NC-->>NV: ack
+    NV->>NV: tira da outbox, log "delivered"
+    NV-->>CV: "Delivered to colega"
+    NC->>CC: notifications/claude/channel (push)
+  else colega offline
+    NV-->>CV: "queued" (sem erro)
+    Note over NV: a outbox espera
+    NC->>NV: o colega volta: conexão + hello
+    NV->>NC: reenvia a outbox
+    NC-->>NV: ack
   end
 ```
 

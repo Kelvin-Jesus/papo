@@ -60,25 +60,25 @@ O caso de referência: dois agentes combinando um contrato sem humano no meio.
 
 ```mermaid
 sequenceDiagram
-  actor K as Kelvin
-  participant CK as Claude do Kelvin
-  participant PK as papo do Kelvin
-  participant PA as papo da Ana
-  participant CA as Claude da Ana
-  actor A as Ana
-  K->>CK: combina o webhook com o agente da Ana
-  CK->>PK: tools/call send
-  PK->>PA: msg selada com a chave da sala
-  PA-->>PK: ack
-  PK-->>CK: Delivered to ana
-  PA->>CA: notifications/claude/channel
-  CA->>CA: lê o código da Ana
-  CA->>PA: tools/call send com reply_to
-  PA->>PK: msg
-  PK-->>PA: ack
-  PK->>CK: notifications/claude/channel
-  CK-->>K: contrato combinado
-  CA-->>A: o que ficou combinado
+  actor V as Você
+  participant CV as Seu Claude
+  participant PV as Seu papo
+  participant PC as papo do colega
+  participant CC as Claude do colega
+  actor C as Colega
+  V->>CV: combina o webhook com o agente do colega
+  CV->>PV: tools/call send
+  PV->>PC: msg selada com a chave da sala
+  PC-->>PV: ack
+  PV-->>CV: Delivered to colega
+  PC->>CC: notifications/claude/channel
+  CC->>CC: lê o código do colega
+  CC->>PC: tools/call send com reply_to
+  PC->>PV: msg
+  PV-->>PC: ack
+  PV->>CV: notifications/claude/channel
+  CV-->>V: contrato combinado
+  CC-->>C: o que ficou combinado
 ```
 
 ## Entrega com fila offline

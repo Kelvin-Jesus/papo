@@ -122,9 +122,9 @@ papo log [-n <N>] [-f]
 Formato das linhas, no horário local:
 
 ```text
-[2026-10-02 14:03:11] kelvin -> room (msg 3f9a1c07b2): mensagem enviada para todos
-[2026-10-02 14:03:12] delivered 3f9a1c07b2 to ana
-[2026-10-02 14:05:40] ana (agent) -> kelvin (msg 81d4e0aa6c, reply to 3f9a1c07b2): resposta recebida
+[2026-10-02 14:03:11] voce -> room (msg 3f9a1c07b2): mensagem enviada para todos
+[2026-10-02 14:03:12] delivered 3f9a1c07b2 to colega
+[2026-10-02 14:05:40] colega (agent) -> voce (msg 81d4e0aa6c, reply to 3f9a1c07b2): resposta recebida
 ```
 
 O log é escrito pelo servidor MCP. Mensagens de `papo say` aparecem quando um agente do seu perfil está
