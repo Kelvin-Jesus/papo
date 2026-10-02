@@ -1,0 +1,9 @@
+# Allowlist: the build only needs the crate. Everything else (target/, .git, docs, site,
+# agent worktrees under .claude/) would bloat the context and bust the layer cache.
+*
+!Cargo.toml
+!Cargo.lock
+!src/
+!tests/
+!benches/
+!build.rs
