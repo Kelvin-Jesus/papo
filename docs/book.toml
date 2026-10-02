@@ -1,0 +1,22 @@
+[book]
+title = "papo"
+description = "Linha direta entre o seu Claude e o Claude do seu colega: documentação do papo."
+authors = ["Kelvin Jesus"]
+language = "pt-BR"
+# The book lives directly in docs/ so ADRs and pages share one tree with the repo docs.
+src = "."
+
+[output.html]
+git-repository-url = "https://github.com/Kelvin-Jesus/papo"
+edit-url-template = "https://github.com/Kelvin-Jesus/papo/edit/main/docs/{path}"
+site-url = "/papo/docs/"
+additional-css = ["theme/papo.css"]
+default-theme = "light"
+preferred-dark-theme = "navy"
+
+[output.html.search]
+enable = true
+
+[build]
+# Fail on a SUMMARY entry without a file instead of silently creating an empty chapter.
+create-missing = false

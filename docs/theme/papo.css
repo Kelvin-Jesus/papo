@@ -1,0 +1,43 @@
+/* papo brand accents for mdBook (loaded via `additional-css` in book.toml).
+   Palette: violet #6E56CF / #8E7CF0, teal #12A594 / #2BC4AF, ink #1C1A2E. */
+
+.light,
+.rust,
+html:not(.js) {
+    --links: #5b45c2;
+    --sidebar-active: #5b45c2;
+    --search-mark-bg: #d9d2fb;
+    --sidebar-header-border-color: #6e56cf;
+    --quote-border: #d9d2fb;
+}
+
+.coal,
+.navy,
+.ayu {
+    --links: #a89bf7;
+    --sidebar-active: #2bc4af;
+    --search-mark-bg: #4a3f8f;
+    --sidebar-header-border-color: #8e7cf0;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not(.js) {
+        --links: #a89bf7;
+        --sidebar-active: #2bc4af;
+        --search-mark-bg: #4a3f8f;
+        --sidebar-header-border-color: #8e7cf0;
+    }
+}
+
+/* Headings get a hint of the brand without fighting the theme's text color. */
+.content h1 {
+    border-bottom: 3px solid var(--sidebar-header-border-color);
+    padding-bottom: 0.2em;
+}
+
+.content a:focus-visible,
+.sidebar a:focus-visible {
+    outline: 2px solid var(--sidebar-active);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
