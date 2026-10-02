@@ -1,4 +1,4 @@
-# Two papo agents (ana and bob) in separate containers, plus an optional local relay.
+# Two papo agents (colega and voce) in separate containers, plus an optional local relay.
 # Driven by scripts/docker-e2e.sh, which creates the room, starts both MCP servers over
 # stdio and checks that messages go both ways.
 #
@@ -15,7 +15,7 @@ services:
       # Random host port, only so the script can tell when the relay is up.
       - "127.0.0.1::3340"
 
-  ana:
+  colega:
     build:
       context: ../..
       target: runtime
@@ -24,16 +24,16 @@ services:
       - PAPO_RELAY
       - PAPO_LOG
     volumes:
-      - ana-data:/data
+      - colega-data:/data
 
-  bob:
+  voce:
     image: ${PAPO_IMAGE:-papo:dev}
     environment:
       - PAPO_RELAY
       - PAPO_LOG
     volumes:
-      - bob-data:/data
+      - voce-data:/data
 
 volumes:
-  ana-data:
-  bob-data:
+  colega-data:
+  voce-data:

@@ -31,7 +31,7 @@ essa verificação usa o repositório de certificados do sistema.
 Guarde o perfil num volume com nome, para ele sobreviver entre execuções:
 
 ```sh
-docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name kj --about api-pagamentos
+docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name voce --about api-pagamentos
 docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo invite
 docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo status
 docker run --rm -v papo-data:/data -e TZ=America/Sao_Paulo ghcr.io/kelvin-jesus/papo log -n 20
@@ -41,7 +41,7 @@ Um alias deixa o uso igual ao do binário:
 
 ```sh
 alias papo='docker run --rm -i -v papo-data:/data -e TZ=America/Sao_Paulo ghcr.io/kelvin-jesus/papo'
-papo say --to ana "Pode olhar o PR do webhook?"
+papo say --to colega "Pode olhar o PR do webhook?"
 ```
 
 `TZ` só muda o horário mostrado em `papo log`; sem ele, o container mostra UTC.
@@ -108,7 +108,7 @@ também [Relay próprio](relay-proprio.md).
 | ------- | --------- | ------------------- |
 | `docker build --target test .` | Roda `cargo test --locked` num Linux fixo (Alpine, musl): os mesmos testes herméticos do CI | Só para baixar dependências |
 | `scripts/docker-smoke.sh [imagem]` | CLI, volume nomeado, servidor MCP por stdio (`initialize`, `tools/list`, `status`) e a trava de perfil | Não |
-| `scripts/docker-e2e.sh` | Dois agentes (ana e bob) em containers separados, com um relay local: bob pergunta, ana recebe por push (`claude/channel`), responde com `reply_to`, bob recebe com `wait`, e o humano do bob fala com `papo say` | Sim (DNS da n0) |
+| `scripts/docker-e2e.sh` | Dois agentes (`voce` e `colega`) em containers separados, com um relay local: `voce` pergunta, `colega` recebe por push (`claude/channel`), responde com `reply_to`, `voce` recebe com `wait`, e a pessoa do lado `voce` fala com `papo say` | Sim (DNS da n0) |
 | `scripts/docker-e2e.sh --public` | O mesmo, pelos relays públicos da n0 | Sim |
 
 O e2e dirige os dois servidores MCP pelo stdio, do mesmo jeito que duas sessões do Claude Code
