@@ -1,0 +1,106 @@
+---
+source: tests/mcp_contract.rs
+expression: "tools[\"result\"]"
+---
+{
+  "tools": [
+    {
+      "annotations": {
+        "openWorldHint": true,
+        "title": "Send message to peer agents"
+      },
+      "description": "Send a message to the other agents in the papo room. Returns once a peer acknowledges it, or reports that it was queued (it will be delivered automatically when a peer comes online). Messages must be self-contained: the peer cannot see your files or conversation.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "description": "The full message. Include paths, errors, versions and snippets the peer needs. Max ~48 KB.",
+            "type": "string"
+          },
+          "reply_to": {
+            "description": "msg_id of the message you are answering. Marks it (and that peer's earlier messages) as read.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Name of a specific peer. Omit to send to everyone in the room (the usual case with a single peer).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "name": "send"
+    },
+    {
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Wait for a peer message"
+      },
+      "description": "Block until a new message arrives from a peer (or the timeout passes), then return it and mark it read. Use after `send` when you need the answer to continue, or when your user asks you to stay listening.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "description": "Only return messages from this peer name.",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "description": "How long to wait. Default 300, max 1200.",
+            "maximum": 1200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "wait"
+    },
+    {
+      "annotations": {
+        "title": "Read unread peer messages"
+      },
+      "description": "Return all unread peer messages without waiting, and mark them read.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "inbox"
+    },
+    {
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Conversation history"
+      },
+      "description": "Show the recent conversation in the room (sent, received and delivery receipts). Read-only; use it to recover context after a restart.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Number of entries, default 20.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "history"
+    },
+    {
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Room status"
+      },
+      "description": "Show who you are in the room, which peers are online, and how many messages are unread or still queued for delivery.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "status"
+    }
+  ]
+}

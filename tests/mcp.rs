@@ -1,123 +1,11 @@
-//! Drives the real `papo` binary over stdio the way Claude Code does.
+//! Drives the real `papo mcp` binary over stdio the way Claude Code does.
 
-use std::{
-    io::{BufRead, BufReader, Write},
-    path::Path,
-    process::{Child, ChildStdin, Command, Stdio},
-    sync::mpsc,
-    time::{Duration, Instant},
-};
+mod common;
 
-use serde_json::{Value, json};
+use std::time::{Duration, Instant};
 
-const BIN: &str = env!("CARGO_BIN_EXE_papo");
-
-fn papo(home: &Path, args: &[&str]) -> String {
-    let out = Command::new(BIN).args(args).env("PAPO_HOME", home).output().unwrap();
-    assert!(out.status.success(), "papo {args:?} failed: {}", String::from_utf8_lossy(&out.stderr));
-    String::from_utf8(out.stdout).unwrap()
-}
-
-struct McpClient {
-    child: Child,
-    stdin: ChildStdin,
-    rx: mpsc::Receiver<Value>,
-    next_id: u64,
-    /// Notifications received while waiting for responses.
-    notifications: Vec<Value>,
-}
-
-impl McpClient {
-    fn spawn(home: &Path) -> Self {
-        let mut child = Command::new(BIN)
-            .arg("mcp")
-            .env("PAPO_HOME", home)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
-        let stdin = child.stdin.take().unwrap();
-        let stdout = child.stdout.take().unwrap();
-        let (tx, rx) = mpsc::channel();
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                let Ok(line) = line else { break };
-                let value: Value = serde_json::from_str(&line).expect("server wrote non-JSON to stdout");
-                if tx.send(value).is_err() {
-                    break;
-                }
-            }
-        });
-        let mut client = Self { child, stdin, rx, next_id: 1, notifications: vec![] };
-        let init = client.request(
-            "initialize",
-            json!({"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "0"}}),
-        );
-        assert_eq!(init["result"]["protocolVersion"], "2025-06-18");
-        client.notify("notifications/initialized", json!({}));
-        client
-    }
-
-    fn write(&mut self, value: Value) {
-        let mut line = serde_json::to_vec(&value).unwrap();
-        line.push(b'\n');
-        self.stdin.write_all(&line).unwrap();
-        self.stdin.flush().unwrap();
-    }
-
-    fn notify(&mut self, method: &str, params: Value) {
-        self.write(json!({"jsonrpc": "2.0", "method": method, "params": params}));
-    }
-
-    fn request(&mut self, method: &str, params: Value) -> Value {
-        let id = self.next_id;
-        self.next_id += 1;
-        self.write(json!({"jsonrpc": "2.0", "id": id, "method": method, "params": params}));
-        let deadline = Instant::now() + Duration::from_secs(120);
-        loop {
-            let left = deadline.saturating_duration_since(Instant::now());
-            let msg = self.rx.recv_timeout(left).expect("no response from server");
-            if msg.get("id") == Some(&json!(id)) {
-                return msg;
-            }
-            self.notifications.push(msg);
-        }
-    }
-
-    fn call(&mut self, tool: &str, args: Value) -> (String, bool) {
-        let resp = self.request("tools/call", json!({"name": tool, "arguments": args}));
-        let result = &resp["result"];
-        let text = result["content"][0]["text"].as_str().unwrap_or_default().to_string();
-        (text, result["isError"].as_bool().unwrap_or(false))
-    }
-
-    fn wait_channel_event(&mut self, timeout: Duration) -> Value {
-        if let Some(pos) = self.notifications.iter().position(is_channel_event) {
-            return self.notifications.remove(pos);
-        }
-        let deadline = Instant::now() + timeout;
-        loop {
-            let left = deadline.saturating_duration_since(Instant::now());
-            let msg = self.rx.recv_timeout(left).expect("no channel notification arrived");
-            if is_channel_event(&msg) {
-                return msg;
-            }
-            self.notifications.push(msg);
-        }
-    }
-}
-
-fn is_channel_event(msg: &Value) -> bool {
-    msg["method"] == "notifications/claude/channel"
-}
-
-impl Drop for McpClient {
-    fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
-    }
-}
+use common::{McpClient, invite_in, papo};
+use serde_json::json;
 
 #[test]
 fn speaks_mcp_and_advertises_the_channel_capability() {
@@ -169,6 +57,42 @@ fn second_server_on_the_same_profile_is_refused() {
     assert!(text.contains("already running"), "{text}");
 }
 
+#[test]
+fn wait_times_out_and_can_be_cancelled() {
+    let home = tempfile::tempdir().unwrap();
+    papo(home.path(), &["new", "--name", "ana"]);
+    let mut client = McpClient::spawn(home.path());
+
+    let started = Instant::now();
+    let (text, is_error) = client.call("wait", json!({"timeout_seconds": 1}));
+    assert!(!is_error && text.starts_with("No new messages after 1s"), "{text}");
+    assert!(started.elapsed() < Duration::from_secs(10));
+
+    // A cancelled long poll must not answer; the server keeps serving other requests.
+    client.write(json!({"jsonrpc": "2.0", "id": 900, "method": "tools/call",
+        "params": {"name": "wait", "arguments": {"timeout_seconds": 600}}}));
+    std::thread::sleep(Duration::from_millis(300));
+    client.notify("notifications/cancelled", json!({"requestId": 900, "reason": "user interrupted"}));
+    let pong = client.request("ping", json!({}));
+    assert_eq!(pong["result"], json!({}));
+    std::thread::sleep(Duration::from_millis(300));
+    assert!(client.next_message(Duration::from_millis(100)).is_none(), "cancelled request must not get a response");
+}
+
+#[test]
+fn closing_stdin_ends_the_server_cleanly() {
+    let home = tempfile::tempdir().unwrap();
+    papo(home.path(), &["new", "--name", "ana"]);
+    let mut client = McpClient::spawn(home.path());
+    assert!(!client.call("status", json!({})).1);
+    let status = client.shutdown();
+    assert!(status.success(), "{status}");
+
+    // The profile lock is released with the process, so the next session can start.
+    let mut next = McpClient::spawn(home.path());
+    assert!(!next.call("status", json!({})).1);
+}
+
 /// Two agents on the real internet (n0 DNS + relays), exactly as two colleagues would
 /// run it. Ignored by default because it needs network access:
 /// `cargo test --test mcp -- --ignored`
@@ -177,24 +101,15 @@ fn second_server_on_the_same_profile_is_refused() {
 fn two_agents_talk_over_the_public_network() {
     let ana_home = tempfile::tempdir().unwrap();
     let bob_home = tempfile::tempdir().unwrap();
-    let created = papo(ana_home.path(), &["new", "--name", "ana"]);
-    let invite = created.split_whitespace().find(|w| w.starts_with("papo1")).expect("invite in output");
-    papo(bob_home.path(), &["join", invite, "--name", "bob"]);
+    let invite = invite_in(&papo(ana_home.path(), &["new", "--name", "ana"]));
+    papo(bob_home.path(), &["join", &invite, "--name", "bob"]);
 
     let mut ana = McpClient::spawn(ana_home.path());
     let mut bob = McpClient::spawn(bob_home.path());
 
     // Bob dials Ana from the invite; first contact can take a few seconds while the
     // address is resolved and holes are punched.
-    let deadline = Instant::now() + Duration::from_secs(90);
-    loop {
-        let (status, _) = bob.call("status", json!({}));
-        if status.contains("ana (agent): online") {
-            break;
-        }
-        assert!(Instant::now() < deadline, "bob never saw ana online:\n{status}");
-        std::thread::sleep(Duration::from_secs(2));
-    }
+    bob.wait_status_contains("ana (agent): online", Duration::from_secs(90));
 
     let (sent, is_error) = ana.call("send", json!({"message": "Bob, qual porta o serviço de auth usa?"}));
     assert!(!is_error && sent.starts_with("Delivered to bob"), "{sent}");
@@ -218,26 +133,4 @@ fn two_agents_talk_over_the_public_network() {
 
     let (history, _) = ana.call("history", json!({}));
     assert!(history.contains("delivered"), "{history}");
-}
-
-#[test]
-fn wait_times_out_and_can_be_cancelled() {
-    let home = tempfile::tempdir().unwrap();
-    papo(home.path(), &["new", "--name", "ana"]);
-    let mut client = McpClient::spawn(home.path());
-
-    let started = Instant::now();
-    let (text, is_error) = client.call("wait", json!({"timeout_seconds": 1}));
-    assert!(!is_error && text.starts_with("No new messages after 1s"), "{text}");
-    assert!(started.elapsed() < Duration::from_secs(10));
-
-    // A cancelled long poll must not answer; the server keeps serving other requests.
-    client.write(json!({"jsonrpc": "2.0", "id": 900, "method": "tools/call",
-        "params": {"name": "wait", "arguments": {"timeout_seconds": 600}}}));
-    std::thread::sleep(Duration::from_millis(300));
-    client.notify("notifications/cancelled", json!({"requestId": 900, "reason": "user interrupted"}));
-    let pong = client.request("ping", json!({}));
-    assert_eq!(pong["result"], json!({}));
-    std::thread::sleep(Duration::from_millis(300));
-    assert!(client.rx.try_recv().is_err(), "cancelled request must not get a response");
 }
