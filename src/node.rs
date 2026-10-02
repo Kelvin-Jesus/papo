@@ -131,6 +131,9 @@ struct Inner {
     neighbors_changed: Notify,
     /// Cleared if the gossip subscription dies; nothing arrives after that.
     subscribed: AtomicBool,
+    /// Set by a graceful `shutdown`: the subscription ending and broadcasts failing are
+    /// then expected, not something to warn the user about.
+    closing: AtomicBool,
 }
 
 pub struct Node {
@@ -194,6 +197,7 @@ impl Node {
             inbox_changed: Notify::new(),
             neighbors_changed: Notify::new(),
             subscribed: AtomicBool::new(true),
+            closing: AtomicBool::new(false),
         });
 
         let tasks = vec![
@@ -398,6 +402,7 @@ impl Node {
     pub async fn shutdown(&self) {
         // Router shutdown closes the endpoint, which lets peers see us leave promptly
         // instead of waiting for a QUIC idle timeout.
+        self.inner.closing.store(true, Ordering::Relaxed);
         let _ = self.router.shutdown().await;
     }
 }
@@ -424,7 +429,9 @@ impl Inner {
             Err(e) => return eprintln!("papo: could not encode frame: {e:#}"),
         };
         if let Err(e) = self.sender.broadcast(bytes).await {
-            eprintln!("papo: broadcast failed: {e}");
+            if !self.closing.load(Ordering::Relaxed) {
+                eprintln!("papo: broadcast failed: {e}");
+            }
         }
     }
 
@@ -608,11 +615,15 @@ async fn event_loop(inner: Arc<Inner>, mut receiver: GossipReceiver) {
         match receiver.try_next().await {
             Ok(Some(event)) => inner.handle_event(event).await,
             Ok(None) => {
-                eprintln!("papo: gossip subscription closed");
+                if !inner.closing.load(Ordering::Relaxed) {
+                    eprintln!("papo: gossip subscription closed");
+                }
                 break;
             }
             Err(e) => {
-                eprintln!("papo: gossip subscription ended: {e}");
+                if !inner.closing.load(Ordering::Relaxed) {
+                    eprintln!("papo: gossip subscription ended: {e}");
+                }
                 break;
             }
         }
@@ -628,6 +639,9 @@ async fn maintenance_loop(inner: Arc<Inner>) {
     let mut next_heartbeat = tokio::time::Instant::now() + HEARTBEAT;
     loop {
         interval.tick().await;
+        if inner.closing.load(Ordering::Relaxed) {
+            return;
+        }
         let now = tokio::time::Instant::now();
         let alone = inner.lock().neighbors.is_empty();
         if alone {
