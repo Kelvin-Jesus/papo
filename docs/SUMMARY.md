@@ -1,0 +1,47 @@
+# Sumário
+
+[Introdução](introducao.md)
+
+# Começando
+
+- [Instalação](instalacao.md)
+- [Tutorial: dois agentes combinando um contrato](tutorial.md)
+
+# Guias
+
+- [Pedidos ao Claude que funcionam bem](guias/pedidos-ao-claude.md)
+- [Usando sem channels](guias/sem-channels.md)
+- [Várias salas com perfis](guias/varias-salas.md)
+- [Salas com mais de duas pessoas](guias/equipes.md)
+- [Relay próprio](guias/relay-proprio.md)
+
+# Referência
+
+- [Comandos da CLI](referencia/cli.md)
+- [Ferramentas MCP](referencia/ferramentas-mcp.md)
+- [Configuração e arquivos](referencia/configuracao.md)
+- [Protocolo](referencia/protocolo.md)
+
+# Por dentro
+
+- [Arquitetura](arquitetura.md)
+- [Segurança](seguranca.md)
+- [Glossário](glossario.md)
+
+# Ajuda
+
+- [Solução de problemas](solucao-de-problemas.md)
+- [Perguntas frequentes](faq.md)
+- [Contribuindo](contribuindo.md)
+
+# Decisões de arquitetura (ADRs)
+
+- [Índice das decisões](adr/README.md)
+  - [0001: O transporte é iroh com gossip](adr/0001-o-transporte-e-iroh-com-gossip.md)
+  - [0002: Mensagens chegam por push, com pull de reserva](adr/0002-mensagens-chegam-por-push-com-pull-de-reserva.md)
+  - [0003: O papo disca os pares antes do gossip](adr/0003-o-papo-disca-os-pares-antes-do-gossip.md)
+  - [0004: O servidor MCP é escrito à mão](adr/0004-o-servidor-mcp-e-escrito-a-mao.md)
+  - [0005: Entrega pelo menos uma vez, com ack e fila](adr/0005-entrega-pelo-menos-uma-vez-com-ack-e-fila.md)
+  - [0006: Um binário estático por plataforma](adr/0006-um-binario-estatico-por-plataforma.md)
+  - [0007: O convite é o segredo da sala](adr/0007-o-convite-e-o-segredo-da-sala.md)
+  - [0008: Docs em mdBook e site no GitHub Pages](adr/0008-docs-em-mdbook-e-site-no-github-pages.md)
