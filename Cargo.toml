@@ -28,10 +28,25 @@ tokio = { version = "1.53.1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
 
+[features]
+# Test-only: lets the binary run on a local relay with a static address table so two
+# `papo mcp` processes can be tested end to end without internet (tests/e2e_local.rs).
+test-network = ["iroh/test-utils"]
+
 [dev-dependencies]
+assert_cmd = "2.2.2"
+criterion = "0.8.2"
+insta = { version = "1.48.0", features = ["json", "filters", "redactions"] }
 # test-utils gives us an in-process relay server, so integration tests never touch the public network.
 iroh = { version = "1.3.0", features = ["test-utils"] }
+jsonschema = "0.58.5"
+predicates = "3.1.4"
+proptest = "1.11.0"
 tempfile = "3"
+
+[[bench]]
+name = "crypto"
+harness = false
 
 [profile.release]
 # Single self-contained binary per platform: optimize for size and strip symbols.
