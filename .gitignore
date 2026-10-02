@@ -1,0 +1,4 @@
+/target
+# mdBook output and the assembled Pages site (built in CI)
+/docs/book/
+/_site/
