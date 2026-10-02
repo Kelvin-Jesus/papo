@@ -142,7 +142,7 @@ impl Invite {
             .decode(body.to_ascii_uppercase().as_bytes())
             .context("invite is not valid base32 (was it truncated when copying?)")?;
         ensure!(
-            bytes.len() >= 32 + INVITE_CHECK_LEN && (bytes.len() - INVITE_CHECK_LEN) % 32 == 0,
+            bytes.len() >= 32 + INVITE_CHECK_LEN && (bytes.len() - INVITE_CHECK_LEN).is_multiple_of(32),
             "invite has an invalid length (was it truncated when copying?)"
         );
         let (payload, check) = bytes.split_at(bytes.len() - INVITE_CHECK_LEN);

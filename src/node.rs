@@ -428,10 +428,10 @@ impl Inner {
             Ok(b) => b,
             Err(e) => return eprintln!("papo: could not encode frame: {e:#}"),
         };
-        if let Err(e) = self.sender.broadcast(bytes).await {
-            if !self.closing.load(Ordering::Relaxed) {
-                eprintln!("papo: broadcast failed: {e}");
-            }
+        if let Err(e) = self.sender.broadcast(bytes).await
+            && !self.closing.load(Ordering::Relaxed)
+        {
+            eprintln!("papo: broadcast failed: {e}");
         }
     }
 
