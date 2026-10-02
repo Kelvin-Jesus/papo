@@ -1,0 +1,17 @@
+# Self-hosted iroh relay for papo, in dev mode (plain HTTP).
+#
+#   docker compose -f docker/relay/compose.yaml up -d
+#   PAPO_RELAY=http://<this-host>:3340 papo ...      # on every member of the room
+#
+# Not for production: no TLS and no access control. Anyone who can reach port 3340 can
+# relay traffic through it (papo frames stay end-to-end encrypted either way).
+name: papo-relay
+
+services:
+  relay:
+    build:
+      context: .
+    image: papo-relay:dev
+    restart: unless-stopped
+    ports:
+      - "3340:3340/tcp"

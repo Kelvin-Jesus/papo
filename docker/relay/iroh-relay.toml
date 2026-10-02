@@ -1,0 +1,8 @@
+# iroh-relay config for local/dev use (started with --dev: plain HTTP, TLS ignored).
+#
+# Bind IPv4 explicitly: --dev alone binds [::]:3340, which fails in containers whose
+# network has IPv6 disabled (Docker's default bridge).
+http_bind_addr = "0.0.0.0:3340"
+
+# The metrics endpoint would listen on another port nobody scrapes here.
+enable_metrics = false
