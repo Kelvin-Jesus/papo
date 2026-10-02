@@ -1,0 +1,95 @@
+/* papo: design tokens (dark). Source of truth for site/ and the papo Design System.
+   Rules and rationale live in design/brand-book.md. */
+:root {
+  color-scheme: dark;
+
+  /* Ground and layers: deep ink with a violet bias, never pure black or neutral grey. */
+  --fundo: #0d0c17;
+  --fundo-2: #121120;
+  --superficie: #181728;
+  --superficie-2: #201e34;
+  --linha: #2c2a44;
+  --linha-forte: #3b3858;
+
+  /* Text. --tinta-3 is the floor for captions: 5:1 on --fundo. */
+  --tinta: #eeedf7;
+  --tinta-2: #b4b1cc;
+  --tinta-3: #8784a3;
+
+  /* Meaning: your side, the colleague's side, a person in the room, failure. */
+  --voce: #8e7cf0;
+  --voce-forte: #6e56cf;
+  --voce-fundo: #221d45;
+  --colega: #2bc4af;
+  --colega-forte: #12a594;
+  --colega-fundo: #0f2c2a;
+  --humano: #f5c451;
+  --sobre-humano: #1c1a2e; /* text on --humano: 10.4:1 */
+  --erro: #e2735a;
+  --foco: #8e7cf0;
+
+  /* Type: one family, two voices through its axes. */
+  --fonte: "Recursive", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fonte-mono: "Recursive", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --t-display: clamp(2.75rem, 1.6rem + 4.6vw, 4.75rem); /* 44 to 76 px */
+  --t-h2: clamp(2rem, 1.5rem + 2vw, 2.75rem); /* 32 to 44 px */
+  --t-h3: 1.5rem;
+  --t-corpo: 1.125rem;
+  --t-pequeno: 0.9375rem;
+  --t-mono: 0.875rem;
+  --t-legenda: 0.8125rem;
+
+  /* Space: 4 px grid. */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 20px;
+  --e-6: 24px;
+  --e-8: 32px;
+  --e-10: 40px;
+  --e-12: 48px;
+  --e-16: 64px;
+  --e-24: 96px;
+
+  /* Shape. The bubble keeps the speaker's corner tight. */
+  --raio-s: 8px;
+  --raio-m: 12px;
+  --raio-l: 20px;
+  --raio-bolha: 16px;
+  --raio-bolha-canto: 6px;
+  --raio-pilula: 999px;
+
+  /* Depth: light from the top edge instead of drop shadows on dark. */
+  --borda-luz: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --sombra-painel: 0 24px 60px -32px rgb(0 0 0 / 0.7);
+
+  /* Motion: the back-and-forth. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-papo: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ease-fio: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-tap: 120ms;
+  --dur-ui: 220ms;
+  --dur-bolha: 240ms;
+  --dur-viagem: 900ms;
+  --dur-ack: 450ms;
+  --dur-onda: 600ms;
+  --dur-digitando: 1200ms;
+}
+
+/* Voices of Recursive. */
+.voz-display { font-family: var(--fonte); font-variation-settings: "CASL" 1, "MONO" 0; font-weight: 800; letter-spacing: -0.035em; }
+.voz-texto { font-family: var(--fonte); font-variation-settings: "CASL" 0, "MONO" 0; }
+.voz-agente { font-family: var(--fonte-mono); font-variation-settings: "CASL" 0, "MONO" 1; }
+.voz-humano { font-family: var(--fonte-mono); font-variation-settings: "CASL" 1, "MONO" 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-tap: 1ms;
+    --dur-ui: 1ms;
+    --dur-bolha: 1ms;
+    --dur-viagem: 1ms;
+    --dur-ack: 1ms;
+    --dur-onda: 1ms;
+  }
+}
