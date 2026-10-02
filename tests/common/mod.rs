@@ -170,6 +170,19 @@ impl McpClient {
         self.wait_notification("notifications/claude/channel", timeout)
     }
 
+    /// Waits for the channel event carrying `content`, skipping others (a message read
+    /// through `wait` was usually also pushed, so earlier events can be pending).
+    pub fn wait_channel_message(&mut self, content: &str, timeout: Duration) -> Value {
+        let deadline = Instant::now() + timeout;
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            let event = self.wait_channel_event(left);
+            if event["params"]["content"] == content {
+                return event;
+            }
+        }
+    }
+
     /// Polls `status` until `needle` shows up (peers take a moment to find each other).
     pub fn wait_status_contains(&mut self, needle: &str, timeout: Duration) -> String {
         let deadline = Instant::now() + timeout;
