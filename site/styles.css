@@ -258,7 +258,8 @@ h3 { font-size: var(--t-h3); line-height: 1.25; font-weight: 700; }
 .tsf__lado--colega { background: var(--colega-fundo); border: 1px solid rgb(43 196 175 / 0.3); }
 .tsf__lado--voce { background: var(--voce-fundo); border: 1px solid rgb(142 124 240 / 0.3); }
 .tsf__meio { background: var(--superficie); border: 1px dashed rgb(245 196 81 / 0.5); align-items: flex-start; }
-.tsf__quem { font-size: var(--t-legenda); font-weight: 700; letter-spacing: 0.04em; color: var(--tinta-3); }
+/* --tinta-3 only reaches 4.5:1 on --fundo; on the tinted panels the label needs --tinta-2. */
+.tsf__quem { font-size: var(--t-legenda); font-weight: 700; letter-spacing: 0.04em; color: var(--tinta-2); }
 .tsf__msg { color: var(--tinta); font-size: var(--t-mono); line-height: 1.55; }
 .tsf__recibo { display: inline-flex; gap: 6px; align-items: center; font-size: 0.8125rem; color: var(--colega); }
 .tsf__placar { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; font-size: var(--t-legenda); }
@@ -295,6 +296,9 @@ h3 { font-size: var(--t-h3); line-height: 1.25; font-weight: 700; }
 .rede[data-modo="teimoso"] .rede__direto { opacity: 0.12; }
 .rede[data-modo="teimoso"] .rede__desvio, .rede[data-modo="teimoso"] .rede__relay-bg, .rede[data-modo="teimoso"] .rede__relay-txt { opacity: 1; }
 .rede__legenda { font-size: var(--t-pequeno); min-height: 3.2em; }
+/* The switch comes before the figcaption in the DOM (a figcaption must be the first or last child of
+   its figure); order keeps it visually below the caption. */
+.rede > .chave { order: 1; }
 .fatos { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .fatos li { display: flex; flex-direction: column; gap: 8px; }
 .fatos h3 { display: flex; align-items: center; gap: 8px; }
