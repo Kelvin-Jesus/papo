@@ -2,98 +2,16 @@
 //! endpoint and real gossip; only the network is local (in-process relay + in-memory
 //! address lookup), so these tests never reach the internet.
 
+mod common;
+
 use std::time::Duration;
 
-use iroh::{
-    Endpoint, EndpointAddr, RelayMap, RelayMode, RelayUrl, SecretKey, address_lookup::memory::MemoryLookup,
-    endpoint::presets, tls::CaTlsConfig,
-};
+use common::localnet::{LocalNet, STEP, eventually};
 use papo::{
-    node::{Node, NodeEvent, NodeOptions, SendOutcome},
-    proto::{PeerKind, now_ms},
-    room::RoomSecret,
-    store::{LogEntry, Profile, Store},
+    node::{NodeEvent, SendOutcome},
+    proto::PeerKind,
+    store::LogEntry,
 };
-use tempfile::TempDir;
-
-const STEP: Duration = Duration::from_secs(20);
-
-struct LocalNet {
-    relay_map: RelayMap,
-    relay_url: RelayUrl,
-    lookup: MemoryLookup,
-    room: RoomSecret,
-    dir: TempDir,
-    // Keeps the in-process relay alive for the test's lifetime.
-    _relay: Box<dyn std::any::Any + Send>,
-}
-
-impl LocalNet {
-    async fn new() -> Self {
-        let (relay_map, relay_url, server) = iroh::test_utils::run_relay_server().await.unwrap();
-        Self {
-            relay_map,
-            relay_url,
-            lookup: MemoryLookup::new(),
-            room: RoomSecret::generate(),
-            dir: tempfile::tempdir().unwrap(),
-            _relay: Box::new(server),
-        }
-    }
-
-    /// Opens the profile if it exists, so a restarted node sees its previous state.
-    fn store(&self, name: &str) -> Store {
-        let dir = self.dir.path().join(name);
-        if let Ok(store) = Store::open_at(dir.clone()) {
-            return store;
-        }
-        let profile = Profile { name: name.into(), about: None, room: self.room.to_base32(), created_ms: now_ms() };
-        Store::create_at(dir, &profile).unwrap()
-    }
-
-    async fn endpoint(&self, key: SecretKey) -> Endpoint {
-        let ep = Endpoint::builder(presets::Minimal)
-            .relay_mode(RelayMode::Custom(self.relay_map.clone()))
-            .secret_key(key)
-            .ca_tls_config(CaTlsConfig::insecure_skip_verify())
-            .bind()
-            .await
-            .unwrap();
-        ep.address_lookup().unwrap().add(self.lookup.clone());
-        self.lookup.add_endpoint_info(EndpointAddr::new(ep.id()).with_relay_url(self.relay_url.clone()));
-        ep.online().await;
-        ep
-    }
-
-    /// A long-running agent node with persistent state, like the MCP server.
-    async fn agent(&self, name: &str, bootstrap: Vec<iroh::EndpointId>) -> Node {
-        let store = self.store(name);
-        let ep = self.endpoint(store.secret_key().unwrap()).await;
-        let opts = NodeOptions {
-            name: name.into(),
-            about: Some(format!("{name}-repo")),
-            kind: PeerKind::Agent,
-            ephemeral: false,
-            bootstrap,
-        };
-        Node::spawn(ep, self.room.clone(), opts, Some(store)).await.unwrap()
-    }
-
-    /// A one-shot CLI identity, like `papo say`.
-    async fn cli(&self, name: &str, bootstrap: Vec<iroh::EndpointId>) -> Node {
-        let ep = self.endpoint(SecretKey::generate()).await;
-        let opts = NodeOptions { name: name.into(), about: None, kind: PeerKind::Human, ephemeral: true, bootstrap };
-        Node::spawn(ep, self.room.clone(), opts, None).await.unwrap()
-    }
-}
-
-async fn eventually(what: &str, mut check: impl FnMut() -> bool) {
-    let deadline = tokio::time::Instant::now() + STEP;
-    while !check() {
-        assert!(tokio::time::Instant::now() < deadline, "timed out waiting for: {what}");
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-}
 
 #[tokio::test]
 async fn message_is_delivered_acked_and_logged() {

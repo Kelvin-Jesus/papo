@@ -17,6 +17,8 @@ use std::{
 use iroh::{EndpointId, SecretKey};
 use serde_json::{Value, json};
 
+pub mod localnet;
+
 pub const BIN: &str = env!("CARGO_BIN_EXE_papo");
 
 /// Runs `papo` against an isolated home and returns stdout; fails the test (showing
