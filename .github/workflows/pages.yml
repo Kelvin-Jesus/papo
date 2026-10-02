@@ -39,17 +39,10 @@ jobs:
             | tar -xz -C "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Build docs
-        run: mdbook build docs
-
-      - name: Assemble site
-        run: |
-          mkdir -p _site/assets
-          cp -R site/. _site/
-          cp -R assets/logo _site/assets/logo
-          rm -rf _site/assets/logo/source
-          cp -R docs/book _site/docs
-          touch _site/.nojekyll
+      # Same script the quality gate runs: builds the book (failing on any mdBook
+      # warning) and assembles _site/ with the landing page, the logo and the book.
+      - name: Build docs and assemble site
+        run: scripts/build-site.sh
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
