@@ -7,6 +7,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Snapshot mismatches fail in CI instead of writing new snapshots.
+  INSTA_UPDATE: "no"
 
 jobs:
   test:
@@ -25,8 +27,55 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --check
       - run: cargo clippy --all-targets --locked -- -D warnings
-      # Local relay + in-memory address lookup: no internet needed.
-      - run: cargo test --locked
+      - run: cargo clippy --all-targets --locked --features test-network -- -D warnings
+      # Unit, doc, property, robustness, store, node scenario, MCP contract and CLI
+      # tests, plus the hermetic two-process e2e (local relay). No internet needed.
+      - run: cargo test --locked --features test-network
+      - if: matrix.os == 'ubuntu-latest'
+        name: Benchmarks and fuzz targets still compile
+        run: |
+          cargo bench --locked --no-run
+          cargo check --manifest-path fuzz/Cargo.toml --bins
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      # Measured at 94% of lines when the floor was set; the slack absorbs
+      # timing-dependent branches (reconnects, lag) that vary between runs.
+      - name: Measure (fails under 90% of lines)
+        run: cargo llvm-cov --locked --features test-network --lcov --output-path lcov.info --fail-under-lines 90
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo '## Cobertura de testes'
+            echo
+            echo '```'
+            cargo llvm-cov report --summary-only
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lcov
+          path: lcov.info
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Advisories (RustSec), licenses, banned crates and sources; policy in deny.toml.
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check all
 
   # Two real MCP servers talking through the public iroh network (n0 DNS + relays).
   # Informative only: depends on third-party infrastructure being reachable.

@@ -1,0 +1,56 @@
+name: mutants
+
+# Mutation testing: cargo-mutants changes the code (flips conditions, replaces return
+# values...) and checks that some test fails. Surviving mutants point at behavior no
+# test pins down. Slow, so it runs weekly and on demand, not on every push.
+on:
+  schedule:
+    - cron: "41 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Limit to these files (space separated, e.g. src/room.rs src/proto.rs)"
+        default: ""
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  mutants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - name: Run cargo-mutants
+        run: |
+          files=""
+          for f in ${{ inputs.files }}; do files="$files --file $f"; done
+          # Exit code 2 means some mutants survived: report it, the summary shows which.
+          cargo mutants --features test-network --timeout-multiplier 3 $files || [ $? -eq 2 ]
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Mutation testing'
+            echo
+            for kind in caught missed timeout unviable; do
+              [ -f "mutants.out/$kind.txt" ] && echo "- $kind: $(wc -l < "mutants.out/$kind.txt")"
+            done
+            if [ -s mutants.out/missed.txt ]; then
+              echo
+              echo '### Mutantes que sobreviveram'
+              echo '```'
+              cat mutants.out/missed.txt
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutants.out
+          path: mutants.out

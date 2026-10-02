@@ -1,0 +1,53 @@
+name: fuzz
+
+# Coverage-guided fuzzing of everything that parses untrusted input (invites, frames,
+# sealed bytes). Short runs on changes to those parsers, a longer one every week.
+on:
+  pull_request:
+    paths: ["src/room.rs", "src/proto.rs", "fuzz/**", ".github/workflows/fuzz.yml"]
+  push:
+    branches: [main]
+    paths: ["src/room.rs", "src/proto.rs", "fuzz/**", ".github/workflows/fuzz.yml"]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: "300"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fuzz:
+    name: fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [invite_decode, frame_decode, room_open]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+      # Keep the corpus between runs so each run starts where the last one stopped.
+      - uses: actions/cache@v4
+        with:
+          path: fuzz/corpus/${{ matrix.target }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: fuzz-corpus-${{ matrix.target }}-
+      - name: Fuzz
+        run: |
+          seconds="${{ inputs.seconds }}"
+          if [ -z "$seconds" ]; then
+            if [ "${{ github.event_name }}" = "schedule" ]; then seconds=1800; else seconds=60; fi
+          fi
+          cargo fuzz run ${{ matrix.target }} -- -max_total_time="$seconds"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: crash-${{ matrix.target }}
+          path: fuzz/artifacts/${{ matrix.target }}
