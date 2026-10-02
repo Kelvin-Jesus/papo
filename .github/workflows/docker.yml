@@ -1,0 +1,152 @@
+name: docker
+
+# Container image of papo: built and smoke-tested on PRs and on main, an informative
+# two-agent end-to-end run, and on v* tags a multi-arch image pushed to
+# ghcr.io/kelvin-jesus/papo. (Path filters do not apply to tag pushes.)
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - docker/**
+      - scripts/docker-*.sh
+      - src/**
+      - tests/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/docker.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - docker/**
+      - scripts/docker-*.sh
+      - src/**
+      - tests/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/kelvin-jesus/papo
+
+jobs:
+  image:
+    name: build + smoke (amd64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Run the test suite in the container (test stage)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: test
+          cache-from: type=gha,scope=papo-test
+          cache-to: type=gha,mode=max,scope=papo-test
+
+      - name: Build the runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64
+          load: true
+          tags: papo:ci
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=papo-amd64
+          cache-to: type=gha,mode=max,scope=papo-amd64
+
+      - name: Image size
+        run: |
+          docker image ls papo:ci
+          echo "compressed: $(docker save papo:ci | gzip -c | wc -c) bytes" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test (CLI, volume, MCP over stdio, profile lock)
+        run: scripts/docker-smoke.sh papo:ci
+
+  e2e:
+    name: two agents in containers (informative)
+    needs: image
+    runs-on: ubuntu-latest
+    # Depends on the n0 DNS/pkarr service on the internet for address lookup.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build papo image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64
+          load: true
+          tags: papo:dev
+          cache-from: type=gha,scope=papo-amd64
+      - name: Build relay image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/relay
+          load: true
+          tags: papo-relay:dev
+          cache-from: type=gha,scope=papo-relay
+          cache-to: type=gha,mode=max,scope=papo-relay
+      - name: End-to-end through a local relay
+        env:
+          PAPO_E2E_SKIP_BUILD: "1"
+          PAPO_LOG: iroh::socket::transports::relay=info
+        run: scripts/docker-e2e.sh
+      - name: End-to-end through the public n0 relays
+        env:
+          PAPO_E2E_SKIP_BUILD: "1"
+        run: scripts/docker-e2e.sh --public
+
+  publish:
+    name: publish multi-arch to GHCR
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - name: Build and push (linux/amd64, linux/arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VERSION=${{ steps.meta.outputs.version }}
+          cache-from: |
+            type=gha,scope=papo-amd64
+            type=gha,scope=papo-arm64
+          cache-to: type=gha,mode=max,scope=papo-arm64
