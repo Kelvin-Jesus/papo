@@ -6,3 +6,4 @@
 * [Rotate a room](/playbooks/rotate-a-room.md) - Remove a member or replace a leaked invite.
 * [Run the public e2e test](/playbooks/run-public-e2e.md) - Two real MCP servers talking over the public iroh network.
 * [Run and test in Docker](/playbooks/run-in-docker.md) - Static image, smoke test, MCP from a container and the two-agent e2e via a local relay.
+* [Test the code](/playbooks/test-the-code.md) - Which suite covers what, snapshots, coverage, fuzzing, mutation testing and cargo-deny.

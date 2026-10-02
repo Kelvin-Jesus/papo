@@ -14,6 +14,6 @@ timestamp: 2026-10-02T00:00:00Z
 3. **Implementation**: write `tool_<name>(ctx, args) -> Result<String>`; returned errors become `isError: true` results. Read arguments with `str_arg` and clamp numeric ones. Long-running tools follow `tool_wait`: `tokio::select!` with periodic `notifications/progress` when a `progressToken` is present; cancellation is already handled by aborting the task.
 4. **Node API**: if the tool needs new behavior, add it to `Node` in `src/node.rs` and keep the [delivery invariants](/concepts/delivery.md) (outbox before broadcast, persist before ack).
 5. **Instructions**: if agents should change how they collaborate, update `instructions()` in `src/mcp.rs`.
-6. **Tests**: `tests/mcp.rs` asserts the exact tool list in `speaks_mcp_and_advertises_the_channel_capability`; update it and add a test that calls the tool through JSON-RPC. Node behavior gets a test in `tests/node.rs`.
+6. **Tests**: `tests/mcp.rs` asserts the exact tool list in `speaks_mcp_and_advertises_the_channel_capability`; update it. In `tests/mcp_contract.rs`, add sample arguments for the JSON Schema check and a test that calls the tool through JSON-RPC, then re-record the `tools_list` snapshot (`INSTA_UPDATE=always`) and review its diff. Node behavior gets a test in `tests/node_scenarios.rs`. See [test the code](/playbooks/test-the-code.md).
 7. **Docs**: README tools table, `docs/referencia/ferramentas-mcp.md` (docs book), and `knowledge/apis/mcp-tools/<name>.md` plus its `index.md` and a `knowledge/log.md` entry.
-8. Run `cargo fmt`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+8. Run `cargo fmt`, `cargo clippy --all-targets --features test-network -- -D warnings`, `cargo test --features test-network`.

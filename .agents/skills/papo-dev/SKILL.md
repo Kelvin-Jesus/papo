@@ -9,19 +9,37 @@ description: Build, test and lint loop for the papo Rust codebase, plus the inva
 
 ```sh
 cargo build
-cargo test                                  # unit + integration (local relay, no internet), ~5 s
-cargo clippy --all-targets -- -D warnings   # CI uses -D warnings
+cargo test --features test-network          # all suites, no internet, ~40 s
+cargo clippy --all-targets --features test-network -- -D warnings   # CI uses -D warnings
 cargo fmt                                   # max_width 120 (rustfmt.toml)
 ```
 
-Targeted runs:
+Targeted runs (pick the suite that matches what you touched):
 
 ```sh
 cargo test --lib                            # unit tests in src/
-cargo test --test node                      # delivery semantics over real iroh endpoints
-cargo test --test mcp                       # JSON-RPC against the built binary
+cargo test --doc                            # examples in the public API docs
+cargo test --test properties                # proptest invariants (room, proto)
+cargo test --test robustness                # arbitrary input never panics
+cargo test --test store                     # on-disk profile state
+cargo test --test node --test node_scenarios   # delivery over real iroh endpoints
+cargo test --test mcp --test mcp_contract   # JSON-RPC against the built binary
+cargo test --test cli                       # CLI commands and errors
+cargo test --features test-network --test e2e_local   # two papo mcp processes, local relay
 cargo test --test mcp -- --ignored          # public network e2e (needs internet, ~6 s)
 ```
+
+Deeper checks before a release or after touching parsers/crypto:
+
+```sh
+cargo llvm-cov --features test-network --summary-only   # CI floor 90% lines
+cargo deny check                            # advisories, licenses, sources
+cargo +nightly fuzz run invite_decode -- -max_total_time=60   # also frame_decode, room_open
+cargo mutants --features test-network --file src/room.rs      # surviving mutants = untested behavior
+```
+
+Snapshots (`tests/snapshots/`): after an intended change to `initialize`, `tools/list`, `--help` or
+the `new` output, run `INSTA_UPDATE=always cargo test --features test-network` and review the diff.
 
 Manual run against throwaway state (never touch `~/.papo` in experiments):
 
@@ -32,7 +50,9 @@ target/debug/papo new --name voce
 
 ## Before declaring done
 
-- [ ] `cargo fmt --check`, clippy with `-D warnings` and `cargo test` pass.
+- [ ] `cargo fmt --check`, clippy with `-D warnings` and `cargo test --features test-network` pass.
+- [ ] A bug fix comes with a test that fails without it; new behavior has a test in the matching suite.
+- [ ] Test hooks (`PAPO_TEST_*`, `test-network`) still default to production behavior.
 - [ ] Nothing in the `papo mcp` path prints to stdout (`knowledge/gotchas/stdout-is-json-rpc.md`).
 - [ ] No peer handed to gossip (`subscribe` bootstrap / `join_peers`) without a live connection (`knowledge/gotchas/gossip-pending-dial.md`).
 - [ ] Delivery order kept: outbox before broadcast; inbox + log before ack (`knowledge/concepts/delivery.md`).

@@ -19,9 +19,12 @@ with iroh-gossip; incoming messages are pushed into the session through Claude C
 
 ```sh
 cargo build
-cargo test                               # unit + integration, local relay only (no internet)
+cargo test --features test-network       # every suite incl. hermetic two-process e2e; no internet
 cargo test --test mcp -- --ignored       # two real MCP servers over the public iroh network (~6 s)
-cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --features test-network -- -D warnings
+INSTA_UPDATE=always cargo test --features test-network   # re-record snapshots after an intended API change
+cargo llvm-cov --features test-network --summary-only    # coverage (CI floor: 90% of lines)
+cargo deny check                         # advisories, licenses, sources (deny.toml)
 cargo fmt                                # rustfmt.toml: max_width 120
 PAPO_LOG=iroh_gossip=debug,iroh=info target/debug/papo status   # network diagnostics on stderr
 docker build --target test .             # test suite in a reproducible Linux container
@@ -40,8 +43,13 @@ scripts/docker-e2e.sh [--public]         # two agents in containers via a local 
 | `src/net.rs` | Endpoint on the public network (n0 preset, optional `PAPO_RELAY`). |
 | `src/mcp.rs` | Hand-rolled MCP stdio server: tools, `claude/channel` push, long-poll `wait`. |
 | `src/main.rs` | CLI (user-facing text in pt-BR). |
-| `tests/node.rs` | Delivery semantics over real iroh endpoints + in-process relay. |
-| `tests/mcp.rs` | Drives the built binary over JSON-RPC like Claude Code does. |
+| `tests/common/` | Shared harness: `McpClient` drives the binary over stdio; `localnet` = in-process relay + `RawPeer` that speaks the wire format. |
+| `tests/node.rs`, `tests/node_scenarios.rs` | Delivery over real iroh endpoints: acks, queue, duplicates, restarts, crash, ordering, multi-member. |
+| `tests/mcp.rs`, `tests/mcp_contract.rs` | MCP contract against the built binary; insta snapshots in `tests/snapshots/`. |
+| `tests/cli.rs`, `tests/store.rs` | CLI commands/errors; on-disk profile state. |
+| `tests/properties.rs`, `tests/robustness.rs` | proptest invariants; arbitrary input never panics. |
+| `tests/e2e_local.rs` | Two `papo mcp` processes + CLI over a local relay (`test-network` feature). |
+| `fuzz/`, `benches/` | cargo-fuzz targets (nightly); criterion benchmarks. |
 
 ## Invariants (breaking these causes real bugs)
 
@@ -95,5 +103,6 @@ Details and evidence for each: `knowledge/gotchas/`.
 - Comments explain why, not what. Errors are returned with context (`anyhow::Context`), never
   swallowed. Background persistence failures are logged to stderr.
 - Prefer integration tests with real endpoints over mocks; anything touching the internet is
-  `#[ignore]`.
+  `#[ignore]`. Test hooks (`PAPO_TEST_*`, the `test-network` feature) must default to production
+  behavior. A bug fix lands with a test that fails without it.
 - Commits: Conventional Commits in Portuguese (`feat(node): ...`, `docs: ...`).

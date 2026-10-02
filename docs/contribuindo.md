@@ -18,9 +18,9 @@ cargo build
 
 ```sh
 cargo build
-cargo test                                   # unitários + integração (rede local, sem internet)
+cargo test --features test-network          # todas as suítes, sem internet (veja Testes)
 cargo test --test mcp -- --ignored           # dois servidores MCP pela internet real
-cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --features test-network -- -D warnings
 cargo fmt                                    # rustfmt.toml: max_width 120
 ```
 
@@ -39,10 +39,73 @@ PAPO_HOME=/tmp/b target/debug/papo join <convite> --name colega
 
 ## Testes
 
-- Testes de integração usam nós reais (endpoints iroh e gossip) numa rede local com relay em processo.
-  Prefira esse estilo a mocks.
+`cargo test --features test-network` roda tudo o que não precisa de internet. Sem a feature, só o
+ponta a ponta hermético fica de fora. Cada tipo de teste tem um lugar:
+
+| Tipo | Onde | O que garante |
+| ---- | ---- | ------------- |
+| Unitários | `src/*.rs` (`mod tests`) | Funções puras: cifra, convite, frames, formatação, limitador, helpers da CLI |
+| Doc tests | exemplos em `src/room.rs`, `src/proto.rs` | A API pública documentada funciona como mostrada |
+| Propriedades | `tests/properties.rs` (proptest) | Invariantes para qualquer entrada: convite vai e volta, truncado é rejeitado, bit trocado é detectado |
+| Robustez | `tests/robustness.rs` | Entrada arbitrária nunca causa pânico; o servidor MCP sobrevive a rajadas de linhas aleatórias |
+| Estado em disco | `tests/store.rs` | Escrita atômica, arquivos corrompidos, trava do perfil, permissões |
+| Nó | `tests/node.rs`, `tests/node_scenarios.rs` | Entrega, fila, ack, duplicatas, reinício, crash, ordem, concorrência, salas maiores |
+| Contrato MCP | `tests/mcp.rs`, `tests/mcp_contract.rs` | JSON-RPC, esquemas das ferramentas, push, progresso, textos que o agente lê |
+| CLI | `tests/cli.rs` | Comandos, mensagens de erro e o que fica no disco |
+| Ponta a ponta | `tests/e2e_local.rs` (feature `test-network`) | Dois `papo mcp` reais e a CLI conversando por um relay local |
+| Internet real | `cargo test --test mcp -- --ignored` | O mesmo, pela infraestrutura pública da n0 |
+
+Regras:
+
+- Testes de rede usam nós reais (endpoints iroh e gossip) numa rede local com relay em processo
+  (`tests/common/localnet.rs`). Prefira esse estilo a mocks. Para mandar frames que um nó normal
+  nunca mandaria, use o `RawPeer` do mesmo arquivo.
+- Testes que dirigem o binário usam `tests/common/mod.rs`, sempre com um `PAPO_HOME` temporário.
 - Qualquer teste que dependa da internet deve ser `#[ignore]`.
-- `tests/mcp.rs` dirige o binário pelo stdio. Ao adicionar uma ferramenta MCP, cubra-a ali.
+- Ao adicionar uma ferramenta MCP, cubra-a em `tests/mcp_contract.rs` e atualize o snapshot.
+
+### Snapshots
+
+`tests/snapshots/` guarda o `initialize`, o `tools/list`, o `--help` e a saída do `new`. Se você mudou
+algo disso de propósito, regrave e revise o diff:
+
+```sh
+INSTA_UPDATE=always cargo test --features test-network
+git diff tests/snapshots
+```
+
+Na CI os snapshots nunca são regravados: diferença é falha.
+
+### Cobertura
+
+```sh
+cargo llvm-cov --features test-network --summary-only
+```
+
+A CI falha abaixo de 90% das linhas (medido em 94% quando o piso foi definido) e publica o resumo na
+página da execução. Os processos `papo` que os testes iniciam também contam, porque terminam por EOF
+no stdin em vez de serem mortos.
+
+### Fuzzing
+
+Os alvos em `fuzz/` (convite, frames, abertura de bytes) rodam com o cargo-fuzz, que precisa de
+nightly:
+
+```sh
+cargo +nightly fuzz run frame_decode -- -max_total_time=60
+```
+
+A CI roda 60 s por alvo quando `src/room.rs`, `src/proto.rs` ou `fuzz/` mudam, e 30 min por semana.
+
+### Testes de mutação e cadeia de suprimentos
+
+```sh
+cargo mutants --features test-network --file src/room.rs   # mutantes sobreviventes = comportamento sem teste
+cargo deny check                                           # vulnerabilidades, licenças e fontes (deny.toml)
+cargo bench                                                # cifra, frames e convites (criterion)
+```
+
+O cargo-mutants roda semanalmente na CI (`mutants.yml`); o cargo-deny roda em todo push.
 
 ## Convenções
 
