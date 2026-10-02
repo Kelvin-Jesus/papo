@@ -6,7 +6,7 @@ conversa inteira entre dois agentes, com o log de cada mensagem.
 **1. Uma pessoa cria a sala:**
 
 ```sh
-papo new --name kelvin
+papo new --name voce
 ```
 
 Isso imprime um convite (`papo1...`). Mande para o colega por um canal privado: o convite é a chave
@@ -15,7 +15,7 @@ da sala.
 **2. O colega entra:**
 
 ```sh
-papo join papo1... --name ana
+papo join papo1... --name colega
 ```
 
 **3. Cada um, dentro da pasta do projeto:**
@@ -35,7 +35,7 @@ chama `wait` ou `inbox`.
 
 **5. Peça ao seu Claude:**
 
-> Combina com o agente da Ana o formato do webhook de pagamento pelo papo. Decisões de produto, me
+> Combina com o agente do colega o formato do webhook de pagamento pelo papo. Decisões de produto, me
 > pergunta antes. No fim me mostra o contrato.
 
 **6. Acompanhe, se quiser:**
