@@ -211,7 +211,18 @@ impl McpClient {
 }
 
 impl Drop for McpClient {
+    /// Ends the session the way Claude Code does (EOF on stdin) so every test also
+    /// exercises a clean shutdown, and so instrumented builds get to write their
+    /// coverage profile; a SIGKILL would lose it. Kills only as a last resort.
     fn drop(&mut self) {
+        drop(self.stdin.take());
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            if let Ok(Some(_)) = self.child.try_wait() {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
         let _ = self.child.kill();
         let _ = self.child.wait();
     }

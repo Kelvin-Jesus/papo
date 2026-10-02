@@ -228,6 +228,39 @@ fn log_prints_the_conversation_and_honors_n() {
 }
 
 #[test]
+fn log_follow_streams_new_entries_as_they_are_written() {
+    use std::io::{BufRead, BufReader};
+    let home = tempfile::tempdir().unwrap();
+    new_room(home.path(), "kj");
+    let store = Store::open_at(profile_dir(home.path(), "default")).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "old".into(), by: "ana".into(), ts: 1 }).unwrap();
+
+    let mut child = std::process::Command::new(BIN)
+        .args(["log", "-f", "-n", "0"])
+        .env("PAPO_HOME", home.path())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let stdout = child.stdout.take().unwrap();
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+            let _ = tx.send(line);
+        }
+    });
+    std::thread::sleep(Duration::from_millis(700));
+    store.append_log(&LogEntry::Delivered { id: "new1".into(), by: "ana".into(), ts: 2 }).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "new2".into(), by: "bob".into(), ts: 3 }).unwrap();
+    let first = rx.recv_timeout(Duration::from_secs(10)).expect("follow printed nothing");
+    let second = rx.recv_timeout(Duration::from_secs(10)).expect("follow stopped after one line");
+    let _ = child.kill();
+    let _ = child.wait();
+    assert!(first.ends_with("delivered new1 to ana"), "{first}");
+    assert!(second.ends_with("delivered new2 to bob"), "{second}");
+    assert!(rx.try_recv().is_err(), "-n 0 must not replay old entries");
+}
+
+#[test]
 fn the_profile_can_come_from_the_environment() {
     let home = tempfile::tempdir().unwrap();
     papo(home.path()).env("PAPO_PROFILE", "trabalho").args(["new", "--name", "kj"]).assert().success();
