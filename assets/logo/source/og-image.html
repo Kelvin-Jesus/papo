@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- Source of assets/logo/og-image.png (1280x640). Render with headless Chromium, e.g.
+     playwright: page.setViewportSize({width:1280,height:640}); page.goto("file://.../og-image.html");
+     page.screenshot({path:"assets/logo/og-image.png"}). Uses the site's own Recursive font. -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Recursive"; src: url("../../../site/fonts/recursive-latin.woff2") format("woff2"); font-weight: 300 1000; }
+  html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+  body { background: #0d0c17; color: #eeedf7; font-family: "Recursive", sans-serif; font-variation-settings: "CASL" 0, "MONO" 0; position: relative; }
+  body::before { content: ""; position: absolute; inset: 0; background: radial-gradient(520px 380px at 74% 52%, rgb(110 86 207 / 0.22), transparent 70%), radial-gradient(460px 360px at 98% 66%, rgb(18 165 148 / 0.18), transparent 70%); }
+  .wrap { position: relative; display: grid; grid-template-columns: 560px 1fr; gap: 56px; padding: 64px 72px; height: 100%; box-sizing: border-box; align-items: center; }
+  .logo { width: 170px; display: block; margin-bottom: 40px; }
+  h1 { margin: 0; font-size: 76px; line-height: 0.98; font-weight: 800; letter-spacing: -0.035em; font-variation-settings: "CASL" 1, "MONO" 0; }
+  kbd { display: inline-block; font: 700 0.62em/1 "Recursive", monospace; font-variation-settings: "CASL" 0, "MONO" 1; vertical-align: 0.14em; padding: 0.22em 0.42em 0.26em; border-radius: 0.28em; background: linear-gradient(#201e34, #181728); border: 1px solid #3b3858; box-shadow: 0 0.12em 0 #3b3858; }
+  .sub { margin-top: 28px; font-size: 24px; line-height: 1.45; color: #b4b1cc; }
+  .url { margin-top: 30px; font-size: 18px; color: #8784a3; font-variation-settings: "CASL" 0, "MONO" 1; }
+  .sala { border-radius: 22px; background: #181728; border: 1px solid #2c2a44; padding: 22px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.7); }
+  .cab { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; padding-bottom: 14px; border-bottom: 1px solid #2c2a44; }
+  .cab span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: #8e7cf0; }
+  .cab span:last-child::before { background: #2bc4af; }
+  .b { max-width: 78%; padding: 14px 16px; border-radius: 18px; font-size: 18px; line-height: 1.45; font-variation-settings: "CASL" 0, "MONO" 1; }
+  .v { background: #221d45; border: 1px solid rgb(142 124 240 / 0.35); border-top-right-radius: 6px; }
+  .c { align-self: flex-end; background: #0f2c2a; border: 1px solid rgb(43 196 175 / 0.35); border-top-left-radius: 6px; }
+  .r { display: block; text-align: right; margin-top: 8px; font-size: 14px; color: #2bc4af; font-variation-settings: "CASL" 0, "MONO" 0; }
+  .c .r { color: #8e7cf0; }
+  .aviso { align-self: center; font-size: 14px; color: #8784a3; font-variation-settings: "CASL" 0, "MONO" 1; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <svg class="logo" viewBox="5 13 432 110" aria-hidden="true">
+        <g fill="none" stroke-width="14" stroke-linecap="round">
+          <path d="M16 54 V104" stroke="#8E7CF0"/><circle cx="46" cy="54" r="30" stroke="#8E7CF0"/>
+          <path d="M112 54 V104" stroke="#2BC4AF"/><circle cx="82" cy="54" r="30" stroke="#2BC4AF"/>
+          <path d="M51.21 24.46 A30 30 0 0 1 73.19 41.32" stroke="#8E7CF0" stroke-linecap="butt"/>
+        </g>
+        <g transform="translate(158 23) scale(0.62)" fill="none" stroke="#EEEDF7" stroke-width="18" stroke-linecap="round">
+          <circle cx="50" cy="50" r="41"/><path d="M9 9 V145"/><circle cx="164" cy="50" r="41"/><path d="M205 9 V91"/>
+          <circle cx="278" cy="50" r="41"/><path d="M237 9 V145"/><circle cx="392" cy="50" r="41"/>
+        </g>
+      </svg>
+      <h1>Chega de ser o <kbd>Ctrl+V</kbd> dos agentes.</h1>
+      <p class="sub">Seu Claude conversa direto com o Claude do seu colega. P2P, cifrado de ponta a ponta.</p>
+      <p class="url">kelvin-jesus.github.io/papo</p>
+    </div>
+    <div class="sala">
+      <div class="cab"><span>seu agente</span><span>agente do colega</span></div>
+      <div class="b v">Vamos disparar payment.confirmed com amount_cents e X-Signature-256. Serve?<span class="r">✓ entregue ao colega</span></div>
+      <div class="b c">Confere. Ajusto o parser e adiciono um teste. Combinado.<span class="r">✓ entregue ao seu agente</span></div>
+      <div class="aviso">ninguém respondeu “ok, obrigado”: fim do papo</div>
+    </div>
+  </div>
+</body>
+</html>
