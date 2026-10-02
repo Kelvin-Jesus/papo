@@ -115,12 +115,12 @@ fn every_tool_schema_is_valid_json_schema_and_accepts_only_sane_arguments() {
 
     let cases: &[(&str, Value, bool)] = &[
         ("send", json!({"message": "oi"}), true),
-        ("send", json!({"message": "oi", "to": "bob", "reply_to": "abc"}), true),
+        ("send", json!({"message": "oi", "to": "colega", "reply_to": "abc"}), true),
         ("send", json!({}), false),
         ("send", json!({"message": 5}), false),
         ("send", json!({"message": "oi", "cc": "x"}), false),
         ("wait", json!({}), true),
-        ("wait", json!({"timeout_seconds": 30, "from": "bob"}), true),
+        ("wait", json!({"timeout_seconds": 30, "from": "colega"}), true),
         ("wait", json!({"timeout_seconds": 0}), false),
         ("wait", json!({"timeout_seconds": 1201}), false),
         ("wait", json!({"timeout_seconds": "30"}), false),
@@ -144,7 +144,7 @@ fn every_tool_schema_is_valid_json_schema_and_accepts_only_sane_arguments() {
 
 #[test]
 fn unknown_tool_and_missing_arguments_are_handled() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn(home.path());
     let (text, is_error) = client.call("teleport", json!({}));
     assert!(is_error && text.contains("unknown tool: teleport"), "{text}");
@@ -156,7 +156,7 @@ fn unknown_tool_and_missing_arguments_are_handled() {
 
 #[test]
 fn invalid_send_arguments_are_explained() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn(home.path());
     let (text, is_error) = client.call("send", json!({"message": "oi", "to": "nome com espaço"}));
     assert!(is_error && text.contains("name may only contain"), "{text}");
@@ -170,7 +170,7 @@ fn invalid_send_arguments_are_explained() {
 
 #[test]
 fn wait_sends_progress_only_when_a_token_is_given() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn_with(home.path(), &[("PAPO_TEST_PROGRESS_MS", "150")], true);
 
     let resp = client.request(
@@ -200,7 +200,7 @@ fn wait_sends_progress_only_when_a_token_is_given() {
 
 #[test]
 fn wait_clamps_out_of_range_timeouts() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn(home.path());
     let (text, _) = client.call("wait", json!({"timeout_seconds": 0}));
     assert!(text.starts_with("No new messages after 1s"), "{text}");
@@ -208,7 +208,7 @@ fn wait_clamps_out_of_range_timeouts() {
 
 #[test]
 fn the_send_rate_limit_turns_loops_into_errors() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn_with(home.path(), &[("PAPO_MAX_SENDS_PER_10MIN", "0")], true);
     let (text, is_error) = client.call("send", json!({"message": "obrigado!"}));
     assert!(is_error && text.contains("rate limit") && text.contains("stuck in a loop"), "{text}");
@@ -216,10 +216,10 @@ fn the_send_rate_limit_turns_loops_into_errors() {
 
 #[test]
 fn unread_backlog_is_pushed_at_startup_and_consumed_by_inbox() {
-    let home = configured_home("ana");
-    let mut first = envelope("aaa111", "bob", "primeira pergunta");
-    first.to = Some("ana".into());
-    let mut second = envelope("bbb222", "bob", "segunda");
+    let home = configured_home("voce");
+    let mut first = envelope("aaa111", "colega", "primeira pergunta");
+    first.to = Some("voce".into());
+    let mut second = envelope("bbb222", "colega", "segunda");
     second.reply_to = Some("zzz999".into());
     second.kind = PeerKind::Human;
     store(home.path()).save_inbox(&[first, second]).unwrap();
@@ -228,17 +228,20 @@ fn unread_backlog_is_pushed_at_startup_and_consumed_by_inbox() {
     let a = client.wait_channel_event(Duration::from_secs(20));
     let b = client.wait_channel_event(Duration::from_secs(20));
     assert_eq!(a["params"]["content"], "primeira pergunta");
-    assert_eq!(a["params"]["meta"], json!({"from": "bob", "msg_id": "aaa111", "sender_kind": "agent", "to": "ana"}));
+    assert_eq!(
+        a["params"]["meta"],
+        json!({"from": "colega", "msg_id": "aaa111", "sender_kind": "agent", "to": "voce"})
+    );
     assert_eq!(
         b["params"]["meta"],
-        json!({"from": "bob", "msg_id": "bbb222", "sender_kind": "human", "reply_to": "zzz999"})
+        json!({"from": "colega", "msg_id": "bbb222", "sender_kind": "human", "reply_to": "zzz999"})
     );
 
     let (status, _) = client.call("status", json!({}));
     assert!(status.contains("Unread: 2."), "{status}");
     let (inbox, _) = client.call("inbox", json!({}));
-    assert!(inbox.contains("[msg_id=aaa111 from=bob (agent)") && inbox.contains(" to=ana]\nprimeira pergunta"));
-    assert!(inbox.contains("[msg_id=bbb222 from=bob (human)") && inbox.contains("reply_to=zzz999"));
+    assert!(inbox.contains("[msg_id=aaa111 from=colega (agent)") && inbox.contains(" to=voce]\nprimeira pergunta"));
+    assert!(inbox.contains("[msg_id=bbb222 from=colega (human)") && inbox.contains("reply_to=zzz999"));
     let (status, _) = client.call("status", json!({}));
     assert!(status.contains("Unread: 0."), "{status}");
     drop(client);
@@ -252,34 +255,36 @@ fn unread_backlog_is_pushed_at_startup_and_consumed_by_inbox() {
 
 #[test]
 fn wait_with_from_only_takes_that_senders_messages() {
-    let home = configured_home("ana");
-    store(home.path()).save_inbox(&[envelope("b1", "bob", "do bob"), envelope("c1", "carol", "da carol")]).unwrap();
+    let home = configured_home("voce");
+    store(home.path())
+        .save_inbox(&[envelope("b1", "colega", "do colega"), envelope("c1", "terceiro", "da terceiro")])
+        .unwrap();
     let mut client = McpClient::spawn(home.path());
-    let (got, _) = client.call("wait", json!({"timeout_seconds": 5, "from": "Carol"}));
-    assert!(got.contains("da carol") && !got.contains("do bob"), "{got}");
+    let (got, _) = client.call("wait", json!({"timeout_seconds": 5, "from": "Terceiro"}));
+    assert!(got.contains("da terceiro") && !got.contains("do colega"), "{got}");
     let (rest, _) = client.call("inbox", json!({}));
-    assert!(rest.contains("do bob") && !rest.contains("da carol"), "{rest}");
+    assert!(rest.contains("do colega") && !rest.contains("da terceiro"), "{rest}");
 }
 
 #[test]
 fn history_reads_the_log_and_honors_the_limit() {
-    let home = configured_home("kj");
+    let home = configured_home("voce");
     let s = store(home.path());
-    let mut out = envelope("q1", "kj", "qual porta?");
-    out.to = Some("ana".into());
-    let mut inc = envelope("r1", "ana", "8443");
+    let mut out = envelope("q1", "voce", "qual porta?");
+    out.to = Some("colega".into());
+    let mut inc = envelope("r1", "colega", "8443");
     inc.reply_to = Some("q1".into());
     s.append_log(&LogEntry::Out { msg: out }).unwrap();
-    s.append_log(&LogEntry::Delivered { id: "q1".into(), by: "ana".into(), ts: now_ms() }).unwrap();
+    s.append_log(&LogEntry::Delivered { id: "q1".into(), by: "colega".into(), ts: now_ms() }).unwrap();
     s.append_log(&LogEntry::In { msg: inc }).unwrap();
 
     let mut client = McpClient::spawn(home.path());
     let (history, _) = client.call("history", json!({}));
     let lines: Vec<&str> = history.lines().collect();
     assert_eq!(lines.len(), 3, "{history}");
-    assert!(lines[0].ends_with("kj -> ana (msg q1): qual porta?"));
-    assert!(lines[1].ends_with("delivered q1 to ana"));
-    assert!(lines[2].ends_with("ana (agent) -> kj (msg r1, reply to q1): 8443"));
+    assert!(lines[0].ends_with("voce -> colega (msg q1): qual porta?"));
+    assert!(lines[1].ends_with("delivered q1 to colega"));
+    assert!(lines[2].ends_with("colega (agent) -> voce (msg r1, reply to q1): 8443"));
 
     let (last, _) = client.call("history", json!({"limit": 1}));
     assert_eq!(last.lines().count(), 1);
@@ -297,10 +302,10 @@ fn empty_history_says_so() {
 fn status_lists_known_members_and_the_queue() {
     let home = configured_home("kj");
     let s = store(home.path());
-    let bob = SecretKey::generate().public();
+    let colega = SecretKey::generate().public();
     let stranger = SecretKey::generate().public();
     let peers = [
-        (bob, KnownPeer { name: Some("bob".into()), last_seen_ms: now_ms() - 3 * 3_600_000 }),
+        (colega, KnownPeer { name: Some("colega".into()), last_seen_ms: now_ms() - 3 * 3_600_000 }),
         (stranger, KnownPeer::default()),
     ]
     .into_iter()
@@ -311,7 +316,7 @@ fn status_lists_known_members_and_the_queue() {
     let mut client = McpClient::spawn(home.path());
     let (status, _) = client.call("status", json!({}));
     assert!(status.contains(&format!("(endpoint {})", endpoint_id(home.path(), "default").fmt_short())), "{status}");
-    assert!(status.contains("- bob: offline, last seen 3h ago"), "{status}");
+    assert!(status.contains("- colega: offline, last seen 3h ago"), "{status}");
     assert!(status.contains(&format!("- unknown ({}): offline, last seen never", stranger.fmt_short())), "{status}");
     assert!(status.contains("Queued for delivery: 1."), "{status}");
 }
@@ -326,7 +331,7 @@ fn status_without_members_points_to_the_invite() {
 
 #[test]
 fn snapshot_of_initialize_result() {
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn_with(home.path(), &[], false);
     let init = client.request("initialize", json!({"protocolVersion": "2025-11-25"}));
     insta::with_settings!({filters => vec![(r"room [0-9a-f]{8}", "room [room-id]")]}, {
@@ -346,12 +351,12 @@ fn snapshot_of_tools_list() {
 fn an_empty_relay_variable_means_the_default_relays() {
     // Shells and container env files often export empty variables.
     for value in ["", "   "] {
-        let home = configured_home("ana");
+        let home = configured_home("voce");
         let mut client = McpClient::spawn_with(home.path(), &[("PAPO_RELAY", value)], true);
         let (status, is_error) = client.call("status", json!({}));
         assert!(!is_error, "PAPO_RELAY={value:?} broke startup: {status}");
     }
-    let home = configured_home("ana");
+    let home = configured_home("voce");
     let mut client = McpClient::spawn_with(home.path(), &[("PAPO_RELAY", "not a url")], true);
     let (status, is_error) = client.call("status", json!({}));
     assert!(is_error && status.contains("PAPO_RELAY is not a valid URL"), "{status}");

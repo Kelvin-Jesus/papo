@@ -21,7 +21,7 @@ fn new_store(dir: &Path) -> Store {
 fn env(id: &str) -> Envelope {
     Envelope {
         id: id.into(),
-        from: "ana".into(),
+        from: "voce".into(),
         node: "n".into(),
         kind: PeerKind::Agent,
         to: None,
@@ -79,9 +79,7 @@ fn recreating_a_profile_drops_the_old_rooms_state() {
     let store = new_store(dir.path());
     store.save_inbox(&[env("a")]).unwrap();
     store.save_outbox(&[env("b")]).unwrap();
-    store
-        .save_known_peers(&[(SecretKey::generate().public(), KnownPeer::default())].into_iter().collect())
-        .unwrap();
+    store.save_known_peers(&[(SecretKey::generate().public(), KnownPeer::default())].into_iter().collect()).unwrap();
 
     let again = Store::create_at(store.dir().to_path_buf(), &profile("kj")).unwrap();
     assert!(again.inbox().unwrap().is_empty());
@@ -143,7 +141,7 @@ fn known_peers_skip_entries_that_do_not_parse() {
     let store = new_store(dir.path());
     let good = SecretKey::generate().public();
     let mut peers = BTreeMap::new();
-    peers.insert(good, KnownPeer { name: Some("bob".into()), last_seen_ms: 42 });
+    peers.insert(good, KnownPeer { name: Some("colega".into()), last_seen_ms: 42 });
     store.save_known_peers(&peers).unwrap();
 
     // Someone hand-edits the file and leaves a bad id in it.
@@ -154,7 +152,7 @@ fn known_peers_skip_entries_that_do_not_parse() {
 
     let loaded = store.known_peers().unwrap();
     assert_eq!(loaded.len(), 1);
-    assert_eq!(loaded[&good], KnownPeer { name: Some("bob".into()), last_seen_ms: 42 });
+    assert_eq!(loaded[&good], KnownPeer { name: Some("colega".into()), last_seen_ms: 42 });
 }
 
 #[test]
@@ -163,7 +161,7 @@ fn log_tolerates_torn_and_garbage_lines() {
     let store = new_store(dir.path());
     assert!(store.read_log().unwrap().is_empty());
     store.append_log(&LogEntry::In { msg: env("a") }).unwrap();
-    store.append_log(&LogEntry::Delivered { id: "a".into(), by: "bob".into(), ts: 5 }).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "a".into(), by: "colega".into(), ts: 5 }).unwrap();
     let mut file = fs::OpenOptions::new().append(true).open(store.log_path()).unwrap();
     std::io::Write::write_all(&mut file, b"garbage line\n{\"ev\":\"out\",\"msg\":").unwrap();
     let log = store.read_log().unwrap();

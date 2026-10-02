@@ -10,13 +10,13 @@ use serde_json::json;
 #[test]
 fn speaks_mcp_and_advertises_the_channel_capability() {
     let home = tempfile::tempdir().unwrap();
-    papo(home.path(), &["new", "--name", "ana", "--about", "api-repo"]);
+    papo(home.path(), &["new", "--name", "voce", "--about", "api-repo"]);
     let mut client = McpClient::spawn(home.path());
 
     let init = client.request("initialize", json!({"protocolVersion": "2026-07-28", "capabilities": {}}));
     assert_eq!(init["result"]["protocolVersion"], "2025-11-25", "must not negotiate revisions that disable channels");
     assert_eq!(init["result"]["capabilities"]["experimental"]["claude/channel"], json!({}));
-    assert!(init["result"]["instructions"].as_str().unwrap().contains("You are \"ana\""));
+    assert!(init["result"]["instructions"].as_str().unwrap().contains("You are \"voce\""));
 
     let tools = client.request("tools/list", json!({}));
     let names: Vec<&str> =
@@ -25,7 +25,7 @@ fn speaks_mcp_and_advertises_the_channel_capability() {
 
     let (status, is_error) = client.call("status", json!({}));
     assert!(!is_error, "{status}");
-    assert!(status.contains("You are \"ana\""), "{status}");
+    assert!(status.contains("You are \"voce\""), "{status}");
 
     let (inbox, _) = client.call("inbox", json!({}));
     assert_eq!(inbox, "No unread messages.");
@@ -48,7 +48,7 @@ fn unconfigured_profile_still_starts_and_explains_setup() {
 #[test]
 fn second_server_on_the_same_profile_is_refused() {
     let home = tempfile::tempdir().unwrap();
-    papo(home.path(), &["new", "--name", "ana"]);
+    papo(home.path(), &["new", "--name", "voce"]);
     let mut first = McpClient::spawn(home.path());
     assert!(!first.call("status", json!({})).1);
     let mut second = McpClient::spawn(home.path());
@@ -60,7 +60,7 @@ fn second_server_on_the_same_profile_is_refused() {
 #[test]
 fn wait_times_out_and_can_be_cancelled() {
     let home = tempfile::tempdir().unwrap();
-    papo(home.path(), &["new", "--name", "ana"]);
+    papo(home.path(), &["new", "--name", "voce"]);
     let mut client = McpClient::spawn(home.path());
 
     let started = Instant::now();
@@ -82,7 +82,7 @@ fn wait_times_out_and_can_be_cancelled() {
 #[test]
 fn closing_stdin_ends_the_server_cleanly() {
     let home = tempfile::tempdir().unwrap();
-    papo(home.path(), &["new", "--name", "ana"]);
+    papo(home.path(), &["new", "--name", "voce"]);
     let mut client = McpClient::spawn(home.path());
     assert!(!client.call("status", json!({})).1);
     let status = client.shutdown();
@@ -99,38 +99,38 @@ fn closing_stdin_ends_the_server_cleanly() {
 #[test]
 #[ignore = "needs internet access"]
 fn two_agents_talk_over_the_public_network() {
-    let ana_home = tempfile::tempdir().unwrap();
-    let bob_home = tempfile::tempdir().unwrap();
-    let invite = invite_in(&papo(ana_home.path(), &["new", "--name", "ana"]));
-    papo(bob_home.path(), &["join", &invite, "--name", "bob"]);
+    let voce_home = tempfile::tempdir().unwrap();
+    let colega_home = tempfile::tempdir().unwrap();
+    let invite = invite_in(&papo(voce_home.path(), &["new", "--name", "voce"]));
+    papo(colega_home.path(), &["join", &invite, "--name", "colega"]);
 
-    let mut ana = McpClient::spawn(ana_home.path());
-    let mut bob = McpClient::spawn(bob_home.path());
+    let mut voce = McpClient::spawn(voce_home.path());
+    let mut colega = McpClient::spawn(colega_home.path());
 
-    // Bob dials Ana from the invite; first contact can take a few seconds while the
+    // Colega dials Voce from the invite; first contact can take a few seconds while the
     // address is resolved and holes are punched.
-    bob.wait_status_contains("ana (agent): online", Duration::from_secs(90));
+    colega.wait_status_contains("voce (agent): online", Duration::from_secs(90));
 
-    let (sent, is_error) = ana.call("send", json!({"message": "Bob, qual porta o serviço de auth usa?"}));
-    assert!(!is_error && sent.starts_with("Delivered to bob"), "{sent}");
+    let (sent, is_error) = voce.call("send", json!({"message": "Colega, qual porta o serviço de auth usa?"}));
+    assert!(!is_error && sent.starts_with("Delivered to colega"), "{sent}");
 
-    // Pushed into Bob's session as a channel event, with the metadata Claude needs to reply.
-    let event = bob.wait_channel_event(Duration::from_secs(30));
-    assert_eq!(event["params"]["content"], "Bob, qual porta o serviço de auth usa?");
-    assert_eq!(event["params"]["meta"]["from"], "ana");
+    // Pushed into Colega's session as a channel event, with the metadata Claude needs to reply.
+    let event = colega.wait_channel_event(Duration::from_secs(30));
+    assert_eq!(event["params"]["content"], "Colega, qual porta o serviço de auth usa?");
+    assert_eq!(event["params"]["meta"]["from"], "voce");
     let msg_id = event["params"]["meta"]["msg_id"].as_str().unwrap().to_string();
 
-    let (reply, is_error) = bob.call("send", json!({"message": "8443, com TLS.", "reply_to": msg_id}));
-    assert!(!is_error && reply.starts_with("Delivered to ana"), "{reply}");
-    let (bob_inbox, _) = bob.call("inbox", json!({}));
-    assert_eq!(bob_inbox, "No unread messages.", "replying must mark the message read");
+    let (reply, is_error) = colega.call("send", json!({"message": "8443, com TLS.", "reply_to": msg_id}));
+    assert!(!is_error && reply.starts_with("Delivered to voce"), "{reply}");
+    let (colega_inbox, _) = colega.call("inbox", json!({}));
+    assert_eq!(colega_inbox, "No unread messages.", "replying must mark the message read");
 
-    let (got, _) = ana.call("wait", json!({"timeout_seconds": 30}));
+    let (got, _) = voce.call("wait", json!({"timeout_seconds": 30}));
     assert!(
-        got.contains("from=bob") && got.contains("8443, com TLS.") && got.contains(&format!("reply_to={msg_id}")),
+        got.contains("from=colega") && got.contains("8443, com TLS.") && got.contains(&format!("reply_to={msg_id}")),
         "{got}"
     );
 
-    let (history, _) = ana.call("history", json!({}));
+    let (history, _) = voce.call("history", json!({}));
     assert!(history.contains("delivered"), "{history}");
 }

@@ -607,10 +607,10 @@ mod tests {
         let (tx, mut rx) = mpsc::unbounded_channel();
         let msg = Envelope {
             id: "abc".into(),
-            from: "bob".into(),
+            from: "colega".into(),
             node: "n".into(),
             kind: crate::proto::PeerKind::Agent,
-            to: Some("ana".into()),
+            to: Some("voce".into()),
             reply_to: Some("xyz".into()),
             ts: 0,
             body: "oi".into(),
@@ -688,35 +688,35 @@ mod helper_tests {
 
     #[test]
     fn messages_are_formatted_with_id_sender_time_and_reply_context() {
-        let mut first = env("abc123", "bob", "oi\nsegunda linha");
+        let mut first = env("abc123", "colega", "oi\nsegunda linha");
         first.reply_to = Some("x1".into());
-        first.to = Some("ana".into());
-        let text = format_messages(&[first, env("def456", "carol", "tchau")]);
-        assert!(text.starts_with("[msg_id=abc123 from=bob (agent) at "), "{text}");
+        first.to = Some("voce".into());
+        let text = format_messages(&[first, env("def456", "terceiro", "tchau")]);
+        assert!(text.starts_with("[msg_id=abc123 from=colega (agent) at "), "{text}");
         assert!(
-            text.contains(" reply_to=x1 to=ana]\noi\nsegunda linha\n\n[msg_id=def456 from=carol (agent)"),
+            text.contains(" reply_to=x1 to=voce]\noi\nsegunda linha\n\n[msg_id=def456 from=terceiro (agent)"),
             "{text}"
         );
     }
 
     #[test]
     fn log_entries_read_as_a_conversation() {
-        let mut out = env("a1", "kj", "pergunta");
-        out.to = Some("ana".into());
-        assert!(format_log_entry(&LogEntry::Out { msg: out }, "kj").ends_with("kj -> ana (msg a1): pergunta"));
+        let mut out = env("a1", "voce", "pergunta");
+        out.to = Some("colega".into());
+        assert!(format_log_entry(&LogEntry::Out { msg: out }, "voce").ends_with("voce -> colega (msg a1): pergunta"));
         assert!(
-            format_log_entry(&LogEntry::Out { msg: env("c3", "kj", "todos") }, "kj")
-                .ends_with("kj -> room (msg c3): todos")
+            format_log_entry(&LogEntry::Out { msg: env("c3", "voce", "todos") }, "voce")
+                .ends_with("voce -> room (msg c3): todos")
         );
-        let mut inc = env("b2", "ana", "resposta");
+        let mut inc = env("b2", "colega", "resposta");
         inc.reply_to = Some("a1".into());
         inc.kind = PeerKind::Human;
         assert!(
-            format_log_entry(&LogEntry::In { msg: inc }, "kj")
-                .ends_with("ana (human) -> kj (msg b2, reply to a1): resposta")
+            format_log_entry(&LogEntry::In { msg: inc }, "voce")
+                .ends_with("colega (human) -> voce (msg b2, reply to a1): resposta")
         );
-        let delivered = LogEntry::Delivered { id: "a1".into(), by: "ana".into(), ts: 0 };
-        assert!(format_log_entry(&delivered, "kj").ends_with("] delivered a1 to ana"));
+        let delivered = LogEntry::Delivered { id: "a1".into(), by: "colega".into(), ts: 0 };
+        assert!(format_log_entry(&delivered, "voce").ends_with("] delivered a1 to colega"));
     }
 
     #[test]
@@ -741,10 +741,10 @@ mod helper_tests {
 
     #[test]
     fn peers_are_described_by_what_the_agent_needs() {
-        let mut bob = view(Some("bob"), true, now_ms());
-        bob.kind = Some(PeerKind::Agent);
-        bob.about = Some("api-pagamentos".into());
-        assert_eq!(describe_peer(&bob), "bob (agent): online, working on: api-pagamentos");
+        let mut colega = view(Some("colega"), true, now_ms());
+        colega.kind = Some(PeerKind::Agent);
+        colega.about = Some("api-pagamentos".into());
+        assert_eq!(describe_peer(&colega), "colega (agent): online, working on: api-pagamentos");
         let stranger = view(None, false, 0);
         assert_eq!(
             describe_peer(&stranger),
@@ -755,8 +755,8 @@ mod helper_tests {
     #[test]
     fn online_summary_names_who_can_answer() {
         assert_eq!(online_summary(&[]), "No peer is online right now.");
-        let peers = [view(Some("bob"), true, 0), view(Some("carol"), false, 0), view(Some("dave"), true, 0)];
-        assert_eq!(online_summary(&peers), "Online: bob, dave.");
+        let peers = [view(Some("colega"), true, 0), view(Some("terceiro"), false, 0), view(Some("quarto"), true, 0)];
+        assert_eq!(online_summary(&peers), "Online: colega, quarto.");
         // A peer that is online but never said its name cannot be addressed, so it is left out.
         assert_eq!(online_summary(&[view(None, true, 0)]), "No peer is online right now.");
     }
@@ -820,9 +820,9 @@ mod helper_tests {
     fn channel_meta_omits_optional_fields_when_absent() {
         let (tx, mut rx) = mpsc::unbounded_channel();
         let mut pushed = HashSet::new();
-        push(&Out(tx), &env("id1", "bob", "oi"), &mut pushed);
+        push(&Out(tx), &env("id1", "colega", "oi"), &mut pushed);
         let v = rx.try_recv().unwrap();
-        assert_eq!(v["params"]["meta"], json!({"from": "bob", "msg_id": "id1", "sender_kind": "agent"}));
+        assert_eq!(v["params"]["meta"], json!({"from": "colega", "msg_id": "id1", "sender_kind": "agent"}));
         assert_eq!(v["params"]["content"], "oi");
     }
 

@@ -38,59 +38,59 @@ fn acks_for(frames: &[Frame], id: &str) -> usize {
 async fn duplicate_frames_are_acked_again_but_delivered_once() {
     let net = LocalNet::new().await;
     let mut raw = RawPeer::spawn(&net).await;
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
 
     let msg = msg_from_raw(&raw, None, "pergunta repetida");
     raw.send(&Frame::Msg(msg.clone())).await;
-    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("ana"));
+    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("voce"));
     // The sender never saw our ack (from its point of view) and retries.
     raw.send(&Frame::Msg(msg.clone())).await;
-    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("ana"), "duplicates must be re-acked");
+    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("voce"), "duplicates must be re-acked");
 
-    let got = ana.wait(STEP, None).await;
+    let got = voce.wait(STEP, None).await;
     assert_eq!(got.len(), 1);
-    assert!(ana.wait(SHORT, None).await.is_empty(), "delivered only once");
+    assert!(voce.wait(SHORT, None).await.is_empty(), "delivered only once");
 }
 
 #[tokio::test]
 async fn a_nodes_own_messages_echoed_back_are_ignored() {
     let net = LocalNet::new().await;
     let mut raw = RawPeer::spawn(&net).await;
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
 
     let mut echo = msg_from_raw(&raw, None, "eco");
-    echo.node = ana.id().to_string();
+    echo.node = voce.id().to_string();
     raw.send(&Frame::Msg(echo.clone())).await;
     let frames = raw.frames_within(Duration::from_secs(1)).await;
     assert_eq!(acks_for(&frames, &echo.id), 0);
-    assert!(ana.unread().is_empty());
+    assert!(voce.unread().is_empty());
 }
 
 #[tokio::test]
 async fn messages_for_someone_else_are_neither_kept_nor_acked() {
     let net = LocalNet::new().await;
     let mut raw = RawPeer::spawn(&net).await;
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
 
-    let other = msg_from_raw(&raw, Some("carol"), "só pra carol");
+    let other = msg_from_raw(&raw, Some("terceiro"), "só pra terceiro");
     raw.send(&Frame::Msg(other.clone())).await;
-    let mine = msg_from_raw(&raw, Some("ANA"), "pra ana");
+    let mine = msg_from_raw(&raw, Some("VOCE"), "pra voce");
     raw.send(&Frame::Msg(mine.clone())).await;
-    assert_eq!(raw.ack_for(&mine.id).await.as_deref(), Some("ana"));
+    assert_eq!(raw.ack_for(&mine.id).await.as_deref(), Some("voce"));
     let frames = raw.frames_within(SHORT).await;
     assert_eq!(acks_for(&frames, &other.id), 0);
-    let got = ana.wait(STEP, None).await;
-    assert_eq!(got.iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["pra ana"]);
+    let got = voce.wait(STEP, None).await;
+    assert_eq!(got.iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["pra voce"]);
 }
 
 #[tokio::test]
 async fn foreign_and_garbage_frames_are_dropped_and_the_node_keeps_working() {
     let net = LocalNet::new().await;
     let mut raw = RawPeer::spawn(&net).await;
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
 
     // Sealed for another room (someone who learned the topic but not the secret).
@@ -112,92 +112,92 @@ async fn foreign_and_garbage_frames_are_dropped_and_the_node_keeps_working() {
 
     let good = msg_from_raw(&raw, None, "válida");
     raw.send(&Frame::Msg(good.clone())).await;
-    assert_eq!(raw.ack_for(&good.id).await.as_deref(), Some("ana"));
-    let got = ana.wait(STEP, None).await;
+    assert_eq!(raw.ack_for(&good.id).await.as_deref(), Some("voce"));
+    let got = voce.wait(STEP, None).await;
     assert_eq!(got.iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["válida"]);
-    assert!(!ana.peers().iter().any(|p| p.name.as_deref() == Some("bad name!")));
+    assert!(!voce.peers().iter().any(|p| p.name.as_deref() == Some("bad name!")));
 }
 
 #[tokio::test]
 async fn consumed_messages_are_not_resurrected_after_a_restart() {
     let net = LocalNet::new().await;
     let mut raw = RawPeer::spawn(&net).await;
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
     let msg = msg_from_raw(&raw, None, "uma vez só");
     raw.send(&Frame::Msg(msg.clone())).await;
-    assert_eq!(ana.wait(STEP, None).await.len(), 1);
-    ana.shutdown().await;
-    drop(ana);
+    assert_eq!(voce.wait(STEP, None).await.len(), 1);
+    voce.shutdown().await;
+    drop(voce);
 
-    let ana = net.agent("ana", vec![raw.id]).await;
+    let voce = net.agent("voce", vec![raw.id]).await;
     raw.wait_neighbor().await;
     raw.send(&Frame::Msg(msg.clone())).await;
-    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("ana"), "the restarted node still acks it");
-    assert!(ana.wait(Duration::from_secs(1), None).await.is_empty(), "but does not deliver it again");
+    assert_eq!(raw.ack_for(&msg.id).await.as_deref(), Some("voce"), "the restarted node still acks it");
+    assert!(voce.wait(Duration::from_secs(1), None).await.is_empty(), "but does not deliver it again");
 }
 
 #[tokio::test]
 async fn invalid_sends_fail_without_touching_the_outbox_or_log() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
+    let voce = net.agent("voce", vec![]).await;
     let too_big = "x".repeat(MAX_BODY_BYTES + 1);
-    assert!(ana.send(&too_big, None, None, SHORT).await.unwrap_err().to_string().contains("limit"));
-    assert!(ana.send("   \n ", None, None, SHORT).await.unwrap_err().to_string().contains("empty"));
-    assert!(ana.send("oi", Some("nome ruim".into()), None, SHORT).await.is_err());
-    assert!(ana.pending().is_empty());
-    let store = net.store("ana");
+    assert!(voce.send(&too_big, None, None, SHORT).await.unwrap_err().to_string().contains("limit"));
+    assert!(voce.send("   \n ", None, None, SHORT).await.unwrap_err().to_string().contains("empty"));
+    assert!(voce.send("oi", Some("nome ruim".into()), None, SHORT).await.is_err());
+    assert!(voce.pending().is_empty());
+    let store = net.store("voce");
     assert!(store.outbox().unwrap().is_empty());
     assert!(store.read_log().unwrap().is_empty());
 
     // The largest allowed body still goes out (and is queued, since nobody is here).
     let max = "y".repeat(MAX_BODY_BYTES);
-    assert!(matches!(ana.send(&max, None, None, SHORT).await.unwrap(), SendOutcome::Queued { .. }));
+    assert!(matches!(voce.send(&max, None, None, SHORT).await.unwrap(), SendOutcome::Queued { .. }));
 }
 
 #[tokio::test]
 async fn many_messages_arrive_complete_and_in_order() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
 
     let sent: Vec<String> = (0..25).map(|i| format!("mensagem {i:02}")).collect();
     for body in &sent {
-        ana.send(body, None, None, STEP).await.unwrap();
+        voce.send(body, None, None, STEP).await.unwrap();
     }
     let mut got = vec![];
     while got.len() < sent.len() {
-        let batch = bob.wait(STEP, None).await;
+        let batch = colega.wait(STEP, None).await;
         assert!(!batch.is_empty(), "stalled after {} messages", got.len());
         got.extend(batch.into_iter().map(|m| m.body));
     }
     assert_eq!(got, sent);
-    eventually("ana's outbox drains", || ana.pending().is_empty()).await;
+    eventually("voce's outbox drains", || voce.pending().is_empty()).await;
 }
 
 #[tokio::test]
 async fn concurrent_sends_are_all_delivered() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
 
     let sends = (0..24).map(|i| {
-        let ana = &ana;
-        async move { ana.send(&format!("paralela {i}"), None, None, STEP).await.unwrap() }
+        let voce = &voce;
+        async move { voce.send(&format!("paralela {i}"), None, None, STEP).await.unwrap() }
     });
     let outcomes = n0_future::join_all(sends).await;
     assert!(outcomes.iter().all(|o| matches!(o, SendOutcome::Delivered { .. })), "{outcomes:?}");
 
     let mut got = std::collections::BTreeSet::new();
     while got.len() < 24 {
-        let batch = bob.wait(STEP, None).await;
+        let batch = colega.wait(STEP, None).await;
         assert!(!batch.is_empty());
         got.extend(batch.into_iter().map(|m| m.body));
     }
     assert_eq!(got.len(), 24);
-    assert!(ana.pending().is_empty());
+    assert!(voce.pending().is_empty());
 }
 
 #[tokio::test]
@@ -226,90 +226,91 @@ async fn a_four_member_chain_reaches_everyone() {
 #[tokio::test]
 async fn a_restarted_peer_reconnects_and_receives_what_was_queued() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
-    bob.shutdown().await;
-    drop(bob);
-    eventually("ana notices bob left", || ana.neighbor_count() == 0).await;
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
+    colega.shutdown().await;
+    drop(colega);
+    eventually("voce notices colega left", || voce.neighbor_count() == 0).await;
 
-    let SendOutcome::Queued { id } = ana.send("você voltou?", None, None, SHORT).await.unwrap() else {
-        panic!("bob is offline, the message must be queued")
+    let SendOutcome::Queued { id } = voce.send("você voltou?", None, None, SHORT).await.unwrap() else {
+        panic!("colega is offline, the message must be queued")
     };
-    // Bob comes back with no bootstrap: he remembers ana from his own peers.json.
-    let bob = net.agent("bob", vec![]).await;
-    let got = bob.wait(STEP, None).await;
+    // Colega comes back with no bootstrap and finds voce through its own peers.json.
+    let colega = net.agent("colega", vec![]).await;
+    let got = colega.wait(STEP, None).await;
     assert_eq!(got[0].id, id);
-    eventually("ana's outbox drains", || ana.pending().is_empty()).await;
-    assert_eq!(ana.neighbor_count(), 1);
+    eventually("voce's outbox drains", || voce.pending().is_empty()).await;
+    assert_eq!(voce.neighbor_count(), 1);
 }
 
 #[tokio::test]
 async fn messages_to_an_absent_member_wait_for_that_member() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
 
-    // Bob is online but is not the addressee, so nobody acks.
-    let outcome = ana.send("carol, cadê o PR?", Some("carol".into()), None, Duration::from_secs(1)).await.unwrap();
+    // Colega is online but is not the addressee, so nobody acks.
+    let outcome =
+        voce.send("terceiro, cadê o PR?", Some("terceiro".into()), None, Duration::from_secs(1)).await.unwrap();
     assert!(matches!(outcome, SendOutcome::Queued { .. }));
-    assert_eq!(ana.pending().len(), 1);
+    assert_eq!(voce.pending().len(), 1);
 
-    let carol = net.agent("carol", vec![ana.id()]).await;
-    assert_eq!(carol.wait(STEP, None).await[0].body, "carol, cadê o PR?");
-    eventually("delivered to carol", || ana.pending().is_empty()).await;
-    assert!(bob.unread().is_empty());
+    let terceiro = net.agent("terceiro", vec![voce.id()]).await;
+    assert_eq!(terceiro.wait(STEP, None).await[0].body, "terceiro, cadê o PR?");
+    eventually("delivered to terceiro", || voce.pending().is_empty()).await;
+    assert!(colega.unread().is_empty());
 }
 
 #[tokio::test]
 async fn crash_without_shutdown_loses_nothing() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let ana_id = ana.id();
-    let SendOutcome::Queued { id } = ana.send("antes do crash", None, None, SHORT).await.unwrap() else {
+    let voce = net.agent("voce", vec![]).await;
+    let voce_id = voce.id();
+    let SendOutcome::Queued { id } = voce.send("antes do crash", None, None, SHORT).await.unwrap() else {
         panic!("nobody online, expected queue")
     };
     // Simulated crash: no graceful shutdown, the process state is simply gone.
-    drop(ana);
+    drop(voce);
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    let ana = net.agent("ana", vec![]).await;
-    assert_eq!(ana.id(), ana_id);
-    assert_eq!(ana.pending().len(), 1, "the outbox was on disk before the send returned");
-    let bob = net.agent("bob", vec![ana_id]).await;
-    assert_eq!(bob.wait(STEP, None).await[0].id, id);
-    eventually("delivered after the crash", || ana.pending().is_empty()).await;
+    let voce = net.agent("voce", vec![]).await;
+    assert_eq!(voce.id(), voce_id);
+    assert_eq!(voce.pending().len(), 1, "the outbox was on disk before the send returned");
+    let colega = net.agent("colega", vec![voce_id]).await;
+    assert_eq!(colega.wait(STEP, None).await[0].id, id);
+    eventually("delivered after the crash", || voce.pending().is_empty()).await;
 }
 
 #[tokio::test]
 async fn wait_times_out_quickly_and_filters_by_sender() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
+    let voce = net.agent("voce", vec![]).await;
     let started = tokio::time::Instant::now();
-    assert!(ana.wait(Duration::from_millis(200), None).await.is_empty());
+    assert!(voce.wait(Duration::from_millis(200), None).await.is_empty());
     assert!(started.elapsed() < Duration::from_secs(2));
 
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    let carol = net.agent("carol", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await && carol.wait_for_neighbor(STEP).await);
-    bob.send("do bob", Some("ana".into()), None, STEP).await.unwrap();
-    carol.send("da carol", Some("ana".into()), None, STEP).await.unwrap();
-    eventually("both arrived", || ana.unread().len() == 2).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    let terceiro = net.agent("terceiro", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await && terceiro.wait_for_neighbor(STEP).await);
+    colega.send("do colega", Some("voce".into()), None, STEP).await.unwrap();
+    terceiro.send("da terceiro", Some("voce".into()), None, STEP).await.unwrap();
+    eventually("both arrived", || voce.unread().len() == 2).await;
 
-    let from_carol = ana.wait(STEP, Some("CAROL")).await;
-    assert_eq!(from_carol.iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["da carol"]);
-    assert_eq!(ana.unread().iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["do bob"]);
+    let from_carol = voce.wait(STEP, Some("TERCEIRO")).await;
+    assert_eq!(from_carol.iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["da terceiro"]);
+    assert_eq!(voce.unread().iter().map(|m| m.body.as_str()).collect::<Vec<_>>(), ["do colega"]);
     // `from` waits for that sender even if others keep talking.
-    assert!(ana.wait(SHORT, Some("carol")).await.is_empty());
+    assert!(voce.wait(SHORT, Some("terceiro")).await.is_empty());
 }
 
 #[tokio::test]
 async fn unicode_and_large_bodies_arrive_byte_for_byte() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
 
     let snippet = format!("```rust\nfn main() {{ println!(\"olá\"); }}\n```\n{}", "linha\n".repeat(3000));
     let bodies = [
@@ -320,11 +321,11 @@ async fn unicode_and_large_bodies_arrive_byte_for_byte() {
         "z".repeat(MAX_BODY_BYTES),
     ];
     for body in &bodies {
-        ana.send(body, None, None, STEP).await.unwrap();
+        voce.send(body, None, None, STEP).await.unwrap();
     }
     let mut got = vec![];
     while got.len() < bodies.len() {
-        got.extend(bob.wait(STEP, None).await.into_iter().map(|m| m.body));
+        got.extend(colega.wait(STEP, None).await.into_iter().map(|m| m.body));
     }
     // Leading/trailing whitespace is trimmed on send; everything else is preserved.
     assert_eq!(got, bodies.iter().map(|b| b.trim().to_string()).collect::<Vec<_>>());
@@ -333,22 +334,22 @@ async fn unicode_and_large_bodies_arrive_byte_for_byte() {
 #[tokio::test]
 async fn members_are_remembered_with_names_and_shown_with_context() {
     let net = LocalNet::new().await;
-    let ana = net.agent("ana", vec![]).await;
-    let bob = net.agent("bob", vec![ana.id()]).await;
-    assert!(bob.wait_for_neighbor(STEP).await);
-    eventually("ana learns bob's name", || ana.peers().iter().any(|p| p.name.as_deref() == Some("bob"))).await;
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await);
+    eventually("voce learns colega's name", || voce.peers().iter().any(|p| p.name.as_deref() == Some("colega"))).await;
 
-    let view = ana.peers().into_iter().find(|p| p.node == bob.id()).unwrap();
-    assert_eq!(view.about.as_deref(), Some("bob-repo"));
+    let view = voce.peers().into_iter().find(|p| p.node == colega.id()).unwrap();
+    assert_eq!(view.about.as_deref(), Some("colega-repo"));
     assert_eq!(view.kind, Some(PeerKind::Agent));
     assert!(view.online && view.neighbor && !view.ephemeral);
 
-    let known = net.store("ana").known_peers().unwrap();
-    assert_eq!(known[&bob.id()].name.as_deref(), Some("bob"));
-    let log = net.store("ana").read_log().unwrap();
+    let known = net.store("voce").known_peers().unwrap();
+    assert_eq!(known[&colega.id()].name.as_deref(), Some("colega"));
+    let log = net.store("voce").read_log().unwrap();
     assert!(log.iter().all(|e| !matches!(e, LogEntry::In { .. })), "presence is not conversation");
-    assert_eq!(ana.room_id(), net.room.room_id());
-    assert!(ana.is_healthy());
+    assert_eq!(voce.room_id(), net.room.room_id());
+    assert!(voce.is_healthy());
 }
 
 #[tokio::test]

@@ -95,23 +95,23 @@ fn names_and_profiles_are_validated() {
 
 #[test]
 fn join_enters_the_same_room_and_remembers_the_inviter() {
-    let ana = tempfile::tempdir().unwrap();
-    let bob = tempfile::tempdir().unwrap();
-    let invite = new_room(ana.path(), "ana");
-    papo(bob.path())
-        .args(["join", &invite, "--name", "bob"])
+    let voce = tempfile::tempdir().unwrap();
+    let colega = tempfile::tempdir().unwrap();
+    let invite = new_room(voce.path(), "voce");
+    papo(colega.path())
+        .args(["join", &invite, "--name", "colega"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Você entrou na sala").and(predicate::str::contains("\"bob\"")));
+        .stdout(predicate::str::contains("Você entrou na sala").and(predicate::str::contains("\"colega\"")));
 
-    let bob_store = Store::open_at(profile_dir(bob.path(), "default")).unwrap();
-    let ana_store = Store::open_at(profile_dir(ana.path(), "default")).unwrap();
+    let colega_store = Store::open_at(profile_dir(colega.path(), "default")).unwrap();
+    let voce_store = Store::open_at(profile_dir(voce.path(), "default")).unwrap();
     assert_eq!(
-        bob_store.profile().unwrap().room_secret().unwrap(),
-        ana_store.profile().unwrap().room_secret().unwrap()
+        colega_store.profile().unwrap().room_secret().unwrap(),
+        voce_store.profile().unwrap().room_secret().unwrap()
     );
-    let known = bob_store.known_peers().unwrap();
-    assert_eq!(known.keys().copied().collect::<Vec<_>>(), vec![endpoint_id(ana.path(), "default")]);
+    let known = colega_store.known_peers().unwrap();
+    assert_eq!(known.keys().copied().collect::<Vec<_>>(), vec![endpoint_id(voce.path(), "default")]);
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn joining_with_your_own_invite_does_not_list_yourself() {
 #[test]
 fn bad_invites_are_explained() {
     let home = tempfile::tempdir().unwrap();
-    let good = new_room(tempfile::tempdir().unwrap().path(), "ana");
+    let good = new_room(tempfile::tempdir().unwrap().path(), "voce");
     let mut mistyped: Vec<char> = good.chars().collect();
     mistyped[20] = if mistyped[20] == 'a' { 'b' } else { 'a' };
     let cases = [
@@ -136,7 +136,7 @@ fn bad_invites_are_explained() {
     ];
     for (invite, why) in cases {
         papo(home.path())
-            .args(["join", &invite, "--name", "bob"])
+            .args(["join", &invite, "--name", "colega"])
             .assert()
             .failure()
             .stderr(predicate::str::contains(why));
@@ -145,13 +145,13 @@ fn bad_invites_are_explained() {
 
 #[test]
 fn invite_puts_me_first_and_includes_known_members() {
-    let ana = tempfile::tempdir().unwrap();
-    let bob = tempfile::tempdir().unwrap();
-    let invite = new_room(ana.path(), "ana");
-    papo(bob.path()).args(["join", &invite, "--name", "bob"]).assert().success();
+    let voce = tempfile::tempdir().unwrap();
+    let colega = tempfile::tempdir().unwrap();
+    let invite = new_room(voce.path(), "voce");
+    papo(colega.path()).args(["join", &invite, "--name", "colega"]).assert().success();
 
-    let from_bob = Invite::decode(stdout(papo(bob.path()).arg("invite")).trim()).unwrap();
-    assert_eq!(from_bob.peers, vec![endpoint_id(bob.path(), "default"), endpoint_id(ana.path(), "default")]);
+    let from_bob = Invite::decode(stdout(papo(colega.path()).arg("invite")).trim()).unwrap();
+    assert_eq!(from_bob.peers, vec![endpoint_id(colega.path(), "default"), endpoint_id(voce.path(), "default")]);
     assert_eq!(from_bob.secret, Invite::decode(&invite).unwrap().secret);
 }
 
@@ -159,7 +159,8 @@ fn invite_puts_me_first_and_includes_known_members() {
 fn install_print_shows_the_mcp_config() {
     let home = tempfile::tempdir().unwrap();
     new_room(home.path(), "kj");
-    let json: serde_json::Value = serde_json::from_str(&stdout(papo(home.path()).args(["install", "--print"]))).unwrap();
+    let json: serde_json::Value =
+        serde_json::from_str(&stdout(papo(home.path()).args(["install", "--print"]))).unwrap();
     let server = &json["mcpServers"]["papo"];
     assert_eq!(server["args"], serde_json::json!(["mcp"]));
     assert!(server["command"].as_str().unwrap().ends_with(&format!("papo{}", std::env::consts::EXE_SUFFIX)));
@@ -177,7 +178,9 @@ fn install_print_shows_the_mcp_config() {
 fn install_command_can_be_overridden_for_containers() {
     let home = tempfile::tempdir().unwrap();
     new_room(home.path(), "kj");
-    let out = stdout(papo(home.path()).env("PAPO_INSTALL_COMMAND", "docker exec -i papo-kj papo").args(["install", "--print"]));
+    let out = stdout(
+        papo(home.path()).env("PAPO_INSTALL_COMMAND", "docker exec -i papo-kj papo").args(["install", "--print"]),
+    );
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(json["mcpServers"]["papo"]["command"], "docker");
     assert_eq!(json["mcpServers"]["papo"]["args"], serde_json::json!(["exec", "-i", "papo-kj", "papo", "mcp"]));
@@ -212,7 +215,7 @@ fn say_and_status_fail_fast_when_nobody_is_known() {
 #[test]
 fn log_prints_the_conversation_and_honors_n() {
     let home = tempfile::tempdir().unwrap();
-    new_room(home.path(), "kj");
+    new_room(home.path(), "voce");
     papo(home.path()).arg("log").assert().success().stdout("");
 
     let store = Store::open_at(profile_dir(home.path(), "default")).unwrap();
@@ -226,14 +229,14 @@ fn log_prints_the_conversation_and_honors_n() {
         ts: 1_700_000_000_000,
         body: body.into(),
     };
-    store.append_log(&LogEntry::Out { msg: msg("q1", "kj", "qual porta?") }).unwrap();
-    store.append_log(&LogEntry::In { msg: msg("r1", "ana", "8443") }).unwrap();
+    store.append_log(&LogEntry::Out { msg: msg("q1", "voce", "qual porta?") }).unwrap();
+    store.append_log(&LogEntry::In { msg: msg("r1", "colega", "8443") }).unwrap();
 
     let all = stdout(papo(home.path()).arg("log"));
     let lines: Vec<&str> = all.lines().collect();
     assert_eq!(lines.len(), 2);
-    assert!(lines[0].ends_with("kj -> room (msg q1): qual porta?"), "{all}");
-    assert!(lines[1].ends_with("ana (agent) -> kj (msg r1): 8443"), "{all}");
+    assert!(lines[0].ends_with("voce -> room (msg q1): qual porta?"), "{all}");
+    assert!(lines[1].ends_with("colega (agent) -> voce (msg r1): 8443"), "{all}");
     papo(home.path()).args(["log", "-n", "1"]).assert().success().stdout(predicate::str::ends_with("8443\n"));
 }
 
@@ -243,7 +246,7 @@ fn log_follow_streams_new_entries_as_they_are_written() {
     let home = tempfile::tempdir().unwrap();
     new_room(home.path(), "kj");
     let store = Store::open_at(profile_dir(home.path(), "default")).unwrap();
-    store.append_log(&LogEntry::Delivered { id: "old".into(), by: "ana".into(), ts: 1 }).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "old".into(), by: "voce".into(), ts: 1 }).unwrap();
 
     let mut child = std::process::Command::new(BIN)
         .args(["log", "-f", "-n", "0"])
@@ -259,14 +262,14 @@ fn log_follow_streams_new_entries_as_they_are_written() {
         }
     });
     std::thread::sleep(Duration::from_millis(700));
-    store.append_log(&LogEntry::Delivered { id: "new1".into(), by: "ana".into(), ts: 2 }).unwrap();
-    store.append_log(&LogEntry::Delivered { id: "new2".into(), by: "bob".into(), ts: 3 }).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "new1".into(), by: "voce".into(), ts: 2 }).unwrap();
+    store.append_log(&LogEntry::Delivered { id: "new2".into(), by: "colega".into(), ts: 3 }).unwrap();
     let first = rx.recv_timeout(Duration::from_secs(10)).expect("follow printed nothing");
     let second = rx.recv_timeout(Duration::from_secs(10)).expect("follow stopped after one line");
     let _ = child.kill();
     let _ = child.wait();
-    assert!(first.ends_with("delivered new1 to ana"), "{first}");
-    assert!(second.ends_with("delivered new2 to bob"), "{second}");
+    assert!(first.ends_with("delivered new1 to voce"), "{first}");
+    assert!(second.ends_with("delivered new2 to colega"), "{second}");
     assert!(rx.try_recv().is_err(), "-n 0 must not replay old entries");
 }
 
@@ -331,13 +334,9 @@ mod install_with_claude {
         let home = tempfile::tempdir().unwrap();
         let empty = tempfile::tempdir().unwrap();
         new_room(home.path(), "kj");
-        papo(home.path())
-            .env("PATH", empty.path())
-            .arg("install")
-            .assert()
-            .success()
-            .stdout(predicate::str::contains("Não achei o comando `claude`").and(predicate::str::contains(
-                "claude mcp add --scope local papo --",
-            )));
+        papo(home.path()).env("PATH", empty.path()).arg("install").assert().success().stdout(
+            predicate::str::contains("Não achei o comando `claude`")
+                .and(predicate::str::contains("claude mcp add --scope local papo --")),
+        );
     }
 }

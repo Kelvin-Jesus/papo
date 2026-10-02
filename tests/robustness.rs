@@ -118,14 +118,14 @@ proptest! {
     #[test]
     fn configured_tools_survive_random_arguments(lines in prop::collection::vec(arb_line(), 20..40)) {
         let home = tempfile::tempdir().unwrap();
-        common::papo(home.path(), &["new", "--name", "ana"]);
+        common::papo(home.path(), &["new", "--name", "voce"]);
         let mut client = McpClient::spawn(home.path());
         for line in &lines {
             client.write_raw(line);
         }
         let (status, is_error) = client.call("status", json!({}));
         prop_assert!(!is_error, "{}", status);
-        prop_assert!(status.contains("You are \"ana\""));
+        prop_assert!(status.contains("You are \"voce\""));
         let pong = client.request_with_id(json!("still-alive"), "ping", json!({}));
         prop_assert_eq!(&pong["result"], &json!({}));
     }

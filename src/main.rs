@@ -480,7 +480,7 @@ mod tests {
 
     #[test]
     fn about_defaults_to_the_folder_name() {
-        assert_eq!(about_from_dir(Path::new("/home/ana/api-pagamentos")).as_deref(), Some("api-pagamentos"));
+        assert_eq!(about_from_dir(Path::new("/home/voce/api-pagamentos")).as_deref(), Some("api-pagamentos"));
         assert_eq!(about_from_dir(Path::new("/")), None);
     }
 

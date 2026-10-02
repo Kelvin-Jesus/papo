@@ -10,15 +10,15 @@
 //! let room = RoomSecret::generate();
 //! let msg = Envelope {
 //!     id: proto::new_msg_id(),
-//!     from: "kj".into(),
+//!     from: "voce".into(),
 //!     node: "endpoint-id".into(),
 //!     kind: PeerKind::Agent,
-//!     to: Some("ana".into()),
+//!     to: Some("colega".into()),
 //!     reply_to: None,
 //!     ts: proto::now_ms(),
 //!     body: "o handler aceita X-Signature?".into(),
 //! };
-//! assert!(msg.is_for("Ana") && !msg.is_for("bob"));
+//! assert!(msg.is_for("Colega") && !msg.is_for("terceiro"));
 //!
 //! let bytes = proto::encode(&room, &Frame::Msg(msg.clone())).unwrap();
 //! assert_eq!(proto::decode(&room, &bytes).unwrap(), Frame::Msg(msg));
@@ -194,9 +194,9 @@ mod tests {
     fn addressing_is_case_insensitive_and_broadcast_reaches_everyone() {
         let mut env = sample();
         assert!(env.is_for("anyone"));
-        env.to = Some("Ana".into());
-        assert!(env.is_for("ana"));
-        assert!(!env.is_for("bob"));
+        env.to = Some("Voce".into());
+        assert!(env.is_for("voce"));
+        assert!(!env.is_for("colega"));
     }
 
     #[test]

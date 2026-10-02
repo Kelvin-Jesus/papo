@@ -15,10 +15,10 @@ use papo::{
 fn envelope(body_len: usize) -> Envelope {
     Envelope {
         id: proto::new_msg_id(),
-        from: "kj".into(),
+        from: "voce".into(),
         node: SecretKey::generate().public().to_string(),
         kind: PeerKind::Agent,
-        to: Some("ana".into()),
+        to: Some("colega".into()),
         reply_to: None,
         ts: proto::now_ms(),
         body: "x".repeat(body_len),
