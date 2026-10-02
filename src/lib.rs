@@ -4,4 +4,5 @@
 //! a private, end-to-end encrypted room over iroh (QUIC with hole punching and relay
 //! fallback) and lets the agents talk to each other without the humans relaying.
 
+pub mod proto;
 pub mod room;
