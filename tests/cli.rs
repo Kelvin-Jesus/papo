@@ -174,6 +174,16 @@ fn install_print_shows_the_mcp_config() {
 }
 
 #[test]
+fn install_command_can_be_overridden_for_containers() {
+    let home = tempfile::tempdir().unwrap();
+    new_room(home.path(), "kj");
+    let out = stdout(papo(home.path()).env("PAPO_INSTALL_COMMAND", "docker exec -i papo-kj papo").args(["install", "--print"]));
+    let json: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(json["mcpServers"]["papo"]["command"], "docker");
+    assert_eq!(json["mcpServers"]["papo"]["args"], serde_json::json!(["exec", "-i", "papo-kj", "papo", "mcp"]));
+}
+
+#[test]
 fn commands_on_an_unconfigured_profile_explain_the_setup() {
     let home = tempfile::tempdir().unwrap();
     for args in [&["install", "--print"][..], &["invite"], &["log"], &["say", "oi"], &["status"]] {

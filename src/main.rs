@@ -233,18 +233,32 @@ fn claude_add_args(scope: Scope, exe: &str, server_args: &[String]) -> Vec<Strin
     cmd_args
 }
 
+/// The command Claude Code should run, before the `mcp` arguments. Defaults to this
+/// executable; `PAPO_INSTALL_COMMAND` replaces it when that path means nothing to the
+/// host running Claude Code, e.g. `docker exec -i papo-kj papo` for papo in a
+/// container. Split on whitespace (no quoting).
+fn install_command(override_cmd: Option<&str>, exe: &str) -> (String, Vec<String>) {
+    let mut parts: Vec<String> = override_cmd.unwrap_or_default().split_whitespace().map(String::from).collect();
+    if parts.is_empty() {
+        return (exe.to_string(), vec![]);
+    }
+    let program = parts.remove(0);
+    (program, parts)
+}
+
 fn cmd_install(profile: &str, scope: Scope, print: bool) -> Result<()> {
     Store::open(profile)?; // fail early with setup instructions if unconfigured
     let exe = std::env::current_exe().context("locate the papo executable")?;
     let exe = exe.to_string_lossy().into_owned();
-    let args = mcp_server_args(profile);
+    let (program, mut args) = install_command(std::env::var("PAPO_INSTALL_COMMAND").ok().as_deref(), &exe);
+    args.extend(mcp_server_args(profile));
 
     if print {
-        println!("{}", serde_json::to_string_pretty(&install_snippet(&exe, &args))?);
+        println!("{}", serde_json::to_string_pretty(&install_snippet(&program, &args))?);
         return Ok(());
     }
 
-    let status = run_claude(&claude_add_args(scope, &exe, &args));
+    let status = run_claude(&claude_add_args(scope, &program, &args));
     match status {
         Ok(s) if s.success() => {
             println!("\nPronto. Abra o Claude Code nesta pasta com:\n\n  {LAUNCH}\n");
@@ -259,7 +273,7 @@ fn cmd_install(profile: &str, scope: Scope, print: bool) -> Result<()> {
         ),
         Err(_) => {
             println!("Não achei o comando `claude` no PATH. Rode manualmente:\n");
-            println!("  claude mcp add --scope {} papo -- \"{exe}\" {}", scope.as_str(), args.join(" "));
+            println!("  claude mcp add --scope {} papo -- \"{program}\" {}", scope.as_str(), args.join(" "));
             Ok(())
         }
     }
@@ -449,6 +463,19 @@ mod tests {
         let snippet = install_snippet("/opt/papo", &mcp_server_args("default"));
         assert_eq!(snippet["mcpServers"]["papo"]["command"], "/opt/papo");
         assert_eq!(snippet["mcpServers"]["papo"]["args"], serde_json::json!(["mcp"]));
+    }
+
+    #[test]
+    fn install_command_defaults_to_this_executable() {
+        assert_eq!(install_command(None, "/bin/papo"), ("/bin/papo".to_string(), vec![]));
+        assert_eq!(install_command(Some("   "), "/bin/papo"), ("/bin/papo".to_string(), vec![]));
+    }
+
+    #[test]
+    fn install_command_override_splits_into_program_and_prefix_args() {
+        let (program, args) = install_command(Some(" docker  exec -i papo-kj papo "), "/bin/papo");
+        assert_eq!(program, "docker");
+        assert_eq!(args, ["exec", "-i", "papo-kj", "papo"]);
     }
 
     #[test]
