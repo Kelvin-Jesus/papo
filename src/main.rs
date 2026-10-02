@@ -24,7 +24,7 @@ use papo::{
 /// `papo join`. Cada uma roda `papo install` dentro do projeto e abre o Claude Code
 /// com `claude --dangerously-load-development-channels server:papo`.
 #[derive(Parser)]
-#[command(name = "papo", version)]
+#[command(name = "papo", bin_name = "papo", version)]
 struct Cli {
     /// Perfil a usar. Cada perfil é uma identidade numa sala; use vários para estar em
     /// várias salas.
