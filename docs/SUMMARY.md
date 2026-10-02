@@ -34,6 +34,30 @@
 - [Perguntas frequentes](faq.md)
 - [Contribuindo](contribuindo.md)
 
+# Engenharia
+
+- [Status](engenharia/status.md)
+- [Marcos](engenharia/marcos.md)
+- [Roadmap](engenharia/roadmap.md)
+- [Problemas conhecidos](engenharia/problemas-conhecidos.md)
+- [Pesquisa](engenharia/pesquisa.md)
+- [Desempenho](engenharia/desempenho.md)
+- [Diagramas](engenharia/diagramas.md)
+- [Desenvolvimento](engenharia/desenvolvimento.md)
+- [Notas de release]()
+  - [v0.1.0 (rascunho)](releases/v0.1.0.md)
+
+# Para contribuidores e agentes
+
+- [O que todo contribuidor precisa saber](contribuidores/README.md)
+  - [Trabalhando com o mantenedor](contribuidores/trabalhando-com-o-mantenedor.md)
+  - [Agentes em paralelo](contribuidores/agentes-em-paralelo.md)
+  - [Hábitos do projeto](contribuidores/habitos.md)
+  - [Armadilhas](contribuidores/armadilhas.md)
+  - [Ambiente de desenvolvimento](contribuidores/ambiente.md)
+  - [Releases](contribuidores/releases.md)
+  - [Site e documentação](contribuidores/site-e-docs.md)
+
 # Decisões de arquitetura (ADRs)
 
 - [Índice das decisões](adr/README.md)
