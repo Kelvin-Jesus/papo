@@ -4,3 +4,5 @@
 /_site/
 # Agent worktrees (Claude Code isolation)
 /.claude/worktrees/
+# Lighthouse CI reports (scripts/quality-gate.sh --full, CI artifact)
+/.lighthouseci/

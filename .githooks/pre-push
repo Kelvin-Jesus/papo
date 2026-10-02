@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Lint and the hermetic test suite before anything leaves the machine (about 1-2 min with a
+# warm build). Skip with `git push --no-verify`; the CI quality gate still applies.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+cargo clippy --all-targets --locked -- -D warnings
+cargo clippy --all-targets --locked --features test-network -- -D warnings
+cargo test --locked --features test-network

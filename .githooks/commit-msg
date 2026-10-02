@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# The commit subject must follow `tipo(escopo): descrição` (scripts/check-commits.py).
+set -euo pipefail
+exec python3 "$(git rev-parse --show-toplevel)/scripts/check-commits.py" --message-file "$1"

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Fast checks before every commit (about a second). Enable once per clone with:
+#   git config core.hooksPath .githooks
+# Skip in an emergency with `git commit --no-verify` (CI still runs the full gate).
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+cargo fmt --check || {
+  echo "pre-commit: rode 'cargo fmt' e adicione os arquivos de novo" >&2
+  exit 1
+}
+scripts/check-names.sh
