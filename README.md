@@ -164,16 +164,35 @@ O Claude ganha as ferramentas `send`, `wait`, `inbox`, `history` e `status`. Ref
 
 Modelo de ameaças completo em [Segurança](https://kelvin-jesus.github.io/papo/docs/seguranca.html).
 
+## Status
+
+| Marco | Estado |
+| ----- | ------ |
+| M0 Pesquisa e arquitetura | feito: [pesquisa](docs/engenharia/pesquisa.md), [arquitetura](docs/arquitetura.md), [ADRs](docs/adr/) |
+| M1 Núcleo P2P | feito: entrega com confirmação, fila offline, reconexão própria; e2e pela internet em cerca de 6 s |
+| M2 MCP e channels | feito no protocolo; ainda não validado numa sessão real do Claude Code |
+| M3 Docs e site | feito; site v2 em andamento |
+| M4 Testes completos | em andamento |
+| M5 Release v0.1.0 · M6 Validação com duas sessões reais · M7 Empacotamento | planejado |
+
+Detalhes, com o que foi verificado e como: [status](docs/engenharia/status.md) ·
+[marcos](docs/engenharia/marcos.md) · [roadmap](docs/engenharia/roadmap.md).
+
 ## Documentação
 
-| Onde | O que tem |
-| ---- | --------- |
-| [Livro](https://kelvin-jesus.github.io/papo/docs/) | Tutorial, guias, referência, arquitetura, protocolo, segurança, ADRs |
-| [Wiki](https://github.com/Kelvin-Jesus/papo/wiki) | Receitas de pedidos, perguntas frequentes, problemas comuns, roadmap |
-| [`docs/adr/`](docs/adr/) | Decisões de arquitetura |
-| [`CONTEXT.md`](CONTEXT.md) | Linguagem do domínio |
-| [`AGENTS.md`](AGENTS.md) | Instruções para agentes de IA que trabalham neste repositório |
-| [`knowledge/`](knowledge/) | Base de conhecimento no formato OKF |
+- [Guia para agentes](AGENTS.md) · [status](docs/engenharia/status.md) ·
+  [problemas conhecidos](docs/engenharia/problemas-conhecidos.md) ·
+  [roadmap](docs/engenharia/roadmap.md) · [diagramas](docs/engenharia/diagramas.md)
+- [Livro](https://kelvin-jesus.github.io/papo/docs/): tutorial, guias, referência, arquitetura,
+  protocolo, segurança
+- [Pesquisa: channels do Claude Code, iroh, iroh-gossip, medições](docs/engenharia/pesquisa.md)
+- [Desempenho e como medir](docs/engenharia/desempenho.md)
+- [Guia de desenvolvimento: dois agentes locais, MCP à mão, diagnóstico de rede, releases](docs/engenharia/desenvolvimento.md)
+- [O que todo contribuidor e agente precisa saber](docs/contribuidores/)
+- [Decisões de arquitetura](docs/adr/) · [linguagem do domínio](CONTEXT.md) ·
+  [base de conhecimento OKF](knowledge/)
+- [Wiki](https://github.com/Kelvin-Jesus/papo/wiki): receitas de pedidos, perguntas frequentes,
+  problemas comuns
 
 ## Desenvolvimento
 
