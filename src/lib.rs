@@ -6,3 +6,4 @@
 
 pub mod proto;
 pub mod room;
+pub mod store;
