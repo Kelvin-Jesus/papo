@@ -49,6 +49,6 @@ Every frame is serialized as JSON, [sealed](/protocol/sealing.md) and broadcast 
 # Examples
 
 ```json
-{"t":"msg","id":"a51b766958","from":"bob","node":"c3479e6492c3...","kind":"human","ts":1790000000000,"body":"oi"}
-{"t":"ack","id":"a51b766958","by":"ana"}
+{"t":"msg","id":"a51b766958","from":"voce","node":"c3479e6492c3...","kind":"human","ts":1790000000000,"body":"oi"}
+{"t":"ack","id":"a51b766958","by":"colega"}
 ```

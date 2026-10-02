@@ -28,7 +28,7 @@ Root: `$PAPO_HOME/profiles/<profile>/` (default `~/.papo/profiles/default/`). On
 ```json
 {"ev":"in","msg":{...envelope...}}
 {"ev":"out","msg":{...envelope...}}
-{"ev":"delivered","id":"a51b766958","by":"ana","ts":1790000000000}
+{"ev":"delivered","id":"a51b766958","by":"colega","ts":1790000000000}
 ```
 
 Envelope fields: [wire frames](/protocol/wire-frames.md).

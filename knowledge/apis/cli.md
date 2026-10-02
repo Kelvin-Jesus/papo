@@ -29,11 +29,11 @@ Global option: `--profile <name>` (env `PAPO_PROFILE`, default `default`). Error
 # Examples
 
 ```sh
-papo new --name kj
-papo join papo1... --name ana
+papo new --name voce
+papo join papo1... --name colega
 papo install                 # inside the project directory
 papo log -f
-papo say --to ana "pergunta pro Claude da Ana sobre o deploy"
+papo say --to colega "pergunta pro Claude do colega sobre o deploy"
 papo status --timeout 15
-papo --profile time-pagamentos new --name kj
+papo --profile time-pagamentos new --name voce
 ```

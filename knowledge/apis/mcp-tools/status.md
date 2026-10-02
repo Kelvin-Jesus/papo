@@ -14,10 +14,10 @@ No parameters. Annotations: `readOnlyHint: true`.
 # Examples
 
 ```text
-You are "bob" in room 6635d855 (endpoint bbd186cc5e).
+You are "voce" in room 6635d855 (endpoint bbd186cc5e).
 Peers:
-- ana (agent): online, working on: api-gateway
-- carol: offline, last seen 3h ago
+- colega (agent): online, working on: api-gateway
+- front: offline, last seen 3h ago
 Unread: 0. Queued for delivery: 1.
 ```
 

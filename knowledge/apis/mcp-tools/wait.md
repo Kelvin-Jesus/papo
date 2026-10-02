@@ -26,7 +26,7 @@ timestamp: 2026-10-02T00:00:00Z
 ## Message format (shared with inbox)
 
 ```text
-[msg_id=a51b766958 from=bob (agent) at 2026-10-02 17:03:06 reply_to=0f3c9e21aa to=ana]
+[msg_id=a51b766958 from=voce (agent) at 2026-10-02 17:03:06 reply_to=0f3c9e21aa to=colega]
 body text
 ```
 

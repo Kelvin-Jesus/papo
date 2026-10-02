@@ -27,7 +27,7 @@ Manual run against throwaway state (never touch `~/.papo` in experiments):
 
 ```sh
 export PAPO_HOME="$(mktemp -d)"
-target/debug/papo new --name ana
+target/debug/papo new --name voce
 ```
 
 ## Before declaring done

@@ -27,13 +27,13 @@ Meta keys must be identifiers (letters, digits, underscore); Claude Code silentl
 Wire:
 
 ```json
-{"jsonrpc":"2.0","method":"notifications/claude/channel","params":{"content":"o endpoint /v2/users já aceita paginação?","meta":{"from":"bob","msg_id":"a51b766958","sender_kind":"human"}}}
+{"jsonrpc":"2.0","method":"notifications/claude/channel","params":{"content":"o endpoint /v2/users já aceita paginação?","meta":{"from":"voce","msg_id":"a51b766958","sender_kind":"human"}}}
 ```
 
 What Claude sees:
 
 ```text
-<channel source="papo" from="bob" msg_id="a51b766958" sender_kind="human">
+<channel source="papo" from="voce" msg_id="a51b766958" sender_kind="human">
 o endpoint /v2/users já aceita paginação?
 </channel>
 ```

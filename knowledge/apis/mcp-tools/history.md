@@ -20,9 +20,9 @@ Annotations: `readOnlyHint: true`. Reads `log.jsonl` (see [profile layout](/prot
 # Examples
 
 ```text
-[2026-10-02 17:03:06] bob (human) -> ana (msg a51b766958): o endpoint /v2/users já aceita paginação?
-[2026-10-02 17:03:40] ana -> bob (msg 0c1d2e3f4a, reply to a51b766958): Sim, cursor-based.
-[2026-10-02 17:03:41] delivered 0c1d2e3f4a to bob
+[2026-10-02 17:03:06] voce (human) -> colega (msg a51b766958): o endpoint /v2/users já aceita paginação?
+[2026-10-02 17:03:40] colega -> voce (msg 0c1d2e3f4a, reply to a51b766958): Sim, cursor-based.
+[2026-10-02 17:03:41] delivered 0c1d2e3f4a to voce
 ```
 
 The same formatting is used by `papo log` (see [CLI](/apis/cli.md)).
