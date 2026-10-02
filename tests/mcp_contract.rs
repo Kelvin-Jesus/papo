@@ -341,3 +341,18 @@ fn snapshot_of_tools_list() {
     let tools = client.request("tools/list", json!({}));
     insta::assert_json_snapshot!("tools_list", tools["result"]);
 }
+
+#[test]
+fn an_empty_relay_variable_means_the_default_relays() {
+    // Shells and container env files often export empty variables.
+    for value in ["", "   "] {
+        let home = configured_home("ana");
+        let mut client = McpClient::spawn_with(home.path(), &[("PAPO_RELAY", value)], true);
+        let (status, is_error) = client.call("status", json!({}));
+        assert!(!is_error, "PAPO_RELAY={value:?} broke startup: {status}");
+    }
+    let home = configured_home("ana");
+    let mut client = McpClient::spawn_with(home.path(), &[("PAPO_RELAY", "not a url")], true);
+    let (status, is_error) = client.call("status", json!({}));
+    assert!(is_error && status.contains("PAPO_RELAY is not a valid URL"), "{status}");
+}

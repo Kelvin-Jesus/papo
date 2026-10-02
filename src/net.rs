@@ -12,11 +12,19 @@ pub async fn bind_endpoint(secret_key: SecretKey) -> Result<Endpoint> {
         return Ok(endpoint);
     }
     let mut builder = Endpoint::builder(presets::N0).secret_key(secret_key);
-    if let Ok(url) = std::env::var("PAPO_RELAY") {
-        let url: RelayUrl = url.parse().context("PAPO_RELAY is not a valid URL")?;
+    if let Some(url) = relay_override(std::env::var("PAPO_RELAY").ok().as_deref())? {
         builder = builder.relay_mode(RelayMode::Custom(url.into()));
     }
     builder.bind().await.context("bind iroh endpoint")
+}
+
+/// `PAPO_RELAY` as a relay URL. Unset, empty or blank means the public relays: shells
+/// and container env files often export a variable with no value.
+fn relay_override(value: Option<&str>) -> Result<Option<RelayUrl>> {
+    match value.map(str::trim) {
+        None | Some("") => Ok(None),
+        Some(url) => url.parse().map(Some).context("PAPO_RELAY is not a valid URL"),
+    }
 }
 
 /// Hermetic network for end-to-end tests of the real binary, compiled only with the
@@ -54,5 +62,20 @@ mod local {
             .context("bind test endpoint")?;
         endpoint.address_lookup().context("endpoint closed while binding")?.add(lookup);
         Ok(Some(endpoint))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn relay_override_treats_empty_as_unset_and_rejects_garbage() {
+        assert!(relay_override(None).unwrap().is_none());
+        assert!(relay_override(Some("")).unwrap().is_none());
+        assert!(relay_override(Some("  \t")).unwrap().is_none());
+        let url = relay_override(Some(" https://relay.example.com ")).unwrap().unwrap();
+        assert_eq!(url.to_string(), "https://relay.example.com/");
+        assert!(relay_override(Some("not a url")).unwrap_err().to_string().contains("PAPO_RELAY"));
     }
 }
