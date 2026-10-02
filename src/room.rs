@@ -4,6 +4,23 @@
 //! the gossip topic peers meet on, the symmetric key every frame is sealed with, and a
 //! short non-secret id used for display. Knowing the secret is what makes someone a
 //! member, so the invite code that carries it must be shared privately.
+//!
+//! ```
+//! use papo::room::{Invite, RoomSecret};
+//!
+//! let room = RoomSecret::generate();
+//! let sealed = room.seal(b"qual porta o auth usa?");
+//! assert_eq!(room.open(&sealed).unwrap(), b"qual porta o auth usa?");
+//! // A different room can neither read nor forge frames.
+//! assert!(RoomSecret::generate().open(&sealed).is_err());
+//!
+//! // The invite carries the secret plus endpoints to dial, with an integrity check.
+//! let invite = Invite { secret: room, peers: vec![] };
+//! let code = invite.encode();
+//! assert!(code.starts_with("papo1"));
+//! assert_eq!(Invite::decode(&code).unwrap(), invite);
+//! assert!(Invite::decode(&code[..code.len() - 3]).is_err());
+//! ```
 
 use std::fmt;
 

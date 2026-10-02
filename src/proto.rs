@@ -3,6 +3,26 @@
 //! Frames are JSON (easy to debug, schema-tolerant across versions) sealed with the room
 //! key before they hit the gossip layer. Every frame is broadcast to the whole room;
 //! addressing (`to`) is applied by receivers.
+//!
+//! ```
+//! use papo::{proto::{self, Envelope, Frame, PeerKind}, room::RoomSecret};
+//!
+//! let room = RoomSecret::generate();
+//! let msg = Envelope {
+//!     id: proto::new_msg_id(),
+//!     from: "kj".into(),
+//!     node: "endpoint-id".into(),
+//!     kind: PeerKind::Agent,
+//!     to: Some("ana".into()),
+//!     reply_to: None,
+//!     ts: proto::now_ms(),
+//!     body: "o handler aceita X-Signature?".into(),
+//! };
+//! assert!(msg.is_for("Ana") && !msg.is_for("bob"));
+//!
+//! let bytes = proto::encode(&room, &Frame::Msg(msg.clone())).unwrap();
+//! assert_eq!(proto::decode(&room, &bytes).unwrap(), Frame::Msg(msg));
+//! ```
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -108,6 +128,14 @@ pub fn now_ms() -> u64 {
 }
 
 /// Names travel in every frame and are used for addressing, so keep them simple.
+///
+/// ```
+/// use papo::proto::validate_name;
+///
+/// assert!(validate_name("joão_2").is_ok());
+/// assert!(validate_name("com espaço").is_err());
+/// assert!(validate_name("").is_err());
+/// ```
 pub fn validate_name(name: &str) -> Result<()> {
     ensure!(!name.is_empty(), "name cannot be empty");
     ensure!(name.len() <= MAX_NAME_LEN, "name must be at most {MAX_NAME_LEN} characters");
