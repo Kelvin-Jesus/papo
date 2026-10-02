@@ -172,6 +172,17 @@ mod tests {
     }
 
     #[test]
+    fn size_limits_match_what_agents_and_docs_promise() {
+        // The send tool description and the docs promise about 48 KB per message.
+        assert_eq!(MAX_BODY_BYTES, 48 * 1024);
+        assert_eq!(MAX_FRAME_BYTES, 64 * 1024);
+        // A plain-text body at the limit still fits in one frame with its envelope.
+        let mut env = sample();
+        env.body = "a".repeat(MAX_BODY_BYTES);
+        assert!(encode(&RoomSecret::generate(), &Frame::Msg(env)).is_ok());
+    }
+
+    #[test]
     fn oversized_frames_are_refused_before_sending() {
         let room = RoomSecret::generate();
         let mut env = sample();

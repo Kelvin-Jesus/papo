@@ -217,6 +217,17 @@ mod tests {
     }
 
     #[test]
+    fn debug_output_never_contains_the_secret() {
+        let room = RoomSecret::generate();
+        let shown = format!("{room:?}");
+        assert_eq!(shown, format!("RoomSecret({})", room.room_id()));
+        assert!(!shown.contains(&room.to_base32()));
+        // Anything that embeds the secret inherits the redaction.
+        let invite = Invite { secret: room.clone(), peers: vec![] };
+        assert!(!format!("{invite:?}").contains(&room.to_base32()));
+    }
+
+    #[test]
     fn sealed_frames_only_open_with_the_same_room() {
         let room = RoomSecret::generate();
         let other = RoomSecret::generate();
