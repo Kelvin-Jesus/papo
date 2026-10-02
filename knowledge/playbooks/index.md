@@ -5,3 +5,4 @@
 * [Add an MCP tool](/playbooks/add-an-mcp-tool.md) - Every place a new or changed tool must touch.
 * [Rotate a room](/playbooks/rotate-a-room.md) - Remove a member or replace a leaked invite.
 * [Run the public e2e test](/playbooks/run-public-e2e.md) - Two real MCP servers talking over the public iroh network.
+* [Run and test in Docker](/playbooks/run-in-docker.md) - Static image, smoke test, MCP from a container and the two-agent e2e via a local relay.

@@ -24,6 +24,9 @@ cargo test --test mcp -- --ignored       # two real MCP servers over the public 
 cargo clippy --all-targets -- -D warnings
 cargo fmt                                # rustfmt.toml: max_width 120
 PAPO_LOG=iroh_gossip=debug,iroh=info target/debug/papo status   # network diagnostics on stderr
+docker build --target test .             # test suite in a reproducible Linux container
+scripts/docker-smoke.sh                  # image smoke test: --version, new, MCP over stdin, profile lock
+scripts/docker-e2e.sh [--public]         # two agents in containers via a local relay (or the public one)
 ```
 
 ## Map

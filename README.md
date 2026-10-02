@@ -101,6 +101,16 @@ no `PATH`.
 > No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
 > `xattr -d com.apple.quarantine ./papo`.
 
+Com Docker (imagem estática de ~8 MB, publicada em `ghcr.io/kelvin-jesus/papo` a partir da v0.1.0;
+até lá, `docker build -t papo .` neste repositório):
+
+```sh
+docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name <seu-nome>
+```
+
+O servidor MCP também roda em container. Detalhes no
+[guia de Docker](https://kelvin-jesus.github.io/papo/docs/guias/docker.html).
+
 ## Primeiros passos
 
 ```sh

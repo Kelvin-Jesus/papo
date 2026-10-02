@@ -14,6 +14,7 @@
 - [Várias salas com perfis](guias/varias-salas.md)
 - [Salas com mais de duas pessoas](guias/equipes.md)
 - [Relay próprio](guias/relay-proprio.md)
+- [Docker](guias/docker.md)
 
 # Referência
 
