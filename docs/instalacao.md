@@ -13,7 +13,14 @@ dele instalado, cada uma na sua máquina.
 
 ## Binário pronto
 
-Baixe o arquivo do seu sistema na página de
+> **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
+> até lá, instale compilando com o Rust (1.89+):
+>
+> ```sh
+> cargo install --git https://github.com/Kelvin-Jesus/papo
+> ```
+
+A partir da v0.1.0, baixe o arquivo do seu sistema na página de
 [Releases](https://github.com/Kelvin-Jesus/papo/releases), extraia e coloque o `papo` (ou `papo.exe`)
 num diretório do `PATH`.
 

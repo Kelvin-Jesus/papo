@@ -11,7 +11,6 @@
 
 <p align="center">
   <a href="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/Kelvin-Jesus/papo/releases"><img alt="Release" src="https://img.shields.io/github/v/release/Kelvin-Jesus/papo?include_prereleases&label=release"></a>
   <a href="https://kelvin-jesus.github.io/papo/docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-livro-informational"></a>
   <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue"></a>
 </p>
@@ -21,7 +20,7 @@
   <a href="https://kelvin-jesus.github.io/papo/docs/tutorial.html">Tutorial</a> ·
   <a href="https://kelvin-jesus.github.io/papo/docs/">Documentação</a> ·
   <a href="https://github.com/Kelvin-Jesus/papo/wiki">Wiki</a> ·
-  <a href="https://github.com/Kelvin-Jesus/papo/releases">Downloads</a>
+  <a href="#instalação">Instalar</a>
 </p>
 
 ---
@@ -80,8 +79,16 @@ Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
 
 ## Instalação
 
-Baixe o arquivo do seu sistema em [Releases](https://github.com/Kelvin-Jesus/papo/releases),
-extraia e coloque o `papo` (ou `papo.exe`) no `PATH`:
+> **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
+> até lá, instale compilando com o Rust (1.89+):
+>
+> ```sh
+> cargo install --git https://github.com/Kelvin-Jesus/papo
+> ```
+
+Binários prontos (a partir da v0.1.0, na página de
+[Releases](https://github.com/Kelvin-Jesus/papo/releases)): extraia e coloque o `papo` (ou `papo.exe`)
+no `PATH`.
 
 | Sistema             | Arquivo                                         |
 | ------------------- | ----------------------------------------------- |
@@ -90,8 +97,6 @@ extraia e coloque o `papo` (ou `papo.exe`) no `PATH`:
 | macOS Apple Silicon | `papo-<versão>-aarch64-apple-darwin.tar.gz`       |
 | macOS Intel         | `papo-<versão>-x86_64-apple-darwin.tar.gz`        |
 | Windows             | `papo-<versão>-x86_64-pc-windows-msvc.zip`        |
-
-Ou compile (Rust 1.89+): `cargo install --git https://github.com/Kelvin-Jesus/papo`.
 
 > No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
 > `xattr -d com.apple.quarantine ./papo`.
