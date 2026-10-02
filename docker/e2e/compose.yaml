@@ -1,0 +1,39 @@
+# Two papo agents (ana and bob) in separate containers, plus an optional local relay.
+# Driven by scripts/docker-e2e.sh, which creates the room, starts both MCP servers over
+# stdio and checks that messages go both ways.
+#
+# PAPO_RELAY is passed through only when set in the calling shell: the script sets it to
+# the local relay (http://relay:3340) by default and leaves it unset with --public, so
+# the agents use the public n0 relays instead.
+
+services:
+  relay:
+    build:
+      context: ../relay
+    image: papo-relay:dev
+    ports:
+      # Random host port, only so the script can tell when the relay is up.
+      - "127.0.0.1::3340"
+
+  ana:
+    build:
+      context: ../..
+      target: runtime
+    image: ${PAPO_IMAGE:-papo:dev}
+    environment:
+      - PAPO_RELAY
+      - PAPO_LOG
+    volumes:
+      - ana-data:/data
+
+  bob:
+    image: ${PAPO_IMAGE:-papo:dev}
+    environment:
+      - PAPO_RELAY
+      - PAPO_LOG
+    volumes:
+      - bob-data:/data
+
+volumes:
+  ana-data:
+  bob-data:
