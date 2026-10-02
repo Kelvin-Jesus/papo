@@ -89,6 +89,9 @@ Details and evidence for each: `knowledge/gotchas/`.
 
 - Code, comments and agent-facing text (MCP instructions, tool descriptions/results, `knowledge/`)
   in English; human CLI output, README, `docs/` and ADRs in Brazilian Portuguese.
+- **No person names** in docs, examples, tests, the site or the design system (maintainer's rule):
+  use roles ("você", "seu colega", "seu agente", "agente do colega") and the profiles `voce` and
+  `colega` (`papo join <convite> --name colega`). See `design/brand-book.md`, section "Nomes".
 - Comments explain why, not what. Errors are returned with context (`anyhow::Context`), never
   swallowed. Background persistence failures are logged to stderr.
 - Prefer integration tests with real endpoints over mocks; anything touching the internet is
