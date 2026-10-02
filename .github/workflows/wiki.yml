@@ -1,0 +1,42 @@
+name: wiki
+
+# Mirrors wiki/ into the GitHub wiki (a separate git repo) so the wiki is reviewed
+# and versioned like the rest of the docs. GitHub only creates the wiki repo after the
+# first page is saved through the web UI, so the very first run needs that one click.
+on:
+  push:
+    branches: [main]
+    paths: ["wiki/**", ".github/workflows/wiki.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push wiki/ to the GitHub wiki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki-repo; then
+            echo "::error::The wiki repository does not exist yet. Save any first page at https://github.com/${GITHUB_REPOSITORY}/wiki/_new, then re-run this workflow."
+            exit 1
+          fi
+          rsync -a --delete --exclude .git wiki/ wiki-repo/
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already up to date."
+            exit 0
+          fi
+          git commit --quiet -m "Sync wiki from ${GITHUB_SHA::7}"
+          git push --quiet
