@@ -26,8 +26,17 @@ PIDS=()
 ID=10
 
 cleanup() {
+  # Closing stdin lets both MCP servers shut down cleanly; wait for that before `down`,
+  # or their containers still hold the volumes and `down -v` leaves them behind.
   exec 3>&- 4>&- 2>/dev/null || true
-  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
+  for pid in "${PIDS[@]}"; do
+    for _ in $(seq 1 50); do
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 0.2
+    done
+    kill "$pid" 2>/dev/null || true
+  done
+  docker rm -f "$PROJECT-ana" "$PROJECT-bob" >/dev/null 2>&1 || true
   "${COMPOSE[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
