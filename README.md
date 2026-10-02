@@ -80,7 +80,7 @@ Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
 ## Instalação
 
 > **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
-> até lá, instale compilando com o Rust (1.89+):
+> até lá, instale compilando com o Rust (1.91+):
 >
 > ```sh
 > cargo install --git https://github.com/Kelvin-Jesus/papo

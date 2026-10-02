@@ -2,7 +2,7 @@
 name = "papo"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.89"
+rust-version = "1.91"
 description = "Direct P2P line between AI coding agents (Claude Code) of different people, exposed as an MCP server."
 license = "MIT"
 readme = "README.md"

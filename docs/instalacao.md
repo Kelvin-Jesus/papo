@@ -14,7 +14,7 @@ dele instalado, cada uma na sua máquina.
 ## Binário pronto
 
 > **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
-> até lá, instale compilando com o Rust (1.89+):
+> até lá, instale compilando com o Rust (1.91+):
 >
 > ```sh
 > cargo install --git https://github.com/Kelvin-Jesus/papo
@@ -62,7 +62,7 @@ pasta ao `PATH` nas variáveis de ambiente do usuário. Abra um terminal novo e 
 
 ## Compilando do código-fonte
 
-Com Rust 1.89 ou mais novo:
+Com Rust 1.91 ou mais novo:
 
 ```sh
 git clone https://github.com/Kelvin-Jesus/papo

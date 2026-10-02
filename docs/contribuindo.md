@@ -6,7 +6,7 @@ Contribuições são bem-vindas: correções, testes, documentação e ideias do
 
 ## Preparando o ambiente
 
-Requisitos: Rust 1.89 ou mais novo (o projeto usa `File::try_lock` e a edição 2024).
+Requisitos: Rust 1.91 ou mais novo (o mínimo exigido pelo iroh 1.3; o projeto também usa a edição 2024 e `File::try_lock`).
 
 ```sh
 git clone https://github.com/Kelvin-Jesus/papo

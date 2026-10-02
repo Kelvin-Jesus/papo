@@ -9,7 +9,7 @@ no [`AGENTS.md`](https://github.com/Kelvin-Jesus/papo/blob/main/AGENTS.md).
 
 | Ferramenta | Para quê |
 | ---------- | -------- |
-| Rust 1.89 ou mais novo | edição 2024 e `File::try_lock` |
+| Rust 1.91 ou mais novo | mínimo do iroh 1.3 (o job `msrv` do CI confere); edição 2024 e `File::try_lock` |
 | `gh` (GitHub CLI) | disparar workflows, baixar artefatos, criar releases |
 | mdBook 0.5.4 | livro em `docs/` (a mesma versão fixada no workflow `pages`) |
 | Chromium | validar diagramas Mermaid e tirar prints do site |
