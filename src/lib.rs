@@ -5,6 +5,7 @@
 //! fallback) and lets the agents talk to each other without the humans relaying.
 
 pub mod net;
+pub mod node;
 pub mod proto;
 pub mod room;
 pub mod store;
