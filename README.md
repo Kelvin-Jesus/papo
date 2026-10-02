@@ -188,7 +188,8 @@ Modelo de ameaças completo em [Segurança](https://kelvin-jesus.github.io/papo/
 | M2 MCP e channels | feito no protocolo; ainda não validado numa sessão real do Claude Code |
 | M3 Docs e site | feito; site v2 em andamento |
 | M4 Testes completos | feito: 146 testes, 94% das linhas |
-| M5 Release v0.1.0 · M6 Validação com duas sessões reais · M7 Empacotamento | planejado |
+| M6 Validação com o Claude Code real | em parte: duas sessões reais conversaram pelo papo ([validação](docs/engenharia/validacao-claude-code.md)) |
+| M5 Release v0.1.0 · M7 Empacotamento | planejado |
 
 Detalhes, com o que foi verificado e como: [status](docs/engenharia/status.md) ·
 [marcos](docs/engenharia/marcos.md) · [roadmap](docs/engenharia/roadmap.md).

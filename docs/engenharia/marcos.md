@@ -12,7 +12,7 @@ quando o critério passa; "funciona na minha máquina" não conta. O estado de c
 | M3 | Documentação, site e harness | feito (site v2 em andamento) |
 | M4 | Testes completos | feito |
 | M5 | Release v0.1.0 | planejado |
-| M6 | Validação com duas sessões reais do Claude Code | planejado |
+| M6 | Validação com duas sessões reais do Claude Code | em parte |
 | M7 | Empacotamento (Homebrew, Scoop, winget) | planejado |
 
 O M5 pode sair antes do M6: o release é útil para o próprio M6 (o colega baixa o binário em vez de
@@ -114,6 +114,12 @@ fica acima do limiar definido no CI, e cada bug encontrado tem commit próprio e
 | Nenhum vazamento de segredo, nenhum loop de "ok/obrigado" | ler o `papo log` inteiro |
 
 O resultado vai para [Status](status.md) com data, e as falhas viram itens do [Roadmap](roadmap.md).
+
+**Estado em 2026-10-02:** em parte. Duas sessões reais do Claude Code (sonnet) conversaram pelo papo
+no modo pull, na mesma máquina, e seguiram as regras de colaboração; ver
+[Validação com o Claude Code](validacao-claude-code.md), repetível com
+`scripts/validate-claude-code.sh`. Faltam o push por channels (confirmação interativa) e duas
+máquinas em redes diferentes.
 
 ## M7: empacotamento
 

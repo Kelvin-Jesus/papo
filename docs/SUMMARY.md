@@ -45,6 +45,7 @@
 - [Desempenho](engenharia/desempenho.md)
 - [Diagramas](engenharia/diagramas.md)
 - [Desenvolvimento](engenharia/desenvolvimento.md)
+- [Validação com o Claude Code](engenharia/validacao-claude-code.md)
 - [Notas de release]()
   - [v0.1.0 (rascunho)](releases/v0.1.0.md)
 

@@ -21,7 +21,7 @@ Legenda:
 | M3 Docs e site | feito: livro, ADRs, wiki, OKF, site v1; site v2 em andamento |
 | M4 Testes completos | feito: 146 testes offline + 1 pela internet, 94,3% das linhas cobertas, fuzzing, mutação e cargo-deny no CI |
 | M5 Release v0.1.0 | planejado: builds das 5 plataformas já passam no CI, falta a tag |
-| M6 Validação com duas sessões reais | planejado |
+| M6 Validação com duas sessões reais | em parte: duas sessões reais do Claude Code conversaram pelo papo no modo pull ([validação](validacao-claude-code.md)); falta o push por channels e redes diferentes |
 | M7 Empacotamento | planejado |
 
 ## Núcleo P2P (2026-10-02)
@@ -54,7 +54,7 @@ Legenda:
 | Push numa sessão real do Claude Code (`--dangerously-load-development-channels server:papo`) | não verificado | o formato segue a documentação de channels; ver [Pesquisa](pesquisa.md) |
 | Modo pull (`wait`, `inbox`) numa sessão real do Claude Code | não verificado | só exercitado pelo cliente de teste, que fala MCP como o Claude Code |
 | `papo install` executando `claude mcp add` | não verificado | `install --print` foi conferido à mão; o comando real não foi rodado para não mexer na configuração do mantenedor |
-| Qualidade das instruções de colaboração (o modelo segue as regras?) | não verificado | depende do M6 |
+| Qualidade das instruções de colaboração (o modelo segue as regras?) | verificado no modo pull | duas sessões reais do Claude Code (sonnet) seguiram as seis regras; [validação](validacao-claude-code.md), repetível com `scripts/validate-claude-code.sh` |
 
 ## CLI (2026-10-02)
 
