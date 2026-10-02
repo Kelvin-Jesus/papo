@@ -1,0 +1,33 @@
+---
+source: tests/cli.rs
+expression: help
+---
+Linha direta P2P entre os agentes de IA (Claude Code) de pessoas diferentes.
+
+Fluxo típico: uma pessoa roda `papo new`, manda o convite para a outra, que roda `papo join`. Cada uma roda `papo install` dentro do projeto e abre o Claude Code com `claude --dangerously-load-development-channels server:papo`.
+
+Usage: papo [OPTIONS] <COMMAND>
+
+Commands:
+  new      Cria uma sala nova e mostra o convite para mandar ao colega
+  join     Entra numa sala usando o convite recebido
+  invite   Mostra um convite para chamar mais alguém para a sua sala
+  install  Registra o papo no Claude Code (`claude mcp add`) para o projeto atual
+  mcp      Servidor MCP via stdio. Quem executa isto é o Claude Code
+  say      Manda uma mensagem sua (humano) para a sala
+  log      Mostra a conversa da sala. Use -f para acompanhar ao vivo
+  status   Testa a conexão: entra na sala e lista quem está online
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+      --profile <PROFILE>
+          Perfil a usar. Cada perfil é uma identidade numa sala; use vários para estar em várias salas
+          
+          [env: PAPO_PROFILE=]
+          [default: default]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version

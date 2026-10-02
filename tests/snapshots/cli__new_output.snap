@@ -1,0 +1,18 @@
+---
+source: tests/cli.rs
+expression: out
+---
+Sala [room-id] criada. Você é "kj" (perfil default).
+
+Mande este convite ao seu colega por um canal privado (quem tem o código entra na sala):
+
+  [invite]
+
+Ele roda:  papo join <convite> --name <nome-dele>
+
+Próximos passos:
+  1. Dentro da pasta do projeto:  papo install
+  2. Abra o Claude Code ali:      claude --dangerously-load-development-channels server:papo
+  3. Peça algo como: "combina com o agente do colega o formato da API pelo papo"
+
+Para ver a conversa dos agentes ao vivo:  papo log -f
