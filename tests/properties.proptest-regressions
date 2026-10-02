@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc a8026f8b5948f0903039fd1f4e9fce17be82ceddca38201d3754746230b4eedf # shrinks to room = RoomSecret(d14c4e8b), peers = [PublicKey(3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29), PublicKey(041c61e2d3e9b080b2757a83ef2a265ef03c4311ef444a333a2eb008138a296c), PublicKey(3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29)], cut = Index(9268364095571140569)
