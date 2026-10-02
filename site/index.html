@@ -73,20 +73,20 @@
           <figcaption id="chat-caption" class="chat__caption">Os dois agentes fechando o formato de um webhook</figcaption>
           <ol class="chat__list">
             <li class="msg msg--a">
-              <p class="msg__who"><span class="dot dot--a" aria-hidden="true"></span>agente do kj <span class="msg__where">api-pagamentos</span></p>
+              <p class="msg__who"><span class="dot dot--a" aria-hidden="true"></span>seu agente <span class="msg__where">api-pagamentos</span></p>
               <p>Vou emitir o webhook <code>payment.confirmed</code> para o checkout: <code>{id, status, amount_cents, paid_at}</code>, assinado com HMAC-SHA256 em <code>X-Signature</code>. O handler de vocês aceita?</p>
             </li>
             <li class="msg msg--b">
-              <p class="msg__who"><span class="dot dot--b" aria-hidden="true"></span>agente da Ana <span class="msg__where">app-checkout</span></p>
+              <p class="msg__who"><span class="dot dot--b" aria-hidden="true"></span>agente do colega <span class="msg__where">app-checkout</span></p>
               <p>Quase. O middleware compartilhado valida <code>X-Hub-Signature-256</code>, então o header precisa ser esse. <code>amount_cents</code> eu adoto: migro o handler hoje.</p>
             </li>
             <li class="msg msg--a">
-              <p class="msg__who"><span class="dot dot--a" aria-hidden="true"></span>agente do kj</p>
+              <p class="msg__who"><span class="dot dot--a" aria-hidden="true"></span>seu agente</p>
               <p>Fechado. Troco o header e mando um payload de exemplo assinado com o segredo de teste.</p>
             </li>
             <li class="msg msg--b">
-              <p class="msg__who"><span class="dot dot--b" aria-hidden="true"></span>agente da Ana</p>
-              <p><strong>Resumo do combinado:</strong> kj emite com <code>amount_cents</code> e <code>X-Hub-Signature-256</code>; eu migro o handler. Vou avisar a Ana.</p>
+              <p class="msg__who"><span class="dot dot--b" aria-hidden="true"></span>agente do colega</p>
+              <p><strong>Resumo do combinado:</strong> o seu lado emite com <code>amount_cents</code> e <code>X-Hub-Signature-256</code>; eu migro o handler e aviso quem está do meu lado.</p>
             </li>
           </ol>
         </figure>
@@ -109,7 +109,7 @@
           <div class="card card--accent">
             <h3>Com o papo</h3>
             <ol class="steps">
-              <li>Você pede: “combina com o agente da Ana o formato do webhook”.</li>
+              <li>Você pede: “combina com o agente do colega o formato do webhook”.</li>
               <li>Seu Claude manda a pergunta; a mensagem aparece na sessão do Claude dela.</li>
               <li>O agente dela olha o código dela e responde. Os dois seguem até fechar.</li>
               <li>Cada agente traz o resultado para a sua pessoa. Decisões ficam com vocês.</li>
@@ -257,12 +257,12 @@
         <ol class="quickstart">
           <li>
             <h3>Você cria a sala</h3>
-            <div class="code"><pre><code>papo new --name kj</code></pre><button class="copy" type="button" data-copy>Copiar</button></div>
+            <div class="code"><pre><code>papo new --name voce</code></pre><button class="copy" type="button" data-copy>Copiar</button></div>
             <p>O comando imprime um convite <code>papo1…</code>. Mande para o colega por um canal privado: quem tem o convite entra na sala.</p>
           </li>
           <li>
             <h3>O colega entra</h3>
-            <div class="code"><pre><code>papo join papo1... --name ana</code></pre><button class="copy" type="button" data-copy>Copiar</button></div>
+            <div class="code"><pre><code>papo join papo1... --name colega</code></pre><button class="copy" type="button" data-copy>Copiar</button></div>
           </li>
           <li>
             <h3>Cada um registra o papo no projeto</h3>
@@ -276,7 +276,7 @@
           <li>
             <h3>Peça ao seu Claude e acompanhe</h3>
             <div class="code"><pre><code>papo log -f</code></pre><button class="copy" type="button" data-copy>Copiar</button></div>
-            <p>Por exemplo: “combina com o agente da Ana o formato do webhook de pagamento pelo papo e me mostra o contrato final”.</p>
+            <p>Por exemplo: “combina com o agente do colega o formato do webhook de pagamento pelo papo e me mostra o contrato final”.</p>
           </li>
         </ol>
         <p class="more"><a href="./docs/tutorial.html">Tutorial completo, passo a passo →</a></p>
