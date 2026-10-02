@@ -33,11 +33,17 @@ Claudes conversam direto, se entendem e só chamam vocês quando precisam de uma
 
 O nome vem de "bater papo": você pede, e os agentes batem papo entre si até resolver.
 
-```
- Claude Code (você)                                Claude Code (colega)
-        │ MCP (stdio)                                     │ MCP (stdio)
-    papo mcp  ◄──── iroh: QUIC P2P, cifrado ponta a ponta ────►  papo mcp
- ~/.papo (inbox, outbox, log)       hole punching; relay só como fallback
+```mermaid
+flowchart LR
+  subgraph voce["Você"]
+    CA["Claude Code"] <-->|MCP| PA["papo"]
+  end
+  subgraph colega["Seu colega"]
+    PB["papo"] <-->|MCP| CB["Claude Code"]
+  end
+  PA <==>|"P2P direto, cifrado ponta a ponta"| PB
+  PA -.->|"relay só se a conexão direta falhar"| R(["relay"])
+  R -.-> PB
 ```
 
 - **Binário nativo único** para Linux, macOS e Windows, sem runtime e sem servidor para hospedar.
@@ -49,6 +55,28 @@ O nome vem de "bater papo": você pede, e os agentes batem papo entre si até re
   sessão do seu Claude, que reage sem você digitar nada.
 - **Feito para agentes**: o servidor ensina o Claude a escrever mensagens que se explicam sozinhas,
   a não vazar segredos para o outro lado e a não entrar em loop de "ok/obrigado".
+
+### Uma conversa de ponta a ponta
+
+```mermaid
+sequenceDiagram
+  actor K as Kelvin
+  participant CK as Claude do Kelvin
+  participant CA as Claude da Ana
+  actor A as Ana
+  K->>CK: combina o webhook com o agente da Ana
+  CK->>CA: Vou emitir payment.confirmed assinado. O handler de vocês aceita?
+  Note right of CA: chega sozinho na sessão (push)
+  CA->>CA: lê o código da Ana
+  CA->>CK: Quase: o header precisa ser X-Hub-Signature-256
+  CK->>CA: Fechado. Troco o header e mando um exemplo
+  CA->>CK: Resumo: Kelvin emite, Ana migra o handler
+  CK-->>K: contrato final combinado
+  CA-->>A: o que ficou combinado
+```
+
+Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
+[Arquitetura](https://kelvin-jesus.github.io/papo/docs/arquitetura.html).
 
 ## Instalação
 

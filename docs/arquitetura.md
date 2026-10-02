@@ -1,12 +1,34 @@
 # Arquitetura
 
-O papo é um crate Rust com uma biblioteca (`src/lib.rs`) e um binário (`src/main.rs`). Os módulos
-têm responsabilidades estreitas e dependem uns dos outros numa ordem só:
+O papo é um crate Rust com uma biblioteca (`src/lib.rs`) e um binário (`src/main.rs`). Cada pessoa
+roda o próprio `papo mcp` dentro do Claude Code; os dois servidores se encontram direto pela rede, e
+ninguém hospeda nada no meio.
 
-```text
-room ──► proto ──► store ──► node ──► mcp ──► main (CLI)
-                              ▲
-                     net ─────┘ (endpoint na rede real; os testes usam uma rede local)
+```mermaid
+flowchart LR
+  subgraph maquinaA["Sua máquina"]
+    CA["Claude Code"] <-->|"MCP via stdio"| PA["papo mcp"]
+    PA --- SA[("~/.papo<br/>inbox, outbox, log")]
+    KA(["você: papo log -f / papo say"]) -.-> SA
+  end
+  subgraph maquinaB["Máquina do colega"]
+    PB["papo mcp"] <-->|"MCP via stdio"| CB["Claude Code"]
+    PB --- SB[("~/.papo<br/>inbox, outbox, log")]
+  end
+  PA <==>|"QUIC P2P, frames cifrados com a chave da sala"| PB
+  PA -.->|"só se o hole punching falhar"| R(["relay iroh"])
+  R -.-> PB
+  D[("DNS / pkarr da n0")] -. "acha o endereço pelo id" .- PA
+  D -. "acha o endereço pelo id" .- PB
+```
+
+Os módulos têm responsabilidades estreitas e dependem uns dos outros numa ordem só:
+
+```mermaid
+flowchart LR
+  room --> proto --> store --> node --> mcp --> main["main (CLI)"]
+  net --> node
+  net -. "testes trocam por rede local" .- T(["tests/"])
 ```
 
 | Módulo | Responsabilidade |
@@ -42,6 +64,16 @@ Os membros não são passados ao gossip como pontos de entrada. O próprio papo 
 ALPN do gossip, entrega a conexão pronta ao gossip como se tivesse sido recebida, e só então pede ao
 gossip para entrar em contato com aquele membro.
 
+```mermaid
+stateDiagram-v2
+  [*] --> Sozinho: nó sobe (sem bootstrap no gossip)
+  Sozinho --> Discando: chegou a hora da próxima tentativa
+  Discando --> Sozinho: falhou ou deu timeout (15 s)<br/>espera 1, 2, 4, 8, 10, 10... s
+  Discando --> Conectado: conexão aberta, entregue ao gossip<br/>e join_peers com aquele membro
+  Conectado --> Conectado: a cada 30 s, hello e reenvio da outbox
+  Conectado --> Sozinho: último vizinho caiu (backoff volta a 1 s)
+```
+
 O motivo é um comportamento do iroh-gossip 0.101: se a primeira discagem para um ponto de entrada
 falha, por exemplo porque o colega abriu o Claude um segundo antes e ainda não publicou o endereço,
 aquele par fica "pendente" para sempre e novas tentativas não discam de novo. Uma conexão recebida
@@ -50,13 +82,29 @@ destrava esse estado, e o protocolo do gossip é simétrico. Detalhes na
 
 ### Entrega
 
-```text
- send()                                   receptor
-   │ grava na outbox                        │
-   │ difunde msg ───────────────────────────► descarta se não é para ele / é duplicata (re-ack)
-   │                                        │ grava no inbox e no log
-   │ ◄─────────────────────────────── ack ───┤ difunde ack
-   │ tira da outbox, registra "delivered"   │ notifica o servidor MCP (push)
+```mermaid
+sequenceDiagram
+  participant CK as Claude do Kelvin
+  participant NK as papo do Kelvin
+  participant NA as papo da Ana
+  participant CA as Claude da Ana
+  CK->>NK: send(mensagem)
+  NK->>NK: grava na outbox (antes de difundir)
+  alt Ana online
+    NK->>NA: msg (selada com a chave da sala)
+    NA->>NA: descarta se não é para ela ou se é duplicata
+    NA->>NA: grava inbox e log
+    NA-->>NK: ack
+    NK->>NK: tira da outbox, log "delivered"
+    NK-->>CK: "Delivered to ana"
+    NA->>CA: notifications/claude/channel (push)
+  else Ana offline
+    NK-->>CK: "queued" (sem erro)
+    Note over NK: a outbox espera
+    NA->>NK: Ana volta: conexão + hello
+    NK->>NA: reenvia a outbox
+    NA-->>NK: ack
+  end
 ```
 
 Se o `ack` não chega a tempo, `send` devolve "na fila" sem erro. A fila é difundida de novo quando um
@@ -74,6 +122,18 @@ explica as escolhas.
 
 O servidor é escrito à mão sobre JSON-RPC, sem SDK
 ([ADR 0004](adr/0004-o-servidor-mcp-e-escrito-a-mao.md)). A estrutura:
+
+```mermaid
+flowchart LR
+  stdin(["stdin do Claude Code"]) --> L["Leitor<br/>linha a linha"]
+  L -->|"initialize, ping, tools/list"| W
+  L -->|"tools/call"| T["tarefa por chamada<br/>(cancelável)"]
+  T --> W["Escritor único"]
+  N["nó"] -- "eventos: mensagem nova" --> B["Bomba do channel"]
+  B -->|"notifications/claude/channel"| W
+  T <--> N
+  W --> stdout(["stdout = só JSON-RPC"])
+```
 
 - **Leitor**: lê o stdin linha a linha e despacha. `initialize`, `ping` e `tools/list` respondem na
   hora. Cada `tools/call` vira uma tarefa própria, guardada num mapa para poder ser cancelada por

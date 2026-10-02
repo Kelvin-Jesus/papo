@@ -11,6 +11,8 @@ git-repository-url = "https://github.com/Kelvin-Jesus/papo"
 edit-url-template = "https://github.com/Kelvin-Jesus/papo/edit/main/docs/{path}"
 site-url = "/papo/docs/"
 additional-css = ["theme/papo.css"]
+# Mermaid diagrams (```mermaid) are rendered client-side; the library loads from the CDN on demand.
+additional-js = ["theme/mermaid-init.js"]
 default-theme = "light"
 preferred-dark-theme = "navy"
 
