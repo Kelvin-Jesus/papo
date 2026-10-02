@@ -22,6 +22,9 @@ const AAD: &[u8] = b"papo/v1";
 const NONCE_LEN: usize = 24;
 /// Invites stay pasteable in a chat message; a handful of entry points is plenty.
 const MAX_INVITE_PEERS: usize = 4;
+/// Trailing integrity check. Without it, a copy-paste cut at a 32-byte boundary decoded
+/// as a valid invite with fewer entry points, silently.
+const INVITE_CHECK_LEN: usize = 4;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct RoomSecret([u8; 32]);
@@ -103,11 +106,13 @@ pub struct Invite {
 
 impl Invite {
     pub fn encode(&self) -> String {
-        let mut bytes = Vec::with_capacity(32 + 32 * self.peers.len());
+        let mut bytes = Vec::with_capacity(32 + 32 * self.peers.len() + INVITE_CHECK_LEN);
         bytes.extend_from_slice(&self.secret.0);
         for peer in self.peers.iter().take(MAX_INVITE_PEERS) {
             bytes.extend_from_slice(peer.as_bytes());
         }
+        let check = invite_check(&bytes);
+        bytes.extend_from_slice(&check);
         format!("{INVITE_PREFIX}{}", BASE32_NOPAD.encode(&bytes).to_ascii_lowercase())
     }
 
@@ -120,11 +125,16 @@ impl Invite {
             .decode(body.to_ascii_uppercase().as_bytes())
             .context("invite is not valid base32 (was it truncated when copying?)")?;
         ensure!(
-            bytes.len() >= 32 && bytes.len() % 32 == 0,
+            bytes.len() >= 32 + INVITE_CHECK_LEN && (bytes.len() - INVITE_CHECK_LEN) % 32 == 0,
             "invite has an invalid length (was it truncated when copying?)"
         );
-        let secret = RoomSecret(bytes[..32].try_into().expect("checked length"));
-        let peers = bytes[32..]
+        let (payload, check) = bytes.split_at(bytes.len() - INVITE_CHECK_LEN);
+        ensure!(
+            invite_check(payload) == check,
+            "invite is damaged or incomplete (was it truncated or mistyped when copying?)"
+        );
+        let secret = RoomSecret(payload[..32].try_into().expect("checked length"));
+        let peers = payload[32..]
             .as_chunks::<32>()
             .0
             .iter()
@@ -132,6 +142,11 @@ impl Invite {
             .collect::<Result<Vec<_>>>()?;
         Ok(Self { secret, peers })
     }
+}
+
+fn invite_check(payload: &[u8]) -> [u8; INVITE_CHECK_LEN] {
+    let digest = blake3::derive_key("papo v1 invite check", payload);
+    digest[..INVITE_CHECK_LEN].try_into().expect("digest is 32 bytes")
 }
 
 #[cfg(test)]
@@ -160,6 +175,28 @@ mod tests {
         let code = invite.encode();
         assert!(Invite::decode(&code[..code.len() - 5]).is_err());
         assert!(Invite::decode("hello").is_err());
+    }
+
+    #[test]
+    fn invite_cut_at_an_entry_point_boundary_is_rejected() {
+        let peers: Vec<_> = (0..3).map(|_| SecretKey::generate().public()).collect();
+        let full = Invite { secret: RoomSecret::generate(), peers: peers.clone() };
+        // Exactly what one fewer peer encodes to, minus its checksum: base32 of 96 bytes.
+        let shorter = Invite { secret: full.secret.clone(), peers: peers[..2].to_vec() }.encode();
+        let code = full.encode();
+        for len in [shorter.len(), shorter.len() - 7, INVITE_PREFIX.len() + 52, INVITE_PREFIX.len() + 154] {
+            assert!(Invite::decode(&code[..len]).is_err(), "accepted {len}-char prefix");
+        }
+    }
+
+    #[test]
+    fn mistyped_invite_is_rejected() {
+        let code = Invite { secret: RoomSecret::generate(), peers: vec![SecretKey::generate().public()] }.encode();
+        let mut chars: Vec<char> = code.chars().collect();
+        let i = INVITE_PREFIX.len() + 10;
+        chars[i] = if chars[i] == 'a' { 'b' } else { 'a' };
+        let err = Invite::decode(&chars.into_iter().collect::<String>()).unwrap_err();
+        assert!(err.to_string().contains("damaged"), "{err}");
     }
 
     #[test]
