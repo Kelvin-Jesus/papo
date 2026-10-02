@@ -2,3 +2,5 @@
 # mdBook output and the assembled Pages site (built in CI)
 /docs/book/
 /_site/
+# Agent worktrees (Claude Code isolation)
+/.claude/worktrees/
