@@ -63,7 +63,7 @@ rpc() {
   printf '{"jsonrpc":"2.0","id":%d,"method":"%s","params":%s}\n' "$id" "$method" "$params" >&"$fd"
   deadline=$((SECONDS + timeout))
   while ((SECONDS < deadline)); do
-    line=$(grep -m1 "\"id\":$id[,}]" "$WORK/$agent.out" || true)
+    line=$(grep -m1 "\"id\":${id}[,}]" "$WORK/$agent.out" || true)
     if [[ -n $line ]]; then
       REPLY=$line
       return 0

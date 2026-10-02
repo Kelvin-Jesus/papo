@@ -27,11 +27,14 @@ jobs:
         with:
           tool: cargo-mutants
       - name: Run cargo-mutants
+        # The dispatch input goes through env, never straight into the script (no injection).
+        env:
+          INPUT_FILES: ${{ inputs.files }}
         run: |
-          files=""
-          for f in ${{ inputs.files }}; do files="$files --file $f"; done
+          args=()
+          for f in $INPUT_FILES; do args+=(--file "$f"); done
           # Exit code 2 means some mutants survived: report it, the summary shows which.
-          cargo mutants --features test-network --timeout-multiplier 3 $files || [ $? -eq 2 ]
+          cargo mutants --features test-network --timeout-multiplier 3 "${args[@]}" || [ $? -eq 2 ]
       - name: Summary
         if: always()
         run: |
