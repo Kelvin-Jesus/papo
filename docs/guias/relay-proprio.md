@@ -47,4 +47,5 @@ PAPO_LOG=info papo status
 ```
 
 Nos logs aparece o relay escolhido como "home relay". Se a URL estiver errada, o papo para na hora com
-"PAPO_RELAY is not a valid URL".
+"PAPO_RELAY is not a valid URL". Deixar a variável vazia (`PAPO_RELAY=`) equivale a não definir:
+volta para os relays públicos.

@@ -67,14 +67,16 @@ Cuidados:
 - **`--about` no `new`/`join`.** Fora do Docker, o papo usa o nome da pasta do projeto para dizer
   aos colegas no que você está trabalhando. No container a pasta de trabalho é `/`, que não tem
   nome, então informe `--about` ao criar ou entrar na sala.
-- **`papo install` não serve aqui.** Rodado dentro do container, ele imprime o caminho interno
-  (`/usr/local/bin/papo`), que não existe no seu computador. Use o `claude mcp add` acima.
+- **`papo install` dentro do container.** Sozinho, ele registraria o caminho interno
+  (`/usr/local/bin/papo`), que não existe no seu computador. Use o `claude mcp add` acima, ou defina
+  `PAPO_INSTALL_COMMAND` com o comando do container para o `papo install --print` mostrar a
+  configuração certa.
 - **`say` e `log` ao mesmo tempo que o servidor.** Funcionam num segundo container com o mesmo
   volume: eles não pegam a trava do perfil.
 - **Rede.** O container fica atrás do NAT do Docker e o papo atravessa como em qualquer NAT (hole
   punching, ou relay quando não dá). No Linux, `--network host` aumenta a chance de conexão direta.
-- **`PAPO_RELAY` vazia quebra.** Se for usar relay próprio, passe a URL completa
-  (`-e PAPO_RELAY=http://...`); não defina a variável vazia.
+- **`PAPO_RELAY` vazia** equivale a não definida (relays públicos). Para relay próprio, passe a URL
+  completa (`-e PAPO_RELAY=http://...`).
 
 ## Relay próprio com Docker Compose
 

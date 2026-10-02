@@ -6,7 +6,8 @@
 | -------- | ------ | --- |
 | `PAPO_HOME` | `~/.papo` | Onde ficam os perfis e dados. No Windows, `~` é a pasta do usuário. |
 | `PAPO_PROFILE` | `default` | Perfil usado quando `--profile` não é passado. |
-| `PAPO_RELAY` | relays públicos da n0 | URL de um `iroh-relay` próprio ([Relay próprio](../guias/relay-proprio.md)). |
+| `PAPO_RELAY` | relays públicos da n0 | URL de um `iroh-relay` próprio ([Relay próprio](../guias/relay-proprio.md)). Vazia ou só com espaços conta como não definida. |
+| `PAPO_INSTALL_COMMAND` | o próprio executável | Substitui o comando que `papo install` registra e que `--print` mostra (por exemplo `docker run -i --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo` para usar o papo em container). |
 | `PAPO_LOG` | desligado | Liga logs de diagnóstico no stderr. Aceita filtros do `tracing`, como `info`, `debug` ou `iroh_gossip=debug,iroh=info`. |
 | `PAPO_MAX_SENDS_PER_10MIN` | `40` | Limite anti-loop de envios do agente numa janela de 10 minutos. |
 

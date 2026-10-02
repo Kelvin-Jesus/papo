@@ -19,7 +19,7 @@ Legenda:
 | M1 Núcleo P2P | feito: sala, cifra, gossip, entrega com ack e fila offline, reconexão própria |
 | M2 MCP e channels | feito no protocolo; falta a sessão real do Claude Code (é o M6) |
 | M3 Docs e site | feito: livro, ADRs, wiki, OKF, site v1; site v2 em andamento |
-| M4 Testes completos | em andamento (branch separado) |
+| M4 Testes completos | feito: 146 testes offline + 1 pela internet, 94,3% das linhas cobertas, fuzzing, mutação e cargo-deny no CI |
 | M5 Release v0.1.0 | planejado: builds das 5 plataformas já passam no CI, falta a tag |
 | M6 Validação com duas sessões reais | planejado |
 | M7 Empacotamento | planejado |
@@ -79,10 +79,28 @@ Legenda:
 
 ## Em andamento
 
-- **Testes completos (M4):** propriedade, fuzzing, contrato MCP, CLI com snapshots, benchmarks,
-  cobertura com limiar no CI, mutação e cargo-deny, num branch separado. Esta página muda quando ele
-  for integrado.
 - **Site v2:** redesenho da página do projeto com conceito de marca, design system e demo interativa.
+
+## Testes (M4, 2026-10-02)
+
+| Tipo | Quantos | Onde |
+| ---- | ------- | ---- |
+| Unitários (biblioteca e binário) | 33 e 9 | nos módulos de `src/` |
+| Doctests | 3 | API pública de `room` e `proto` |
+| Propriedade (proptest) | 13 | convite, cifra, frames, nomes, endereçamento |
+| Robustez (bytes arbitrários) | 6 | decodificação de convite, frame, cifra e linhas do MCP |
+| Armazenamento | 15 | escrita atômica, permissões 0600, trava, arquivos corrompidos |
+| Nó | 5 + 16 cenários | entrega, fila, reinício, várias salas, multi-hop, queda sem shutdown |
+| MCP e contrato do MCP | 5 + 20 | JSON-RPC, cancelamento, progresso, freio, snapshots com insta, JSON Schema das ferramentas |
+| CLI | 19 | comandos, erros e saídas |
+| e2e local, dois processos (feature `test-network`) | 2 | dois `papo mcp` e a CLI num relay local |
+| e2e pela internet | 1 (ignorado por padrão) | `cargo test --test mcp -- --ignored` |
+
+Cobertura (cargo-llvm-cov): 94,3% das linhas e 93,1% das regiões; por módulo, proto 100, mcp 98,2,
+room 97,9, net 97,8, node 92,7, store 90,6 e main 87,9. O CI falha abaixo de 90% das linhas. Três
+alvos de `cargo fuzz` rodaram limpos localmente (31 milhões, 2,3 milhões e 2,6 milhões de execuções)
+e rodam no CI com tempo curto; o cargo-mutants roda por agendamento. Benchmarks com criterion em
+`benches/` (`cargo bench`).
 
 ## Não feito
 

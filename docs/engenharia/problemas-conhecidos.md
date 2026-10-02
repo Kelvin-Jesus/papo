@@ -21,12 +21,15 @@ evidência técnica de cada uma das regras do produto está em `knowledge/gotcha
 | Só um servidor MCP por perfil: uma segunda sessão do Claude Code no mesmo perfil recebe erro | Um perfil por projeto (`papo install --profile <nome>`) |
 | Travessia de NAT entre redes diferentes ainda não foi testada (o e2e roda na mesma máquina) | Parte do M6 |
 | A wiki do GitHub não sincroniza até a primeira página ser salva pela interface | Salvar qualquer página em `/wiki/_new` e rodar o workflow `wiki` de novo |
-| `papo say` e `papo status` terminam imprimindo `papo: gossip subscription closed` no stderr mesmo quando tudo deu certo (visto em 2026-10-02) | Inofensivo: é o laço de eventos do nó efêmero avisando o fim da assinatura no encerramento normal. Correção: não avisar quando o fim vem de um `shutdown` pedido |
+| Um corpo com menos de 48 KiB mas cheio de caracteres que o JSON escapa (aspas, barras, controles) pode passar de 64 KiB no frame e ser recusado com "frame too large" | Resumir ou dividir a mensagem; o erro aparece na hora para o agente, nada fica na fila |
 
 ## Resolvidos (mantenha as regras)
 
 | O que aconteceu | Causa | Regra |
 | --------------- | ----- | ----- |
+| `papo say` e `papo status` terminavam imprimindo `papo: gossip subscription closed` mesmo dando certo | O laço de eventos avisava o fim da assinatura também no desligamento normal do nó | O nó marca que está desligando antes de fechar; teste de CLI garante stderr limpo |
+| Um convite cortado exatamente na fronteira de um endpoint era aceito | O formato não tinha verificação e o tamanho cortado continuava múltiplo de 32 bytes | Convite com 4 bytes de verificação BLAKE3; teste de propriedade com cortes arbitrários |
+| `PAPO_RELAY` vazia impedia o papo de subir | String vazia tratada como URL | Vazia conta como não definida |
 | A sala nunca se formava pela internet: o segundo membro ficava sozinho para sempre | No iroh-gossip 0.101, um par passado como bootstrap cuja primeira discagem falha fica `Pending` no ator do gossip; `join_peers` depois disso só enfileira mensagens e nunca disca de novo. O caso comum: discar um colega que abriu a sessão há um segundo e ainda não publicou o endereço ("No addressing information available") | Nunca passar pares ao gossip como bootstrap; o papo disca com o ALPN do gossip e entrega a conexão pronta via `Gossip::handle_connection` ([ADR 0003](../adr/0003-o-papo-disca-os-pares-antes-do-gossip.md)) |
 | O primeiro contato levava 12 s | Tentativas a cada 10 s fixos; a primeira sempre perdia a corrida contra a publicação do endereço | Backoff que começa em 1 s e dobra até 10 s; voltou para cerca de 6 s no e2e |
 

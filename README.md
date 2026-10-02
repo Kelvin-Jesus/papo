@@ -187,7 +187,7 @@ Modelo de ameaças completo em [Segurança](https://kelvin-jesus.github.io/papo/
 | M1 Núcleo P2P | feito: entrega com confirmação, fila offline, reconexão própria; e2e pela internet em cerca de 6 s |
 | M2 MCP e channels | feito no protocolo; ainda não validado numa sessão real do Claude Code |
 | M3 Docs e site | feito; site v2 em andamento |
-| M4 Testes completos | em andamento |
+| M4 Testes completos | feito: 146 testes, 94% das linhas |
 | M5 Release v0.1.0 · M6 Validação com duas sessões reais · M7 Empacotamento | planejado |
 
 Detalhes, com o que foi verificado e como: [status](docs/engenharia/status.md) ·

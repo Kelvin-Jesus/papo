@@ -113,12 +113,16 @@ nos últimos 75 segundos.
 ## Convite
 
 ```text
-"papo1" + base32_minúsculo_sem_padding( segredo (32 bytes) || endpoint id 1 (32 bytes) || ... )
+corpo = segredo (32 bytes) || endpoint id 1 (32 bytes) || ... || endpoint id n (32 bytes)
+"papo1" + base32_minúsculo_sem_padding( corpo || blake3(corpo)[0..4] )
 ```
 
-Contém o segredo da sala e de 0 a 4 endpoint ids que podem ser discados para entrar. A decodificação
-aceita espaços nas pontas e qualquer caixa nas letras depois do prefixo (que é sempre `papo1`), e recusa tamanhos que não sejam múltiplos de 32
-bytes (sinal de convite cortado ao copiar).
+Contém o segredo da sala e de 0 a 4 endpoint ids que podem ser discados para entrar, seguidos de 4
+bytes de verificação (os primeiros 4 bytes do BLAKE3 do corpo). Com um endpoint, o convite tem 114
+caracteres. A decodificação aceita espaços nas pontas e qualquer caixa nas letras depois do prefixo
+(que é sempre `papo1`), e recusa convites cuja verificação não confere: um convite cortado ao copiar
+falha mesmo quando o corte cai exatamente na fronteira de um endpoint (bug achado por um teste de
+propriedade antes da v0.1.0; convites gerados antes dessa mudança não valem mais).
 
 ## Limites
 

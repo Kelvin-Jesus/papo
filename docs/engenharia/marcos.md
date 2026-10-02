@@ -10,7 +10,7 @@ quando o critério passa; "funciona na minha máquina" não conta. O estado de c
 | M1 | Núcleo P2P: sala, cifra, gossip, entrega, fila | feito |
 | M2 | Servidor MCP e channels | feito no protocolo |
 | M3 | Documentação, site e harness | feito (site v2 em andamento) |
-| M4 | Testes completos | em andamento |
+| M4 | Testes completos | feito |
 | M5 | Release v0.1.0 | planejado |
 | M6 | Validação com duas sessões reais do Claude Code | planejado |
 | M7 | Empacotamento (Homebrew, Scoop, winget) | planejado |
@@ -87,7 +87,7 @@ snapshots, e2e, doctests, benchmarks, cobertura medida com limiar no CI, mutaç�
 fica acima do limiar definido no CI, e cada bug encontrado tem commit próprio e linha em
 [Problemas conhecidos](problemas-conhecidos.md).
 
-**Estado:** em andamento num branch separado.
+**Estado:** feito em 2026-10-02 e integrado na `main`: 146 testes offline, 94,3% das linhas cobertas, quatro bugs corrigidos com commit e teste próprios. Detalhes em [Status](status.md#testes-m4-2026-10-02).
 
 ## M5: release v0.1.0
 
