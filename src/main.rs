@@ -1,13 +1,14 @@
 use std::{
+    collections::BTreeMap,
     io::{BufRead, BufReader, Seek, SeekFrom},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
     time::Duration,
 };
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
-use iroh::SecretKey;
+use iroh::{EndpointId, SecretKey};
 use papo::{
     mcp::{self, Identity, Started, format_log_entry},
     net::bind_endpoint,
@@ -188,42 +189,62 @@ fn cmd_invite(profile: &str) -> Result<()> {
     let store = Store::open(profile)?;
     let data = store.profile()?;
     let me = store.secret_key()?.public();
-    // Include a few recently seen members too, so the newcomer can get in even when
-    // we are offline.
-    let mut others: Vec<(iroh::EndpointId, KnownPeer)> = store.known_peers()?.into_iter().collect();
-    others.sort_by_key(|(_, p)| std::cmp::Reverse(p.last_seen_ms));
-    let peers = std::iter::once(me).chain(others.into_iter().map(|(id, _)| id).take(3)).collect();
+    let peers = invite_peers(me, store.known_peers()?);
     let invite = Invite { secret: data.room_secret()?, peers };
     println!("{}", invite.encode());
     Ok(())
 }
 
-fn cmd_install(profile: &str, scope: Scope, print: bool) -> Result<()> {
-    Store::open(profile)?; // fail early with setup instructions if unconfigured
-    let exe = std::env::current_exe().context("locate the papo executable")?;
-    let exe = exe.to_string_lossy().into_owned();
+/// Us first, then up to three members ordered by how recently we saw them, so the
+/// newcomer can get in even when we are offline.
+fn invite_peers(me: EndpointId, known: BTreeMap<EndpointId, KnownPeer>) -> Vec<EndpointId> {
+    let mut others: Vec<(EndpointId, KnownPeer)> = known.into_iter().filter(|(id, _)| *id != me).collect();
+    others.sort_by_key(|(_, p)| std::cmp::Reverse(p.last_seen_ms));
+    std::iter::once(me).chain(others.into_iter().map(|(id, _)| id).take(3)).collect()
+}
+
+/// Arguments Claude Code passes to `papo`; the default profile stays implicit so the
+/// generated config reads cleanly.
+fn mcp_server_args(profile: &str) -> Vec<String> {
     let mut args = vec!["mcp".to_string()];
     if profile != "default" {
         args.extend(["--profile".to_string(), profile.to_string()]);
     }
+    args
+}
 
-    if print {
-        let snippet = serde_json::json!({"mcpServers": {"papo": {"command": exe, "args": args}}});
-        println!("{}", serde_json::to_string_pretty(&snippet)?);
-        return Ok(());
-    }
+fn install_snippet(exe: &str, server_args: &[String]) -> serde_json::Value {
+    serde_json::json!({"mcpServers": {"papo": {"command": exe, "args": server_args}}})
+}
 
+fn claude_add_args(scope: Scope, exe: &str, server_args: &[String]) -> Vec<String> {
     let mut cmd_args = vec![
         "mcp".to_string(),
         "add".into(),
         "--scope".into(),
         scope.as_str().into(),
         "papo".into(),
+        // Everything after `--` belongs to our command, so `--profile` is not parsed
+        // as a `claude` option.
         "--".into(),
-        exe.clone(),
+        exe.to_string(),
     ];
-    cmd_args.extend(args.iter().cloned());
-    let status = run_claude(&cmd_args);
+    cmd_args.extend(server_args.iter().cloned());
+    cmd_args
+}
+
+fn cmd_install(profile: &str, scope: Scope, print: bool) -> Result<()> {
+    Store::open(profile)?; // fail early with setup instructions if unconfigured
+    let exe = std::env::current_exe().context("locate the papo executable")?;
+    let exe = exe.to_string_lossy().into_owned();
+    let args = mcp_server_args(profile);
+
+    if print {
+        println!("{}", serde_json::to_string_pretty(&install_snippet(&exe, &args))?);
+        return Ok(());
+    }
+
+    let status = run_claude(&claude_add_args(scope, &exe, &args));
     match status {
         Ok(s) if s.success() => {
             println!("\nPronto. Abra o Claude Code nesta pasta com:\n\n  {LAUNCH}\n");
@@ -270,15 +291,17 @@ async fn start_agent(profile: String) -> Result<Started> {
     let room = data.room_secret()?;
     // Claude Code starts MCP servers in the project directory, which tells peers what
     // this agent is working on.
-    let about = data
-        .about
-        .clone()
-        .or_else(|| std::env::current_dir().ok().and_then(|d| d.file_name().map(|n| n.to_string_lossy().into_owned())));
+    let about = data.about.clone().or_else(|| std::env::current_dir().ok().and_then(|d| about_from_dir(&d)));
     let endpoint = bind_endpoint(store.secret_key()?).await?;
     let opts =
         NodeOptions { name: data.name.clone(), about, kind: PeerKind::Agent, ephemeral: false, bootstrap: vec![] };
     let node = Node::spawn(endpoint, room, opts, Some(store.clone())).await?;
     Ok(Started { node, store, profile: data, lock })
+}
+
+/// The project folder name is a good default for "what I'm working on".
+fn about_from_dir(dir: &Path) -> Option<String> {
+    dir.file_name().map(|n| n.to_string_lossy().into_owned()).filter(|s| !s.is_empty())
 }
 
 /// One-shot node with a throwaway identity, so it can run next to the MCP server that
@@ -382,4 +405,61 @@ async fn cmd_status(profile: &str, timeout: u64) -> Result<()> {
     println!("Mensagens na fila de envio: {pending}. Não lidas pelo agente: {unread}.");
     node.shutdown().await;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn id(seed: u8) -> EndpointId {
+        SecretKey::from_bytes(&[seed; 32]).public()
+    }
+
+    #[test]
+    fn invite_lists_me_first_then_the_three_most_recently_seen_members() {
+        let me = id(1);
+        let known: BTreeMap<_, _> = [(id(2), 10), (id(3), 40), (id(4), 30), (id(5), 20), (me, 99)]
+            .into_iter()
+            .map(|(peer, seen)| (peer, KnownPeer { name: None, last_seen_ms: seen }))
+            .collect();
+        assert_eq!(invite_peers(me, known), vec![me, id(3), id(4), id(5)]);
+    }
+
+    #[test]
+    fn invite_with_no_known_members_is_just_me() {
+        assert_eq!(invite_peers(id(1), BTreeMap::new()), vec![id(1)]);
+    }
+
+    #[test]
+    fn default_profile_stays_implicit_in_server_args() {
+        assert_eq!(mcp_server_args("default"), vec!["mcp"]);
+        assert_eq!(mcp_server_args("time-b"), vec!["mcp", "--profile", "time-b"]);
+    }
+
+    #[test]
+    fn claude_add_separates_our_flags_after_double_dash() {
+        let args = claude_add_args(Scope::Local, "/bin/papo", &mcp_server_args("x"));
+        assert_eq!(args, ["mcp", "add", "--scope", "local", "papo", "--", "/bin/papo", "mcp", "--profile", "x"]);
+        assert_eq!(claude_add_args(Scope::User, "p", &[])[3], "user");
+        assert_eq!(claude_add_args(Scope::Project, "p", &[])[3], "project");
+    }
+
+    #[test]
+    fn install_snippet_is_a_valid_mcp_json_entry() {
+        let snippet = install_snippet("/opt/papo", &mcp_server_args("default"));
+        assert_eq!(snippet["mcpServers"]["papo"]["command"], "/opt/papo");
+        assert_eq!(snippet["mcpServers"]["papo"]["args"], serde_json::json!(["mcp"]));
+    }
+
+    #[test]
+    fn about_defaults_to_the_folder_name() {
+        assert_eq!(about_from_dir(Path::new("/home/ana/api-pagamentos")).as_deref(), Some("api-pagamentos"));
+        assert_eq!(about_from_dir(Path::new("/")), None);
+    }
+
+    #[test]
+    fn cli_definition_is_consistent() {
+        use clap::CommandFactory;
+        Cli::command().debug_assert();
+    }
 }
