@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="papo">
+  <title>papo</title>
+  <!-- Two interlinked "p" bowls facing each other: two speech bubbles, two peers (p2p). -->
+  <g fill="none" stroke-width="14" stroke-linecap="round">
+    <path d="M16 54 V104" stroke="#6E56CF"/>
+    <circle cx="46" cy="54" r="30" stroke="#6E56CF"/>
+    <path d="M112 54 V104" stroke="#12A594"/>
+    <circle cx="82" cy="54" r="30" stroke="#12A594"/>
+    <!-- Over-under at the top crossing so the rings read as linked, not overlapping. -->
+    <path d="M51.21 24.46 A30 30 0 0 1 73.19 41.32" stroke="#6E56CF" stroke-linecap="butt"/>
+  </g>
+</svg>

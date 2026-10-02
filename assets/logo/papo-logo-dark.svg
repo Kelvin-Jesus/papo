@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 13 432 110" width="432" height="110" role="img" aria-label="papo">
+  <title>papo</title>
+  <!-- Mark: two interlinked "p" bowls facing each other (two speech bubbles, two peers). -->
+  <g fill="none" stroke-width="14" stroke-linecap="round">
+    <path d="M16 54 V104" stroke="#8E7CF0"/>
+    <circle cx="46" cy="54" r="30" stroke="#8E7CF0"/>
+    <path d="M112 54 V104" stroke="#2BC4AF"/>
+    <circle cx="82" cy="54" r="30" stroke="#2BC4AF"/>
+    <path d="M51.21 24.46 A30 30 0 0 1 73.19 41.32" stroke="#8E7CF0" stroke-linecap="butt"/>
+  </g>
+  <!-- Wordmark drawn with geometry, so it needs no font. -->
+  <g transform="translate(158 23) scale(0.62)" fill="none" stroke="#EEEDF7" stroke-width="18" stroke-linecap="round">
+    <circle cx="50" cy="50" r="41"/>
+    <path d="M9 9 V145"/>
+    <circle cx="164" cy="50" r="41"/>
+    <path d="M205 9 V91"/>
+    <circle cx="278" cy="50" r="41"/>
+    <path d="M237 9 V145"/>
+    <circle cx="392" cy="50" r="41"/>
+  </g>
+</svg>
