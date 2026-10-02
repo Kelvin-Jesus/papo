@@ -107,6 +107,52 @@ cargo bench                                                # cifra, frames e con
 
 O cargo-mutants roda semanalmente na CI (`mutants.yml`); o cargo-deny roda em todo push.
 
+## Quality gates
+
+Nada entra na `main` sem passar pelo check **`quality gate`** do workflow `ci`. Ele só fica verde se
+todos os jobs abaixo passarem; um job pulado ou cancelado também reprova.
+
+| Job na CI | O que garante | Localmente |
+| --------- | ------------- | ---------- |
+| `test (ubuntu, macos, windows)` | fmt, clippy `-D warnings` (padrão e `test-network`), todos os testes offline, benchmarks e alvos de fuzz compilando | `cargo test --features test-network` |
+| `coverage` | pelo menos 90% das linhas cobertas | `cargo llvm-cov --features test-network --summary-only` |
+| `msrv` | compila com a versão mínima do Rust declarada em `Cargo.toml` (1.91, exigida pelo iroh 1.3) | `cargo +1.91 check --all-targets --features test-network` |
+| `rustdoc` | documentação da API sem avisos (links internos quebrados reprovam) | `RUSTDOCFLAGS="-D warnings" cargo doc --no-deps` |
+| `supply-chain` | sem vulnerabilidades conhecidas, licenças e fontes permitidas (`deny.toml`) | `cargo deny check` |
+| `docs` | livro sem nenhum aviso do mdBook, zero links quebrados no site + livro, todos os diagramas Mermaid renderizando | `scripts/build-site.sh` e `python3 scripts/check-book-links.py _site` |
+| `site` | orçamento de peso (gzip: HTML até 30 KB, CSS até 15 KB, JS até 20 KB), HTML válido e Lighthouse no desktop: desempenho ≥ 90, acessibilidade ≥ 95, boas práticas ≥ 95, SEO ≥ 90, sem falha de contraste | `python3 scripts/check-site-budget.py` e `npx @lhci/cli autorun` |
+| `rules` | nenhum nome de pessoa no repositório e mensagens de commit no formato `tipo(escopo): descrição` | `scripts/check-names.sh` e `python3 scripts/check-commits.py` |
+| `secrets` | nenhum segredo em todo o histórico (gitleaks) | `gitleaks git --redact .` |
+| `lint (workflows and scripts)` | workflows válidos (actionlint) e scripts de shell sem problemas (shellcheck) | `actionlint` e `shellcheck scripts/*.sh .githooks/*` |
+
+Informativos, fora do portão: `e2e-public-network (informative)` (depende da infraestrutura da n0),
+o workflow `docker` (só roda quando arquivos de Docker ou de código mudam), `fuzz` e `mutants`
+(agendados).
+
+### Rodando tudo antes do push
+
+```sh
+scripts/quality-gate.sh           # o portão inteiro, menos Lighthouse e MSRV
+scripts/quality-gate.sh --full    # inclui o Lighthouse (precisa de Node e Chrome/Chromium)
+```
+
+O script pula, avisando, o que não estiver instalado (cargo-deny, mdbook, Node, actionlint,
+shellcheck) e termina com um resumo.
+
+### Hooks de git
+
+Uma vez por clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+- `pre-commit`: `cargo fmt --check` e a checagem de nomes (cerca de um segundo).
+- `commit-msg`: o assunto no formato `tipo(escopo): descrição`.
+- `pre-push`: clippy nas duas configurações e a suíte de testes.
+
+Em emergência, `--no-verify` pula o hook local; a CI continua barrando.
+
 ## Convenções
 
 - Código, comentários e textos lidos pelo agente (instruções do servidor, descrições e respostas das

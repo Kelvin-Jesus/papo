@@ -50,7 +50,11 @@ target/debug/papo new --name voce
 
 ## Before declaring done
 
+- [ ] `scripts/quality-gate.sh` ends with `quality gate: ok` (add `--full` when you touched `site/`).
+      It covers fmt, clippy (both configs), tests, rustdoc, cargo-deny, names, commit subjects,
+      workflows/scripts lint, the book, links and the site budget; CI adds MSRV, Lighthouse and gitleaks.
 - [ ] `cargo fmt --check`, clippy with `-D warnings` and `cargo test --features test-network` pass.
+- [ ] No person names anywhere (`scripts/check-names.sh`); commit subjects are `tipo(escopo): descrição`.
 - [ ] A bug fix comes with a test that fails without it; new behavior has a test in the matching suite.
 - [ ] Test hooks (`PAPO_TEST_*`, `test-network`) still default to production behavior.
 - [ ] Nothing in the `papo mcp` path prints to stdout (`knowledge/gotchas/stdout-is-json-rpc.md`).

@@ -30,6 +30,8 @@ PAPO_LOG=iroh_gossip=debug,iroh=info target/debug/papo status   # network diagno
 docker build --target test .             # test suite in a reproducible Linux container
 scripts/docker-smoke.sh                  # image smoke test: --version, new, MCP over stdin, profile lock
 scripts/docker-e2e.sh [--public]         # two agents in containers via a local relay (or the public one)
+scripts/quality-gate.sh [--full]         # the CI quality gate locally (--full adds Lighthouse)
+git config core.hooksPath .githooks      # once per clone: pre-commit, commit-msg and pre-push gates
 ```
 
 ## Map
@@ -67,6 +69,10 @@ scripts/docker-e2e.sh [--public]         # two agents in containers via a local 
 - One MCP server per profile (file lock). Ephemeral CLI nodes (`say`, `status`) use throwaway
   identities and never store, ack or get remembered as members.
 - The room secret never goes into Claude's MCP config, only into `~/.papo/profiles/<p>/profile.json` (0600).
+- **The `quality gate` check must be green before anything lands on main.** It is the aggregate job
+  in `.github/workflows/ci.yml`; a new blocking check is a job in that workflow added to the
+  gate's `needs:` (never a path-filtered workflow). Thresholds and their reasons:
+  `docs/engenharia/desenvolvimento.md#quality-gates`. Never lower a threshold to make a change pass.
 
 Details and evidence for each: `knowledge/gotchas/`.
 
@@ -92,6 +98,8 @@ Details and evidence for each: `knowledge/gotchas/`.
 | A decision recorded in an ADR | a new or superseding ADR in `docs/adr/` (+ `docs/adr/README.md`, `docs/SUMMARY.md`) |
 | A new domain term | `CONTEXT.md` |
 | Anything in `knowledge/` | a dated entry in `knowledge/log.md` |
+| A CI gate or threshold (`ci.yml`, `.lighthouserc.json`, `scripts/check-*`) | the gates table in `docs/contribuindo.md`, the reasons in `docs/engenharia/desenvolvimento.md`, `knowledge/playbooks/pass-the-quality-gate.md` |
+| `rust-version` in `Cargo.toml` | every "Rust 1.xx+" in README, `docs/`, `wiki/` and `site/` |
 
 ## Conventions
 

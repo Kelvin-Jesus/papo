@@ -1,6 +1,7 @@
 # Log
 
 ## 2026-10-02
+* **Creation**: `playbooks/pass-the-quality-gate` - the required `quality gate` check (aggregate of every gating job in `ci.yml`), thresholds with the 2026-10-02 baseline, `scripts/quality-gate.sh` and the `.githooks/`. MSRV corrected to 1.91 (iroh 1.3's floor, confirmed by building with rust:1.91 and failing with 1.90).
 * **Update**: `apis/cli`, `apis/channel-notification`, `apis/mcp-tools/{history,status,wait}`, `protocol/{wire-frames,profile-layout}`, `playbooks/run-public-e2e` - examples use the role profiles `voce` and `colega` instead of person names, per the maintainer's no-names rule (`design/brand-book.md`).
 * **Creation**: `playbooks/run-in-docker` - building, smoke-testing and running papo in Docker, the MCP server from a container and the two-agent e2e via a local iroh-relay. Sourced from `Dockerfile`, `docker/`, `scripts/docker-*.sh` and `.github/workflows/docker.yml`.
 * **Creation**: `playbooks/test-the-code` - test suites, coverage (94% of lines), fuzzing, mutation testing and supply-chain checks. Sourced from `tests/`, `fuzz/`, `benches/`, `deny.toml` and `.github/workflows/{ci,fuzz,mutants}.yml`.

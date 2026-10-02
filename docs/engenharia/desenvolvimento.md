@@ -142,8 +142,47 @@ Os testes de integração do nó criam perfis em pastas temporárias com `Store:
 `Store::open_at`, sem tocar em variáveis de ambiente (que são compartilhadas entre as threads de
 teste). Os testes do binário usam `PAPO_HOME` temporário em cada processo filho.
 
-A suíte está crescendo (propriedade, fuzzing, contrato do MCP, CLI com snapshots, benchmarks,
-cobertura e mutação) num branch separado; esta seção muda quando ele for integrado.
+A lista completa de suítes (propriedade, robustez, contrato do MCP, CLI com snapshots, e2e local,
+fuzzing, benchmarks, cobertura e mutação) está em [Contribuindo](../contribuindo.md#testes).
+
+## Quality gates
+
+O workflow `ci` (`.github/workflows/ci.yml`) reúne todos os checks que barram uma mudança, e o job
+agregado **`quality gate`** depende de todos eles (`needs:`). É esse o único check que a `main`
+exige. A tabela do que cada job garante está em
+[Contribuindo](../contribuindo.md#quality-gates); aqui fica o porquê de cada escolha.
+
+- **Um portão só.** Checks obrigatórios por job quebram toda vez que um job é renomeado ou criado; o
+  agregado concentra a regra num lugar. Ele roda com `if: always()` e reprova se qualquer dependência
+  terminou em `failure`, `cancelled` ou `skipped`, para nada passar por falha de outro job.
+- **Novo check bloqueante** entra como job no `ci.yml` e na lista `needs:` do `quality-gate`.
+  Workflows com filtro de caminho (como o `docker`) não servem como check obrigatório, porque não
+  rodam em todo PR.
+- **MSRV com uma fonte só.** O job `msrv` lê o `rust-version` do `Cargo.toml` e compila com essa
+  versão. Hoje é 1.91 porque o iroh 1.3 e as dependências dele exigem 1.91 (com 1.90 o cargo recusa:
+  `iroh@1.3.0 requires rustc 1.91`).
+- **Limites do Lighthouse** vêm de uma medição local em 2026-10-02 (preset desktop, mediana de 3
+  execuções): desempenho 100, acessibilidade 100, boas práticas 100, SEO 100, LCP de cerca de 0,4 s e
+  CLS 0. Os mínimos (90, 95, 95, 90) deixam folga para a variação do runner; contraste de cor é
+  assertiva própria e reprova sozinha. Os relatórios ficam no artefato `lighthouse` de cada execução.
+  Configuração em `.lighthouserc.json`.
+- **Orçamento do site** (`scripts/check-site-budget.py`) usa gzip nível 9, os mesmos limites da
+  pesquisa de UI/UX (seção 5.7) e um teto de 160 KB para a fonte. Medido em 2026-10-02: HTML 7,9 KB,
+  CSS 7,1 KB, JS 11,8 KB, fonte 139 KB.
+- **HTML válido** com o html-validate (regras recomendadas, `.htmlvalidate.json`); a única exceção é
+  aceitar o `<!doctype html>` em minúsculas.
+- **Nomes de pessoas** (`scripts/check-names.sh`) é a regra do mantenedor virando check: lista de
+  nomes proibidos em palavra inteira, em qualquer arquivo versionado. "Kelvin" fica fora da lista de
+  propósito, porque é o autor e o dono do repositório.
+- **Commits** (`scripts/check-commits.py`): num PR, confere `base..head`; num push na `main`, os
+  commits novos do push. O histórico inteiro passava quando o check foi criado.
+- **Segredos**: gitleaks varre o histórico inteiro (`fetch-depth: 0`) com saída redigida.
+- **Workflows e scripts**: actionlint (que também passa o shellcheck nos blocos `run:`) e shellcheck
+  em `scripts/*.sh` e `.githooks/*`.
+
+Localmente, `scripts/quality-gate.sh` roda o equivalente de tudo isso (menos o MSRV) e os hooks em
+`.githooks/` cobrem o mais rápido a cada commit e push. A configuração do check obrigatório no GitHub
+é feita uma vez, pelo mantenedor, em Settings > Rules.
 
 ## Documentação
 
