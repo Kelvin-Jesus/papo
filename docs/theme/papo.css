@@ -1,5 +1,36 @@
-/* papo brand accents for mdBook (loaded via `additional-css` in book.toml).
-   Palette: violet #6E56CF / #8E7CF0, teal #12A594 / #2BC4AF, ink #1C1A2E. */
+/* papo brand for mdBook (loaded via `additional-css` in book.toml).
+   Same palette and type as the site (design/tokens.css): violet is your side, teal the
+   colleague's, deep violet-biased ink for dark themes. Recursive is served by the site at
+   /papo/fonts/ on GitHub Pages; elsewhere the book falls back to its default fonts. */
+
+@font-face {
+    font-family: "Recursive";
+    src: url("/papo/fonts/recursive-latin.woff2") format("woff2");
+    font-weight: 300 1000;
+    font-display: swap;
+}
+
+:root {
+    --mono-font: "Recursive", "Source Code Pro", Consolas, "Ubuntu Mono", Menlo, monospace;
+}
+
+html {
+    font-family: "Recursive", "Open Sans", sans-serif;
+    font-variation-settings: "CASL" 0, "MONO" 0;
+}
+
+code,
+pre {
+    font-variation-settings: "CASL" 0, "MONO" 1;
+}
+
+.content h1,
+.content h2,
+.menu-title {
+    font-variation-settings: "CASL" 1, "MONO" 0;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
 
 .light,
 .rust,
@@ -14,7 +45,24 @@ html:not(.js) {
 .coal,
 .navy,
 .ayu {
-    --links: #a89bf7;
+    --bg: #0d0c17;
+    --sidebar-bg: #121120;
+    --sidebar-non-existant: #5e5b78;
+    --sidebar-spacer: #2c2a44;
+    --theme-popup-bg: #181728;
+    --theme-popup-border: #2c2a44;
+    --quote-bg: #181728;
+    --quote-border: #2c2a44;
+    --table-border-color: #2c2a44;
+    --table-header-bg: #201e34;
+    --table-alternate-bg: #121120;
+    --searchbar-bg: #181728;
+    --searchbar-border-color: #2c2a44;
+    --code-bg: #181728;
+    --fg: #eeedf7;
+    --sidebar-fg: #b4b1cc;
+    --links: #8e7cf0;
+    --inline-code-color: #eeedf7;
     --sidebar-active: #2bc4af;
     --search-mark-bg: #4a3f8f;
     --sidebar-header-border-color: #8e7cf0;
@@ -22,14 +70,13 @@ html:not(.js) {
 
 @media (prefers-color-scheme: dark) {
     html:not(.js) {
-        --links: #a89bf7;
+        --links: #8e7cf0;
         --sidebar-active: #2bc4af;
         --search-mark-bg: #4a3f8f;
         --sidebar-header-border-color: #8e7cf0;
     }
 }
 
-/* Headings get a hint of the brand without fighting the theme's text color. */
 .content h1 {
     border-bottom: 3px solid var(--sidebar-header-border-color);
     padding-bottom: 0.2em;
