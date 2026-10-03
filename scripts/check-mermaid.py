@@ -12,6 +12,7 @@ Needs Chromium (or Chrome) and internet access (Mermaid comes from jsdelivr).
 import functools
 import html
 import http.server
+import os
 import json
 import re
 import shutil
@@ -68,20 +69,24 @@ def main() -> int:
         server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         url = f"http://127.0.0.1:{server.server_address[1]}/harness.html"
+        args = [browser, "--headless=new", "--disable-gpu", "--virtual-time-budget=30000", "--dump-dom", url]
+        # Ubuntu 24.04 runners restrict unprivileged user namespaces through AppArmor, so Chrome's
+        # sandbox cannot start there. The page is our own local harness, so CI runs it unsandboxed.
+        if os.environ.get("CI"):
+            args.insert(1, "--no-sandbox")
         try:
-            dom = subprocess.run(
-                [browser, "--headless=new", "--disable-gpu", "--virtual-time-budget=30000", "--dump-dom", url],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            ).stdout
+            run = subprocess.run(args, capture_output=True, text=True, timeout=120)
         finally:
             server.shutdown()
+        dom = run.stdout
 
     match = re.search(r'<textarea id="out">(.*?)</textarea>', dom, re.S)
     raw = html.unescape(match.group(1)) if match else "pending"
     if raw == "pending":
-        print("the harness did not finish (no internet to load Mermaid?)", file=sys.stderr)
+        print("the harness did not finish (no internet to load Mermaid, or the browser failed)", file=sys.stderr)
+        print(f"browser exit code {run.returncode}; last stderr lines:", file=sys.stderr)
+        for line in run.stderr.strip().splitlines()[-15:]:
+            print(f"  {line}", file=sys.stderr)
         return 1
     failures = 0
     for name, result in json.loads(raw):
