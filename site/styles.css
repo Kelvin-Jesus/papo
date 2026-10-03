@@ -120,6 +120,8 @@ code { font-family: var(--fonte-mono); font-variation-settings: "CASL" 0, "MONO"
 .botao:hover { background: var(--superficie-2); color: var(--tinta); }
 .botao:active, .cmd:active, .ctl:active { transform: scale(0.97); }
 .botao--fantasma { background: transparent; }
+.botao--voce { background: var(--voce); border-color: var(--voce); color: var(--fundo); }
+.botao--voce:hover { background: #a597f5; color: var(--fundo); }
 .botao--humano { background: var(--humano); border-color: var(--humano); color: var(--sobre-humano); }
 .botao--humano:hover { background: #ffd36b; color: var(--sobre-humano); }
 .cmd { display: inline-flex; align-items: center; gap: 14px; min-height: 52px; max-width: 100%; padding: 6px 6px 6px 16px; border-radius: var(--raio-m); border: 1px solid var(--linha-forte); background: var(--superficie); color: var(--tinta); cursor: pointer; text-align: left; box-shadow: var(--borda-luz); transition: transform var(--dur-tap) ease, border-color var(--dur-ui) ease; }

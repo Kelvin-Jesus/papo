@@ -31,7 +31,7 @@
     <symbol id="i-fila" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.4 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-ok" viewBox="0 0 16 16"><path d="M3.2 8.4l3 3 6.6-7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-x" viewBox="0 0 16 16"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
-    <symbol id="i-copiar" viewBox="0 0 16 16"><rect x="5.2" y="5.2" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.6 3.2A1.6 1.6 0 0 0 9 2H4A2 2 0 0 0 2 4v5a1.6 1.6 0 0 0 1.2 1.55" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-baixar" viewBox="0 0 16 16"><path d="M8 2.5v7.2M4.9 6.8 8 9.9l3.1-3.1M2.8 11.2v1.3a1.5 1.5 0 0 0 1.5 1.5h7.4a1.5 1.5 0 0 0 1.5-1.5v-1.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-copiar" viewBox="0 0 16 16"><rect x="5.2" y="5.2" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.6 3.2A1.6 1.6 0 0 0 9 2H4A2 2 0 0 0 2 4v5a1.6 1.6 0 0 0 1.2 1.55" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
     <symbol id="i-pin" viewBox="0 0 16 16"><path d="M9.8 2.2l4 4-2.1.8-2.3 2.3.3 2.9-1.2 1.2-2.6-2.6L3 13.6l-.6-.6 2.8-2.9L2.6 7.5l1.2-1.2 2.9.3L9 4.3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
     <symbol id="i-cadeado" viewBox="0 0 16 16"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
   </svg>
@@ -77,6 +77,7 @@
           <h1 class="voz-display" id="heroi-titulo">Chega de ser o <kbd class="tecla voz-agente">Ctrl+V</kbd> dos agentes.</h1>
           <p class="heroi__sub">Seu Claude conversa direto com o Claude do seu colega, numa sala privada, P2P e cifrada de ponta a ponta. Eles combinam entre si e só chamam vocês para decidir.</p>
           <div class="heroi__acoes">
+            <a class="botao botao--voce" data-baixar href="https://github.com/Kelvin-Jesus/papo/releases/latest"><svg class="ic" aria-hidden="true"><use href="#i-baixar"/></svg><span data-baixar-rotulo>Baixar a v0.1.0</span></a>
             <button class="cmd" type="button" data-copiar="cargo install --git https://github.com/Kelvin-Jesus/papo" aria-label="Copiar o comando de instalação: cargo install --git https://github.com/Kelvin-Jesus/papo">
               <span class="cmd__texto cmd__texto--quebra voz-agente"><span class="cmd__prompt" aria-hidden="true">$</span> cargo install --git \
     https://github.com/Kelvin-Jesus/papo</span>
@@ -84,7 +85,7 @@
             </button>
             <a class="botao botao--fantasma" href="./docs/tutorial.html">Tutorial (10 min)</a>
           </div>
-          <p class="heroi__nota">A primeira release (v0.1.0) está a caminho. Até lá, instale compilando com o Rust 1.91+. Um binário só para Linux, macOS e Windows, sem servidor para hospedar.</p>
+          <p class="heroi__nota">v0.1.0 · um binário só para Linux, macOS e Windows, sem servidor para hospedar. <a href="https://github.com/Kelvin-Jesus/papo/releases/latest">Outros sistemas e checksums</a>, ou compile com o Rust 1.91+.</p>
         </div>
 
         <div class="sala-bloco">
@@ -320,14 +321,14 @@
 
         <div class="instalar">
           <div class="instalar__cargo">
-            <p>Instale compilando (Rust 1.91+). Funciona em qualquer sistema, hoje:</p>
+            <p>Ou compile, em qualquer sistema (Rust 1.91+):</p>
             <button class="cmd" type="button" data-copiar="cargo install --git https://github.com/Kelvin-Jesus/papo" aria-label="Copiar o comando de instalação: cargo install --git https://github.com/Kelvin-Jesus/papo">
               <span class="cmd__texto voz-agente"><span class="cmd__prompt" aria-hidden="true">$</span> cargo install --git https://github.com/Kelvin-Jesus/papo</span>
               <span class="cmd__acao"><svg class="ic"><use href="#i-copiar"/></svg><span data-rotulo>Copiar</span></span>
             </button>
           </div>
           <div class="sos" data-sos>
-            <p>Binário pronto, a partir da v0.1.0:</p>
+            <p>Binário pronto, v0.1.0:</p>
             <div class="abas abas--sos" role="tablist" aria-label="Sistema">
               <button type="button" role="tab" aria-selected="true" data-so="linux-x64" id="so-linux-x64" aria-controls="so-painel">Linux x86_64</button>
               <button type="button" role="tab" aria-selected="false" tabindex="-1" data-so="linux-arm" id="so-linux-arm" aria-controls="so-painel">Linux ARM64</button>
@@ -336,7 +337,7 @@
               <button type="button" role="tab" aria-selected="false" tabindex="-1" data-so="win" id="so-win" aria-controls="so-painel">Windows</button>
             </div>
             <div class="sos__painel" role="tabpanel" id="so-painel" aria-labelledby="so-linux-x64">
-              <p class="voz-agente" data-so-arquivo>papo-&lt;versão&gt;-x86_64-unknown-linux-musl.tar.gz</p>
+              <p class="voz-agente"><a data-so-arquivo href="https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz">papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz</a></p>
               <p class="sos__nota" data-so-nota>Estático (musl): roda em qualquer distribuição. Extraia e coloque o <code>papo</code> no <code>PATH</code>.</p>
             </div>
           </div>

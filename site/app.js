@@ -830,22 +830,34 @@
     const painel = $(".sos__painel", sos);
     const linux = "Estático (musl): roda em qualquer distribuição. Extraia e coloque o papo no PATH.";
     const mac = "Extraia e coloque o papo no PATH. Se o macOS bloquear o arquivo baixado: xattr -d com.apple.quarantine ./papo";
+    // One place to bump on each release (release assets carry the version in their names).
+    const VERSAO = "v0.1.0";
+    const arquivoDe = (alvo, ext) => `papo-${VERSAO}-${alvo}.${ext}`;
+    const urlDe = (nome) => `https://github.com/Kelvin-Jesus/papo/releases/download/${VERSAO}/${nome}`;
     const dados = {
-      "linux-x64": ["papo-<versão>-x86_64-unknown-linux-musl.tar.gz", linux],
-      "linux-arm": ["papo-<versão>-aarch64-unknown-linux-musl.tar.gz", linux],
-      "mac-arm": ["papo-<versão>-aarch64-apple-darwin.tar.gz", mac],
-      "mac-x64": ["papo-<versão>-x86_64-apple-darwin.tar.gz", mac],
-      win: ["papo-<versão>-x86_64-pc-windows-msvc.zip", "Extraia o papo.exe para uma pasta no PATH. No Windows on ARM, ele roda por emulação."],
+      "linux-x64": [arquivoDe("x86_64-unknown-linux-musl", "tar.gz"), linux, "Linux x86_64"],
+      "linux-arm": [arquivoDe("aarch64-unknown-linux-musl", "tar.gz"), linux, "Linux ARM64"],
+      "mac-arm": [arquivoDe("aarch64-apple-darwin", "tar.gz"), mac, "macOS (Apple Silicon)"],
+      "mac-x64": [arquivoDe("x86_64-apple-darwin", "tar.gz"), mac, "macOS (Intel)"],
+      win: [arquivoDe("x86_64-pc-windows-msvc", "zip"), "Extraia o papo.exe para uma pasta no PATH. No Windows on ARM, ele roda por emulação.", "Windows"],
     };
     const escolher = abas($(".abas--sos", sos), (b) => {
       const [f, n] = dados[b.dataset.so];
       arquivo.textContent = f;
+      arquivo.href = urlDe(f);
       nota.textContent = n;
       painel.setAttribute("aria-labelledby", b.id);
     });
     const ua = (navigator.userAgentData?.platform || navigator.platform || "") + " " + navigator.userAgent;
     const so = /Win/i.test(ua) ? "win" : /Mac/i.test(ua) ? "mac-arm" : /aarch64|arm64/i.test(ua) ? "linux-arm" : "linux-x64";
     escolher($(`[data-so="${so}"]`, sos));
+    // The hero button downloads straight for the detected system; without JS it opens the release page.
+    const baixar = $("[data-baixar]");
+    if (baixar) {
+      const [f, , nome] = dados[so];
+      baixar.href = urlDe(f);
+      $("[data-baixar-rotulo]", baixar).textContent = `Baixar para ${nome}`;
+    }
   }
 
   /* --------------------------------------------------- prompt chips */
