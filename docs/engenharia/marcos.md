@@ -11,7 +11,7 @@ quando o critério passa; "funciona na minha máquina" não conta. O estado de c
 | M2 | Servidor MCP e channels | feito no protocolo |
 | M3 | Documentação, site e harness | feito (site v2 em andamento) |
 | M4 | Testes completos | feito |
-| M5 | Release v0.1.0 | planejado |
+| M5 | Release v0.1.0 | feito |
 | M6 | Validação com duas sessões reais do Claude Code | em parte |
 | M7 | Empacotamento (Homebrew, Scoop, winget) | planejado |
 
@@ -98,6 +98,12 @@ fica acima do limiar definido no CI, e cada bug encontrado tem commit próprio e
 3. Tag `v0.1.0` publicada com o OK do mantenedor; o workflow `release` gera os 5 arquivos e os SHA-256.
 4. Cada arquivo baixado da página de Releases confere com `sha256sum -c`, e `papo --version` roda em
    Linux, macOS e Windows.
+
+**Estado:** feito em 2026-10-02. Tag `v0.1.0` com as notas como corpo da release; os 5 arquivos
+conferem com os SHA-256, os binários de Linux, macOS e Windows são do tipo certo, o de Linux x86_64
+rodou uma troca real pela internet, e a imagem do GHCR baixa sem login nas duas arquiteturas. Rodar
+os binários de macOS e Windows numa máquina desses sistemas fica para quem tiver uma (o CI já roda
+toda a suíte de testes neles).
 
 ## M6: validação com duas sessões reais
 

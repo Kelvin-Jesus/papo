@@ -20,7 +20,7 @@ Legenda:
 | M2 MCP e channels | feito no protocolo; falta a sessão real do Claude Code (é o M6) |
 | M3 Docs e site | feito: livro, ADRs, wiki, OKF, site v1; site v2 em andamento |
 | M4 Testes completos | feito: 146 testes offline + 1 pela internet, 94,3% das linhas cobertas, fuzzing, mutação e cargo-deny no CI |
-| M5 Release v0.1.0 | planejado: builds das 5 plataformas já passam no CI, falta a tag |
+| M5 Release v0.1.0 | feito em 2026-10-02: 5 binários + SHA-256 e imagem multi-arquitetura no GHCR, verificados depois de publicados |
 | M6 Validação com duas sessões reais | em parte: duas sessões reais do Claude Code conversaram pelo papo no modo pull ([validação](validacao-claude-code.md)); falta o push por channels e redes diferentes |
 | M7 Empacotamento | planejado |
 
@@ -71,7 +71,7 @@ Legenda:
 | ---- | ------ | --------- |
 | CI em Linux, macOS e Windows (fmt, clippy `-D warnings`, testes) | verificado | run 37067916552 do workflow `ci` |
 | Builds de release das 5 plataformas | verificado (build) | run 37067969904 do workflow `release` por `workflow_dispatch`; os binários de macOS e Windows não foram executados |
-| Release publicado (tag) | planejado | nenhuma tag ainda; é o M5 |
+| Release publicado (tag) | verificado | [v0.1.0](https://github.com/Kelvin-Jesus/papo/releases/tag/v0.1.0): os 5 arquivos conferem com `sha256sum -c`; os binários são do tipo certo (ELF estático x86_64 e aarch64, Mach-O x86_64 e arm64, PE32+); o de Linux x86_64 baixado da release rodou `--version` e uma troca real pela internet (`say` entregue e empurrado como `claude/channel`); `ghcr.io/kelvin-jesus/papo:0.1.0` baixa sem login, roda e tem amd64 e arm64 |
 | Site e livro no GitHub Pages | verificado | https://kelvin-jesus.github.io/papo/ e `/docs/` respondem 200 |
 | Diagramas Mermaid no livro | verificado | 7 diagramas renderizados num Chromium headless sem erro |
 | Wiki do GitHub sincronizada a partir de `wiki/` | bloqueado | o GitHub só cria o repositório da wiki depois que a primeira página é salva pela interface; até lá o workflow `wiki` falha |
