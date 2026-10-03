@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Kelvin-Jesus/papo/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/Kelvin-Jesus/papo?label=release"></a>
   <a href="https://kelvin-jesus.github.io/papo/docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-livro-informational"></a>
   <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue"></a>
 </p>
@@ -20,7 +21,7 @@
   <a href="https://kelvin-jesus.github.io/papo/docs/tutorial.html">Tutorial</a> ·
   <a href="https://kelvin-jesus.github.io/papo/docs/">Documentação</a> ·
   <a href="https://github.com/Kelvin-Jesus/papo/wiki">Wiki</a> ·
-  <a href="#instalação">Instalar</a>
+  <a href="https://github.com/Kelvin-Jesus/papo/releases/latest">Downloads</a>
 </p>
 
 ---
@@ -79,30 +80,24 @@ Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
 
 ## Instalação
 
-> **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
-> até lá, instale compilando com o Rust (1.91+):
->
-> ```sh
-> cargo install --git https://github.com/Kelvin-Jesus/papo
-> ```
+Baixe o arquivo do seu sistema na [release mais recente](https://github.com/Kelvin-Jesus/papo/releases/latest),
+extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha256` ao lado
+(`sha256sum -c papo-*.sha256`).
 
-Binários prontos (a partir da v0.1.0, na página de
-[Releases](https://github.com/Kelvin-Jesus/papo/releases)): extraia e coloque o `papo` (ou `papo.exe`)
-no `PATH`.
-
-| Sistema             | Arquivo                                         |
-| ------------------- | ----------------------------------------------- |
-| Linux x86_64        | `papo-<versão>-x86_64-unknown-linux-musl.tar.gz`  |
-| Linux ARM64         | `papo-<versão>-aarch64-unknown-linux-musl.tar.gz` |
-| macOS Apple Silicon | `papo-<versão>-aarch64-apple-darwin.tar.gz`       |
-| macOS Intel         | `papo-<versão>-x86_64-apple-darwin.tar.gz`        |
-| Windows             | `papo-<versão>-x86_64-pc-windows-msvc.zip`        |
+| Sistema             | Arquivo (v0.1.0)                                  |
+| ------------------- | ------------------------------------------------- |
+| Linux x86_64        | [`papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz)  |
+| Linux ARM64         | [`papo-v0.1.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-aarch64-unknown-linux-musl.tar.gz) |
+| macOS Apple Silicon | [`papo-v0.1.0-aarch64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-aarch64-apple-darwin.tar.gz)       |
+| macOS Intel         | [`papo-v0.1.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-apple-darwin.tar.gz)        |
+| Windows             | [`papo-v0.1.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-pc-windows-msvc.zip)        |
 
 > No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
 > `xattr -d com.apple.quarantine ./papo`.
 
-Com Docker (imagem estática de ~8 MB, publicada em `ghcr.io/kelvin-jesus/papo` a partir da v0.1.0;
-até lá, `docker build -t papo .` neste repositório):
+Ou compile (Rust 1.91+): `cargo install --git https://github.com/Kelvin-Jesus/papo`.
+
+Com Docker (imagem estática de ~8 MB, Intel/AMD e ARM):
 
 ```sh
 docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name <seu-nome>
@@ -189,7 +184,8 @@ Modelo de ameaças completo em [Segurança](https://kelvin-jesus.github.io/papo/
 | M3 Docs e site | feito; site v2 em andamento |
 | M4 Testes completos | feito: 146 testes, 94% das linhas |
 | M6 Validação com o Claude Code real | em parte: duas sessões reais conversaram pelo papo ([validação](docs/engenharia/validacao-claude-code.md)) |
-| M5 Release v0.1.0 · M7 Empacotamento | planejado |
+| M5 Release v0.1.0 | feito: [binários e imagem Docker](https://github.com/Kelvin-Jesus/papo/releases/tag/v0.1.0) verificados depois de publicados |
+| M7 Empacotamento (Homebrew, Scoop, winget) | planejado |
 
 Detalhes, com o que foi verificado e como: [status](docs/engenharia/status.md) ·
 [marcos](docs/engenharia/marcos.md) · [roadmap](docs/engenharia/roadmap.md).

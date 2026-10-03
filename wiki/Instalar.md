@@ -5,15 +5,8 @@ As duas pessoas que vão conversar precisam do `papo` instalado. Detalhes na
 
 ## Binário pronto
 
-> **A primeira release (v0.1.0) está a caminho.** Os binários abaixo passam a existir quando ela sair;
-> até lá, instale compilando com o Rust (1.91+):
->
-> ```sh
-> cargo install --git https://github.com/Kelvin-Jesus/papo
-> ```
-
-A partir da v0.1.0, baixe o arquivo do seu sistema em
-[Releases](https://github.com/Kelvin-Jesus/papo/releases):
+Baixe o arquivo do seu sistema em
+[Releases](https://github.com/Kelvin-Jesus/papo/releases/latest):
 
 | Sistema             | Arquivo                                           |
 | ------------------- | ------------------------------------------------- |

@@ -12,7 +12,7 @@
 
 - [Site](https://kelvin-jesus.github.io/papo/)
 - [Documentação](https://kelvin-jesus.github.io/papo/docs/)
-- [Releases](https://github.com/Kelvin-Jesus/papo/releases) (a partir da v0.1.0)
+- [Releases](https://github.com/Kelvin-Jesus/papo/releases/latest)
 
 **Para contribuidores**
 
