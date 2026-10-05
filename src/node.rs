@@ -72,7 +72,15 @@ pub struct NodeOptions {
 #[derive(Debug, Clone)]
 pub enum NodeEvent {
     Message(Envelope),
-    Delivered { id: String, by: String },
+    Delivered {
+        id: String,
+        by: String,
+    },
+    /// A member left (`closed`: they closed the room for everyone).
+    Left {
+        name: String,
+        closed: bool,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,6 +122,8 @@ struct State {
     outbox: Vec<Envelope>,
     seen: HashSet<String>,
     ack_waiters: HashMap<String, oneshot::Sender<String>>,
+    /// Members that said goodbye: never redialed, even if the invite still lists them.
+    left: HashSet<EndpointId>,
 }
 
 struct Inner {
@@ -134,6 +144,8 @@ struct Inner {
     /// Set by a graceful `shutdown`: the subscription ending and broadcasts failing are
     /// then expected, not something to warn the user about.
     closing: AtomicBool,
+    /// A member closed the room: no more dialing or heartbeats.
+    closed: AtomicBool,
 }
 
 pub struct Node {
@@ -171,6 +183,7 @@ impl Node {
             state.seen.extend(state.inbox.iter().map(|m| m.id.clone()));
         }
 
+        let closed = store.as_ref().is_some_and(|s| s.is_closed());
         let mut bootstrap: Vec<EndpointId> = opts.bootstrap.clone();
         bootstrap.extend(state.known.keys().copied());
         bootstrap.retain(|id| *id != me);
@@ -198,6 +211,7 @@ impl Node {
             neighbors_changed: Notify::new(),
             subscribed: AtomicBool::new(true),
             closing: AtomicBool::new(false),
+            closed: AtomicBool::new(closed),
         });
 
         let tasks = vec![
@@ -399,6 +413,22 @@ impl Node {
         self.inner.lock().neighbors.len()
     }
 
+    /// Tells the room this identity is going away. `as_node` is the identity members know
+    /// us by (a one-shot CLI node has a throwaway one). Sent twice, since gossip is
+    /// best-effort; receivers handle it idempotently.
+    pub async fn announce_leave(&self, as_node: EndpointId, close: bool) {
+        let (node, name) = (as_node.to_string(), self.inner.opts.name.clone());
+        let frame = if close { Frame::Close { node, name } } else { Frame::Bye { node, name } };
+        for _ in 0..2 {
+            self.inner.broadcast(&frame).await;
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.inner.closed.load(Ordering::Relaxed)
+    }
+
     pub async fn shutdown(&self) {
         // Router shutdown closes the endpoint, which lets peers see us leave promptly
         // instead of waiting for a QUIC idle timeout.
@@ -463,6 +493,9 @@ impl Inner {
             Event::NeighborUp(id) => {
                 self.lock().neighbors.insert(id);
                 self.neighbors_changed.notify_waiters();
+                if self.is_closed() {
+                    return self.announce_closed().await;
+                }
                 // Introduce ourselves and hand over anything that waited for this peer.
                 self.broadcast(&Frame::Hello(self.presence())).await;
                 self.flush_outbox().await;
@@ -484,10 +517,25 @@ impl Inner {
             Frame::Hello(presence) => self.handle_hello(presence).await,
             Frame::Msg(env) => self.handle_msg(env).await,
             Frame::Ack { id, by } => self.handle_ack(id, by),
+            Frame::Bye { node, name } => self.handle_leave(&node, name, false),
+            Frame::Close { node, name } => self.handle_leave(&node, name, true),
         }
     }
 
+    /// A closed room has no members left to ask: whoever shows up is told it is gone, so
+    /// members who were offline when it closed learn about it when they come back.
+    async fn announce_closed(&self) {
+        if self.opts.ephemeral {
+            return;
+        }
+        let frame = Frame::Close { node: self.me.to_string(), name: self.opts.name.clone() };
+        self.broadcast(&frame).await;
+    }
+
     async fn handle_hello(&self, presence: Presence) {
+        if self.is_closed() {
+            return self.announce_closed().await;
+        }
         let Ok(node) = presence.node.parse::<EndpointId>() else {
             return;
         };
@@ -498,6 +546,7 @@ impl Inner {
         let first_time = {
             let mut state = self.lock();
             let first_time = !state.peers.contains_key(&node);
+            state.left.remove(&node);
             if !presence.ephemeral && !self.opts.ephemeral {
                 let entry = state.known.entry(node).or_default();
                 let changed = entry.name.as_deref() != Some(presence.name.as_str());
@@ -568,10 +617,68 @@ impl Inner {
         }
     }
 
+    fn handle_leave(&self, node: &str, name: String, closed: bool) {
+        let Ok(node) = node.parse::<EndpointId>() else {
+            return;
+        };
+        if node == self.me || validate_name(&name).is_err() || (closed && self.is_closed()) {
+            return;
+        }
+        if self.opts.ephemeral {
+            // One-shot CLI nodes keep no state, but still need to report a closed room.
+            if closed {
+                self.closed.store(true, Ordering::Relaxed);
+                let _ = self.events.send(NodeEvent::Left { name, closed });
+            }
+            return;
+        }
+        {
+            let mut state = self.lock();
+            let was_known = state.known.contains_key(&node) || state.peers.contains_key(&node);
+            if closed {
+                let all: Vec<_> = state.known.keys().chain(state.peers.keys()).copied().collect();
+                state.left.extend(all);
+                state.left.insert(node);
+                state.known.clear();
+                state.peers.clear();
+                state.neighbors.clear();
+            } else {
+                state.left.insert(node);
+                state.known.remove(&node);
+                state.peers.remove(&node);
+                state.neighbors.remove(&node);
+                // Nobody is left to ack what was addressed to them.
+                let before = state.outbox.len();
+                state.outbox.retain(|m| m.to.as_deref().is_none_or(|to| !to.eq_ignore_ascii_case(&name)));
+                if state.outbox.len() != before {
+                    self.persist_outbox(&state);
+                }
+            }
+            if !was_known && !closed {
+                return; // duplicate Bye
+            }
+            self.persist_known(&state);
+        }
+        if closed {
+            self.closed.store(true, Ordering::Relaxed);
+            if let Some(store) = &self.store
+                && let Err(e) = store.mark_closed()
+            {
+                eprintln!("papo: could not mark the room as closed: {e:#}");
+            }
+        }
+        self.log(LogEntry::Left { name: name.clone(), closed, ts: now_ms() });
+        let _ = self.events.send(NodeEvent::Left { name, closed });
+    }
+
+    fn is_closed(&self) -> bool {
+        self.closed.load(Ordering::Relaxed)
+    }
+
     fn rejoin_candidates(&self) -> Vec<EndpointId> {
         let state = self.lock();
         let mut ids: Vec<EndpointId> = self.bootstrap.iter().chain(state.known.keys()).copied().collect();
-        ids.retain(|id| *id != self.me);
+        ids.retain(|id| *id != self.me && !state.left.contains(id));
         ids.sort();
         ids.dedup();
         ids
@@ -639,7 +746,7 @@ async fn maintenance_loop(inner: Arc<Inner>) {
     let mut next_heartbeat = tokio::time::Instant::now() + HEARTBEAT;
     loop {
         interval.tick().await;
-        if inner.closing.load(Ordering::Relaxed) {
+        if inner.closing.load(Ordering::Relaxed) || inner.closed.load(Ordering::Relaxed) {
             return;
         }
         let now = tokio::time::Instant::now();

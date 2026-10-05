@@ -16,6 +16,8 @@ Commands:
   mcp      Servidor MCP via stdio. Quem executa isto é o Claude Code
   say      Manda uma mensagem sua (humano) para a sala
   log      Mostra a conversa da sala. Use -f para acompanhar ao vivo
+  leave    Sai da sala: avisa os membros, que param de te procurar, e apaga este perfil
+  close    Fecha a sala para todos: ninguém mais se conecta nela. Também apaga este perfil
   status   Testa a conexão: entra na sala e lista quem está online
   help     Print this message or the help of the given subcommand(s)
 

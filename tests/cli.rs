@@ -340,3 +340,40 @@ mod install_with_claude {
         );
     }
 }
+
+#[test]
+fn leave_with_nobody_to_tell_deletes_the_profile() {
+    let home = tempfile::tempdir().unwrap();
+    new_room(home.path(), "voce");
+    papo(home.path()).args(["leave", "--yes"]).assert().success().stdout(predicate::str::contains("apagado"));
+    assert!(!profile_dir(home.path(), "default").exists());
+    papo(home.path()).arg("invite").assert().failure();
+}
+
+#[test]
+fn a_closed_profile_is_removed_by_close_too() {
+    let home = tempfile::tempdir().unwrap();
+    new_room(home.path(), "voce");
+    Store::open_at(profile_dir(home.path(), "default")).unwrap().mark_closed().unwrap();
+    papo(home.path()).arg("mcp").write_stdin("").assert().success(); // a closed profile still starts: it serves the tombstone
+    papo(home.path()).args(["close", "--yes"]).assert().success();
+    assert!(!profile_dir(home.path(), "default").exists());
+}
+
+#[test]
+fn the_owner_leaving_with_nobody_online_keeps_only_a_tombstone() {
+    let home = tempfile::tempdir().unwrap();
+    new_room(home.path(), "voce");
+    let dir = profile_dir(home.path(), "default");
+    let store = Store::open_at(dir.clone()).unwrap();
+    let colega = iroh::SecretKey::generate().public();
+    store.save_known_peers(&[(colega, Default::default())].into()).unwrap();
+
+    papo(home.path()).args(["leave", "--yes"]).assert().success().stdout(predicate::str::contains("lápide"));
+    assert!(store.is_closed());
+    assert!(dir.join("profile.json").exists() && dir.join("secret.key").exists());
+    assert!(!dir.join("peers.json").exists(), "members are forgotten");
+
+    papo(home.path()).args(["leave", "--yes"]).assert().success();
+    assert!(!dir.exists(), "leaving again removes the tombstone");
+}

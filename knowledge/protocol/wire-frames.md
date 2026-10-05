@@ -1,7 +1,7 @@
 ---
 type: Wire Protocol
 title: Wire frames
-description: JSON frames (hello, msg, ack) tagged by "t", sealed with the room key and broadcast to every member over the gossip topic.
+description: JSON frames (hello, msg, ack, bye, close) tagged by "t", sealed with the room key and broadcast to every member over the gossip topic.
 resource: https://github.com/Kelvin-Jesus/papo/blob/main/src/proto.rs
 tags: [papo, protocol]
 timestamp: 2026-10-02T00:00:00Z
@@ -39,6 +39,8 @@ Every frame is serialized as JSON, [sealed](/protocol/sealing.md) and broadcast 
 | `body` | string | At most 48 KiB (`MAX_BODY_BYTES`). |
 
 `ack`: `{"t": "ack", "id": <msg id>, "by": <acker name>}`. Semantics in [delivery](/concepts/delivery.md).
+
+`bye` / `close`: `{"t": "bye"|"close", "node": <real endpoint id>, "name": <member name>}`. `bye`: receivers forget that endpoint (peers, known, outbox items addressed to it) and never redial it until it sends a hello again. `close`: receivers forget every member, write the `closed` marker and stop dialing. A node whose profile has the `closed` marker (the tombstone, or a member that got `close`) answers `close` to every `NeighborUp`/`hello`, so members that were offline learn the room is gone. Sent twice by `papo leave` / `papo close`; handling is idempotent. Older peers drop both (unknown variant).
 
 ## Limits and compatibility
 

@@ -102,6 +102,17 @@ pub enum Frame {
         id: String,
         by: String,
     },
+    /// A member leaves for good: everyone forgets that endpoint and stops redialing it.
+    Bye {
+        node: String,
+        name: String,
+    },
+    /// A member closes the room for everybody: receivers forget all members and never
+    /// reconnect, until the user runs `papo leave`.
+    Close {
+        node: String,
+        name: String,
+    },
 }
 
 pub fn encode(room: &RoomSecret, frame: &Frame) -> Result<Bytes> {

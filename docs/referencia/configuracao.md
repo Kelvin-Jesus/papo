@@ -29,6 +29,7 @@ Cada perfil fica em `$PAPO_HOME/profiles/<perfil>/`:
 | `inbox.json` | Mensagens recebidas que o agente ainda não leu. |
 | `outbox.json` | Mensagens enviadas que ainda não tiveram confirmação de recebimento. |
 | `log.jsonl` | Histórico da conversa, uma entrada JSON por linha. É o que `papo log` e a ferramenta `history` mostram. |
+| `closed` | Marcador: um membro fechou a sala; o servidor MCP sobe em modo lápide (só responde "sala fechada"). |
 | `lock` | Trava mantida pelo servidor MCP que está usando o perfil. |
 
 No Unix, a pasta do perfil é criada com permissão `0700`. `inbox.json`, `outbox.json` e `peers.json`

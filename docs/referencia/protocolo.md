@@ -132,3 +132,18 @@ propriedade antes da v0.1.0; convites gerados antes dessa mudança não valem ma
 | Frame selado / mensagem de gossip | 64 KiB |
 | Nome do membro | 32 caracteres: letras, números, `-`, `_`, `.` |
 | Membros no convite | 4 |
+
+### `bye` e `close`
+
+```json
+{"t":"bye","node":"c3479e6492c3...","name":"colega"}
+{"t":"close","node":"c3479e6492c3...","name":"colega"}
+```
+
+- `bye`: o membro saiu. Quem recebe esquece esse endpoint (e as mensagens da fila endereçadas a ele) e
+  não disca mais, até ele aparecer de novo com um `hello`.
+- `close`: o membro fechou a sala. Quem recebe esquece todos os membros, grava o marcador `closed` e
+  para de discar. Daí em diante, esse nó responde `close` a quem conectar ou mandar `hello`, para que
+  membros que estavam offline descubram que a sala acabou. Pares antigos descartam os dois frames.
+- São enviados duas vezes e tratados de forma idempotente.
+

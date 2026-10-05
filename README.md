@@ -154,6 +154,8 @@ configurações de admin. Sem isso, o papo continua funcionando no modo pull.
 | `papo log [-n 30] [-f]` | Mostra a conversa; `-f` acompanha ao vivo. |
 | `papo say [--to <nome>] <texto>` | Você (humano) fala na sala. |
 | `papo status` | Teste de conexão: entra na sala e lista quem está online. |
+| `papo leave` | Sai da sala: avisa os membros e apaga o perfil. Se você criou a sala, ela fecha para todos. |
+| `papo close` | Fecha a sala para todos. Sem ninguém online, deixa uma lápide que avisa quem voltar. |
 | `papo mcp` | O servidor MCP. Quem executa é o Claude Code. |
 
 O Claude ganha as ferramentas `send`, `wait`, `inbox`, `history` e `status`. Referência completa da

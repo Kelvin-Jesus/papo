@@ -10,6 +10,7 @@
 //!   inbox.json     received messages the agent has not consumed yet
 //!   outbox.json    sent messages still waiting for an ack
 //!   log.jsonl      append-only conversation log (what `papo log` shows)
+//!   closed         marker: a member closed the room (absent normally)
 //!   lock           held by the running MCP server for this profile
 //! ```
 //!
@@ -41,6 +42,9 @@ pub struct Profile {
     /// in a committed `.mcp.json`.
     pub room: String,
     pub created_ms: u64,
+    /// Created the room (`papo new`). When the owner leaves, the room is closed for everyone.
+    #[serde(default)]
+    pub owner: bool,
 }
 
 impl Profile {
@@ -60,9 +64,23 @@ pub struct KnownPeer {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "ev", rename_all = "snake_case")]
 pub enum LogEntry {
-    In { msg: Envelope },
-    Out { msg: Envelope },
-    Delivered { id: String, by: String, ts: u64 },
+    In {
+        msg: Envelope,
+    },
+    Out {
+        msg: Envelope,
+    },
+    Delivered {
+        id: String,
+        by: String,
+        ts: u64,
+    },
+    /// A member left the room (`closed`: they closed it for everyone).
+    Left {
+        name: String,
+        closed: bool,
+        ts: u64,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -138,6 +156,30 @@ impl Store {
             let _ = fs::remove_file(store.path(stale));
         }
         Ok(store)
+    }
+
+    /// Marks the room as closed by a member: the MCP server refuses to start and nobody is
+    /// redialed. `papo leave` removes the profile.
+    pub fn mark_closed(&self) -> Result<()> {
+        write_atomic(&self.path("closed"), b"1")
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.path("closed").exists()
+    }
+
+    /// Leaves only what is needed to answer "this room is closed" to members who come back
+    /// later: identity and room secret. History, queues and members are dropped.
+    pub fn into_tombstone(&self) -> Result<()> {
+        for stale in ["peers.json", "inbox.json", "outbox.json", "log.jsonl"] {
+            let _ = fs::remove_file(self.path(stale));
+        }
+        self.mark_closed()
+    }
+
+    /// Deletes the whole profile (identity, room secret, history). Irreversible.
+    pub fn destroy(self) -> Result<()> {
+        fs::remove_dir_all(&self.dir).with_context(|| format!("remove {}", self.dir.display()))
     }
 
     pub fn dir(&self) -> &Path {

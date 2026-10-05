@@ -11,7 +11,13 @@ use papo::{
 };
 
 fn profile(name: &str) -> Profile {
-    Profile { name: name.into(), about: Some("api".into()), room: RoomSecret::generate().to_base32(), created_ms: 1 }
+    Profile {
+        name: name.into(),
+        about: Some("api".into()),
+        room: RoomSecret::generate().to_base32(),
+        created_ms: 1,
+        owner: false,
+    }
 }
 
 fn new_store(dir: &Path) -> Store {

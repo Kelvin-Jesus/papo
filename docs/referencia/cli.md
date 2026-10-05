@@ -148,3 +148,33 @@ junto com o servidor MCP do mesmo perfil.
 
 Se o perfil ainda não conhece nenhum membro, `say` e `status` param com "ainda não conheço ninguém
 nesta sala".
+
+## `papo leave`
+
+Sai da sala: avisa os membros online (eles esquecem você e param de te procurar) e apaga o perfil
+(identidade, segredo da sala e histórico).
+
+```text
+papo leave [--yes]
+```
+
+Se você criou a sala (`papo new`), sair equivale a `papo close`: a sala acaba para todos.
+
+Feche o Claude Code que usa o perfil antes: o comando precisa do lock do perfil. Sem `--yes`, pergunta
+antes de apagar. Se ninguém estiver online, quem estava offline continua te procurando até rodar
+`papo leave` também.
+
+## `papo close`
+
+Fecha a sala para todos: quem estiver online marca a sala como fechada e nunca mais disca ninguém; o
+servidor MCP deles passa a só responder "sala fechada" até rodarem `papo leave`. Também apaga o seu perfil.
+
+```text
+papo close [--yes]
+```
+
+Se ninguém estiver online no momento de fechar, o perfil não é apagado: fica só uma **lápide**
+(identidade e segredo da sala; histórico, fila e membros somem). Quando você abrir o Claude Code ali, o
+`papo` responde "sala fechada" a quem voltar a conectar, e quem estava offline descobre que a sala não
+existe mais (e, por sua vez, também passa a avisar os outros). Rode `papo leave` de novo para apagar a
+lápide. Num perfil fechado, `send` falha e `status` diz que a sala acabou.

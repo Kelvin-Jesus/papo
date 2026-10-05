@@ -91,6 +91,17 @@ enum Cmd {
         #[arg(short, long)]
         follow: bool,
     },
+    /// Sai da sala: avisa os membros, que param de te procurar, e apaga este perfil.
+    Leave {
+        /// Não pergunta antes de apagar.
+        #[arg(long)]
+        yes: bool,
+    },
+    /// Fecha a sala para todos: ninguém mais se conecta nela. Também apaga este perfil.
+    Close {
+        #[arg(long)]
+        yes: bool,
+    },
     /// Testa a conexão: entra na sala e lista quem está online.
     Status {
         /// Quantos segundos esperar por alguém.
@@ -144,6 +155,8 @@ async fn run(cli: Cli) -> Result<()> {
         Cmd::Mcp => cmd_mcp(profile).await,
         Cmd::Say { to, text } => cmd_say(&profile, to, text.join(" ")).await,
         Cmd::Log { lines, follow } => cmd_log(&profile, lines, follow).await,
+        Cmd::Leave { yes } => cmd_leave(&profile, yes, false).await,
+        Cmd::Close { yes } => cmd_leave(&profile, yes, true).await,
         Cmd::Status { timeout } => cmd_status(&profile, timeout).await,
     }
 }
@@ -151,7 +164,7 @@ async fn run(cli: Cli) -> Result<()> {
 fn cmd_new(profile: &str, name: String, about: Option<String>, force: bool) -> Result<()> {
     validate_name(&name)?;
     let secret = RoomSecret::generate();
-    let data = Profile { name: name.clone(), about, room: secret.to_base32(), created_ms: now_ms() };
+    let data = Profile { name: name.clone(), about, room: secret.to_base32(), created_ms: now_ms(), owner: true };
     let store = Store::create(profile, &data, force)?;
     let me = store.secret_key()?.public();
     let invite = Invite { secret: secret.clone(), peers: vec![me] };
@@ -166,7 +179,8 @@ fn cmd_new(profile: &str, name: String, about: Option<String>, force: bool) -> R
 fn cmd_join(profile: &str, code: &str, name: String, about: Option<String>, force: bool) -> Result<()> {
     validate_name(&name)?;
     let invite = Invite::decode(code)?;
-    let data = Profile { name: name.clone(), about, room: invite.secret.to_base32(), created_ms: now_ms() };
+    let data =
+        Profile { name: name.clone(), about, room: invite.secret.to_base32(), created_ms: now_ms(), owner: false };
     let store = Store::create(profile, &data, force)?;
     let me = store.secret_key()?.public();
     let known = invite.peers.iter().filter(|id| **id != me).map(|id| (*id, KnownPeer::default())).collect();
@@ -300,6 +314,11 @@ async fn cmd_mcp(profile: String) -> Result<()> {
 
 async fn start_agent(profile: String) -> Result<Started> {
     let store = Store::open(&profile)?;
+    if store.is_closed() {
+        bail!(
+            "a sala foi fechada por um membro. Rode `papo leave` para limpar este perfil e `papo join` para entrar em outra."
+        );
+    }
     let lock = store.lock()?;
     let data = store.profile()?;
     let room = data.room_secret()?;
@@ -345,6 +364,56 @@ async fn cmd_say(profile: &str, to: Option<String>, text: String) -> Result<()> 
         SendOutcome::Queued { id } => println!("enviada (msg {id}), mas ninguém confirmou o recebimento ainda"),
     }
     node.shutdown().await;
+    Ok(())
+}
+
+/// Leaving needs the profile's lock: with Claude Code still running, its MCP server would
+/// keep redialing and recreate files we are about to delete.
+async fn cmd_leave(profile: &str, yes: bool, close: bool) -> Result<()> {
+    let store = Store::open(profile)?;
+    let _lock = store.lock().context("feche o Claude Code que usa este perfil antes de sair da sala")?;
+    let data = store.profile()?;
+    let verb = if close { "fechar a sala para todos" } else { "sair da sala" };
+    if !yes {
+        eprint!("Isso vai {verb} e apagar o perfil {profile} (identidade e histórico). Continuar? [s/N] ");
+        let mut answer = String::new();
+        std::io::stdin().read_line(&mut answer)?;
+        if !matches!(answer.trim().to_lowercase().as_str(), "s" | "sim" | "y" | "yes") {
+            bail!("cancelado");
+        }
+    }
+    // The owner leaving ends the room for everybody.
+    let close = close || data.owner;
+    let known = store.known_peers()?;
+    let mut delivered = false;
+    if store.is_closed() || known.is_empty() {
+        println!("Ninguém a avisar.");
+    } else {
+        let me = store.secret_key()?.public();
+        let node = ephemeral_node(&store, &data).await?;
+        eprintln!("avisando a sala…");
+        if node.wait_for_neighbor(Duration::from_secs(15)).await {
+            node.announce_leave(me, close).await;
+            delivered = true;
+            println!("Avisei os membros online.");
+        } else if !close {
+            println!(
+                "Ninguém online agora: quem estiver offline continua te procurando até rodar `papo leave` por lá também."
+            );
+        }
+        node.shutdown().await;
+    }
+    drop(_lock);
+    if close && !delivered && !store.is_closed() && !known.is_empty() {
+        // Nobody heard us: keep a tombstone so members who were offline learn, when they
+        // reconnect to this identity, that the room no longer exists.
+        store.into_tombstone()?;
+        println!("Sala encerrada. Mantive só uma lápide no perfil {profile}: abra o Claude Code (papo mcp) para ela");
+        println!("avisar quem estava offline. Quando não precisar mais, rode `papo leave` de novo para apagar tudo.");
+        return Ok(());
+    }
+    store.destroy()?;
+    println!("Perfil {profile} apagado. Você saiu da sala.");
     Ok(())
 }
 

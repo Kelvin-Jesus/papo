@@ -53,7 +53,8 @@ impl LocalNet {
         if let Ok(store) = Store::open_at(dir.clone()) {
             return store;
         }
-        let profile = Profile { name: name.into(), about: None, room: self.room.to_base32(), created_ms: now_ms() };
+        let profile =
+            Profile { name: name.into(), about: None, room: self.room.to_base32(), created_ms: now_ms(), owner: false };
         Store::create_at(dir, &profile).unwrap()
     }
 

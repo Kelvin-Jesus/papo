@@ -21,6 +21,7 @@ Root: `$PAPO_HOME/profiles/<profile>/` (default `~/.papo/profiles/default/`). On
 | `inbox.json` | Array of envelopes not yet consumed by the agent | Atomic, rewritten on every change. |
 | `outbox.json` | Array of envelopes not yet acked | Atomic, rewritten on every change. |
 | `log.jsonl` | One JSON entry per line, tagged by `ev` | Append-only; each line is one `write_all` with O_APPEND so `papo mcp` and `papo say` never interleave. A torn last line is ignored on read. |
+| `closed` | Empty marker | Written when a member closes the room; the node starts in tombstone mode (no dialing, answers `close` to whoever connects), `send` fails. |
 | `lock` | Empty | Exclusive `File::try_lock` held by the running MCP server. |
 
 `log.jsonl` entries:

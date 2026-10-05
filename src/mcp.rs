@@ -373,6 +373,9 @@ fn str_arg(args: &Value, key: &str) -> Option<String> {
 
 async fn tool_send(ctx: &Ctx, args: &Value) -> Result<String> {
     let message = str_arg(args, "message").ok_or_else(|| anyhow!("`message` is required"))?;
+    if ctx.node.is_closed() {
+        return Err(anyhow!(CLOSED));
+    }
     if let Err(count) = ctx.sends.lock().unwrap().try_acquire(Instant::now()) {
         return Err(anyhow!(
             "rate limit: {count} messages sent in the last 10 minutes. This usually means the agents are stuck in a loop. \
@@ -444,6 +447,8 @@ fn tool_history(ctx: &Ctx, args: &Value) -> Result<String> {
     Ok(log[start..].iter().map(|e| format_log_entry(e, me)).collect::<Vec<_>>().join("\n"))
 }
 
+const CLOSED: &str = "This room was closed by a member and no longer exists. Nothing can be sent or received. Tell your user to run `papo leave` to clean up this profile.";
+
 fn tool_status(ctx: &Ctx) -> String {
     let peers = ctx.node.peers();
     let mut lines = vec![format!(
@@ -454,6 +459,10 @@ fn tool_status(ctx: &Ctx) -> String {
     )];
     if !ctx.node.is_healthy() {
         lines.push(UNHEALTHY.into());
+    }
+    if ctx.node.is_closed() {
+        lines.push(CLOSED.into());
+        return lines.join("\n");
     }
     if peers.iter().all(|p| p.ephemeral) {
         lines.push("No room members known yet. Share an invite (`papo invite`) with your colleague.".into());
@@ -516,6 +525,8 @@ pub fn format_log_entry(entry: &LogEntry, me: &str) -> String {
             msg.body
         ),
         LogEntry::Delivered { id, by, ts } => format!("[{}] delivered {id} to {by}", local_time(*ts)),
+        LogEntry::Left { name, closed: false, ts } => format!("[{}] {name} left the room", local_time(*ts)),
+        LogEntry::Left { name, closed: true, ts } => format!("[{}] {name} closed the room", local_time(*ts)),
     }
 }
 
@@ -561,6 +572,14 @@ async fn channel_pump(mut ready: Ready, mut initialized: watch::Receiver<bool>, 
         match events.recv().await {
             Ok(NodeEvent::Message(msg)) => push(&out, &msg, &mut pushed),
             Ok(NodeEvent::Delivered { .. }) => {}
+            Ok(NodeEvent::Left { name, closed }) => {
+                let what =
+                    if closed { "closed the room; nobody will receive further messages" } else { "left the room" };
+                out.notify(
+                    CHANNEL_METHOD,
+                    json!({"content": format!("{name} {what}."), "meta": {"from": "papo", "sender_kind": "system"}}),
+                );
+            }
             Err(broadcast::error::RecvError::Lagged(_)) => {
                 for msg in ctx.node.unread() {
                     push(&out, &msg, &mut pushed);

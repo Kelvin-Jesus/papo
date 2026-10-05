@@ -366,3 +366,49 @@ async fn ephemeral_nodes_ignore_messages_and_are_not_remembered() {
     // It announced itself as ephemeral and human.
     assert!(frames.iter().any(|f| matches!(f, Frame::Hello(p) if p.ephemeral && p.kind == PeerKind::Human)));
 }
+
+#[tokio::test]
+async fn a_member_who_says_bye_is_forgotten_and_not_redialed() {
+    let net = LocalNet::new().await;
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(voce.wait_for_neighbor(STEP).await);
+    eventually("voce knows colega", || voce.peers().iter().any(|p| p.name.as_deref() == Some("colega"))).await;
+
+    colega.announce_leave(colega.id(), false).await;
+
+    eventually("voce forgot colega", || voce.peers().is_empty()).await;
+    assert!(net.store("voce").known_peers().unwrap().is_empty(), "no longer remembered on disk");
+    assert!(!voce.is_closed());
+    let log = net.store("voce").read_log().unwrap();
+    assert!(log.iter().any(|e| matches!(e, LogEntry::Left { name, closed: false, .. } if name == "colega")));
+}
+
+#[tokio::test]
+async fn closing_the_room_stops_the_other_side_for_good() {
+    let net = LocalNet::new().await;
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(voce.wait_for_neighbor(STEP).await);
+    eventually("voce knows colega", || !voce.peers().is_empty()).await;
+
+    colega.announce_leave(colega.id(), true).await;
+
+    eventually("room closed", || voce.is_closed()).await;
+    assert!(voce.peers().is_empty());
+    assert!(net.store("voce").is_closed(), "closed marker survives a restart");
+}
+
+#[tokio::test]
+async fn a_member_who_was_offline_learns_the_room_is_gone_from_the_tombstone() {
+    let net = LocalNet::new().await;
+    net.store("voce").mark_closed().unwrap(); // what `papo close` leaves when nobody was online
+    let voce = net.agent("voce", vec![]).await;
+    assert!(voce.is_closed());
+
+    let colega = net.agent("colega", vec![voce.id()]).await;
+
+    eventually("colega learns the room closed", || colega.is_closed()).await;
+    assert!(net.store("colega").is_closed(), "and keeps that across restarts");
+    assert!(colega.peers().is_empty());
+}

@@ -24,6 +24,9 @@ Global option: `--profile <name>` (env `PAPO_PROFILE`, default `default`). Error
 | `log` | `-n/--lines <N>` (default 30), `-f/--follow` | Prints the last N log entries; `--follow` polls the file every 500 ms. |
 | `status` | `--timeout <secs>` (default 20) | Ephemeral node that looks for members, then lists peers with online state and about text, plus queued/unread counts from disk. |
 
+| `leave` | `--yes` | Needs the profile lock. Ephemeral node broadcasts `Bye` (twice) as the real endpoint id, then deletes the profile dir. |
+| `close` | `--yes` | Same, but broadcasts `Close`: receivers forget everyone and write the `closed` marker. The room owner (`Profile.owner`, set by `new`) leaving counts as `close`. If no neighbor answered, `into_tombstone` keeps only `profile.json`, `secret.key` and `closed`; a second `leave` deletes it. |
+
 `say` and `status` refuse to run when the profile knows no peers yet. Launch command printed after setup: `claude --dangerously-load-development-channels server:papo`.
 
 # Examples
