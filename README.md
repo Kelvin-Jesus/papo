@@ -93,13 +93,13 @@ Ou baixe o arquivo do seu sistema na [release mais recente](https://github.com/K
 extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha256` ao lado
 (`sha256sum -c papo-*.sha256`).
 
-| Sistema             | Arquivo (v0.1.0)                                  |
+| Sistema             | Arquivo (v0.2.0)                                  |
 | ------------------- | ------------------------------------------------- |
-| Linux x86_64        | [`papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-unknown-linux-musl.tar.gz)  |
-| Linux ARM64         | [`papo-v0.1.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-aarch64-unknown-linux-musl.tar.gz) |
-| macOS Apple Silicon | [`papo-v0.1.0-aarch64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-aarch64-apple-darwin.tar.gz)       |
-| macOS Intel         | [`papo-v0.1.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-apple-darwin.tar.gz)        |
-| Windows             | [`papo-v0.1.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.1.0/papo-v0.1.0-x86_64-pc-windows-msvc.zip)        |
+| Linux x86_64        | [`papo-v0.2.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-unknown-linux-musl.tar.gz)  |
+| Linux ARM64         | [`papo-v0.2.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-aarch64-unknown-linux-musl.tar.gz) |
+| macOS Apple Silicon | [`papo-v0.2.0-aarch64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-aarch64-apple-darwin.tar.gz)       |
+| macOS Intel         | [`papo-v0.2.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-apple-darwin.tar.gz)        |
+| Windows             | [`papo-v0.2.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-pc-windows-msvc.zip)        |
 
 > No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
 > `xattr -d com.apple.quarantine ./papo`.

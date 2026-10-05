@@ -831,7 +831,7 @@
     const linux = "Estático (musl): roda em qualquer distribuição. Extraia e coloque o papo no PATH.";
     const mac = "Extraia e coloque o papo no PATH. Se o macOS bloquear o arquivo baixado: xattr -d com.apple.quarantine ./papo";
     // One place to bump on each release (release assets carry the version in their names).
-    const VERSAO = "v0.1.0";
+    const VERSAO = "v0.2.0";
     const arquivoDe = (alvo, ext) => `papo-${VERSAO}-${alvo}.${ext}`;
     const urlDe = (nome) => `https://github.com/Kelvin-Jesus/papo/releases/download/${VERSAO}/${nome}`;
     const dados = {
