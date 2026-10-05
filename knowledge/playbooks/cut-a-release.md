@@ -21,6 +21,8 @@ The `release` workflow builds on tag push (`v*`) or manual dispatch and publishe
 
 Each archive is `papo-<tag>-<target>` containing the binary, `README.md` and `LICENSE`, plus a `.sha256` file.
 
+`scripts/install.sh` (the `curl | sh` installer in the README) builds these names itself and resolves the latest tag by following the `/releases/latest` redirect. Changing the archive naming, the `<dir>/papo` layout inside the tarball or the `.sha256` format breaks it; after a release, smoke it with `sh scripts/install.sh --dir "$(mktemp -d)"`.
+
 # Examples
 
 ```sh

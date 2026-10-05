@@ -11,6 +11,26 @@ dele instalado, cada uma na sua máquina.
 - Acesso à internet. Redes que bloqueiam UDP também funcionam, porque o tráfego cai para um relay via
   HTTPS.
 
+## Script de instalação (Linux e macOS)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh
+```
+
+O script detecta o sistema e a arquitetura (inclusive Apple Silicon num terminal sob Rosetta), baixa o
+arquivo da última release, confere o `.sha256` e instala o `papo` em `~/.local/bin`, sem `sudo`. Funciona
+com `curl` ou `wget`. Opções, depois de `sh -s --`:
+
+| Opção | Efeito |
+| ----- | ------ |
+| `--dir <diretório>` | Instala em outro lugar (ex.: `/usr/local/bin`, aí com `sudo sh`). |
+| `--version <vX.Y.Z>` | Instala uma versão específica em vez da última. |
+
+Se o diretório não estiver no `PATH`, o script avisa e mostra a linha para adicionar.
+
+Também dá para pedir ao seu agente que instale e configure tudo: o README tem um
+[prompt pronto e as instruções que ele segue](https://github.com/Kelvin-Jesus/papo#deixando-o-seu-agente-instalar).
+
 ## Binário pronto
 
 Baixe o arquivo do seu sistema na página de

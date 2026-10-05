@@ -80,7 +80,16 @@ Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
 
 ## Instalação
 
-Baixe o arquivo do seu sistema na [release mais recente](https://github.com/Kelvin-Jesus/papo/releases/latest),
+Linux e macOS, num comando só (baixa a última release, confere o `.sha256` e instala em
+`~/.local/bin`, sem sudo):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh
+```
+
+Para outro diretório ou outra versão: `… | sh -s -- --dir /usr/local/bin --version v0.1.0`.
+
+Ou baixe o arquivo do seu sistema na [release mais recente](https://github.com/Kelvin-Jesus/papo/releases/latest),
 extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha256` ao lado
 (`sha256sum -c papo-*.sha256`).
 
@@ -105,6 +114,53 @@ docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name <seu-nom
 
 O servidor MCP também roda em container. Detalhes no
 [guia de Docker](https://kelvin-jesus.github.io/papo/docs/guias/docker.html).
+
+### Deixando o seu agente instalar
+
+Cole isto no Claude Code (ou em outro agente) da máquina onde o papo vai rodar:
+
+> Instala e configura o papo nesta máquina seguindo a seção "Instruções para o agente" de
+> https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/README.md
+
+#### Instruções para o agente
+
+Se você é um agente instalando o papo para o seu usuário, siga os passos em ordem. Onde está escrito
+"pergunte", pergunte: não invente nome nem convite.
+
+1. **Já está instalado?** Rode `papo --version`. Se responder, vá para o passo 3 (ou rode o passo 2
+   para atualizar).
+2. **Instale o binário.**
+   - Linux e macOS: `curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh`.
+     Instala em `~/.local/bin` sem sudo; não use sudo sem perguntar. Se o script avisar que o diretório
+     não está no `PATH`, use o caminho completo (`~/.local/bin/papo`) nesta sessão e pergunte antes de
+     editar o arquivo de inicialização do shell.
+   - Windows (PowerShell): a última tag é o fim da URL para onde
+     `https://github.com/Kelvin-Jesus/papo/releases/latest` redireciona. Baixe
+     `papo-<tag>-x86_64-pc-windows-msvc.zip` e o `.zip.sha256` de
+     `https://github.com/Kelvin-Jesus/papo/releases/download/<tag>/`, compare com
+     `(Get-FileHash <zip> -Algorithm SHA256).Hash`, extraia, ponha o `papo.exe` em
+     `%LOCALAPPDATA%\Programs\papo` e adicione essa pasta ao `PATH` do usuário. Windows on ARM usa o
+     mesmo binário, por emulação.
+   - Plataforma sem binário pronto: `cargo install --git https://github.com/Kelvin-Jesus/papo`
+     (Rust 1.91+).
+
+   Confirme com `papo --version`.
+3. **Pergunte** se o usuário vai criar uma sala ou entrar numa com um convite, e qual nome usar na
+   sala (até 32 caracteres: letras, dígitos, `-`, `_` e `.`).
+   - Criar: `papo new --name <nome>`. Mostre o convite (`papo1...`) ao usuário e diga para mandá-lo ao
+     colega por um canal privado.
+   - Entrar: `papo join <convite> --name <nome>`.
+
+   O convite é o segredo da sala: não grave em arquivo do projeto, commit, issue ou log. Se o comando
+   disser que o perfil já existe, pare e pergunte: `--force` troca a sala atual pela nova, e
+   `--profile <outro>` mantém as duas (aí use o mesmo `--profile` nos passos seguintes).
+4. **Registre no Claude Code**, dentro da pasta do projeto em que o usuário vai trabalhar:
+   `papo install`. Se o `claude` não estiver no `PATH`, o comando imprime o `claude mcp add` para rodar
+   à mão.
+5. **Peça ao usuário para reabrir o Claude Code** nessa pasta com
+   `claude --dangerously-load-development-channels server:papo`. Você não consegue fazer isso por ele:
+   o servidor MCP só é carregado numa sessão nova.
+6. Depois disso, `papo status` mostra se o colega está online.
 
 ## Primeiros passos
 

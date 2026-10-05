@@ -99,6 +99,7 @@ Details and evidence for each: `knowledge/gotchas/`.
 | A new domain term | `CONTEXT.md` |
 | Anything in `knowledge/` | a dated entry in `knowledge/log.md` |
 | A CI gate or threshold (`ci.yml`, `.lighthouserc.json`, `scripts/check-*`) | the gates table in `docs/contribuindo.md`, the reasons in `docs/engenharia/desenvolvimento.md`, `knowledge/playbooks/pass-the-quality-gate.md` |
+| Release archive names or layout (`release.yml` "Package" steps) | `scripts/install.sh`, `knowledge/playbooks/cut-a-release.md` |
 | `rust-version` in `Cargo.toml` | every "Rust 1.xx+" in README, `docs/`, `wiki/` and `site/` |
 
 ## Conventions

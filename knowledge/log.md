@@ -1,6 +1,7 @@
 # Log
 
 ## 2026-10-05
+* **Update**: `playbooks/cut-a-release` - `scripts/install.sh` depends on the archive naming, layout and `.sha256` format; smoke it after each release.
 * **Update**: `apis/cli`, `protocol/*` - owner leaving closes the room; with nobody online a tombstone profile is kept and answers `close` to returning members (`Profile.owner`, `Store::into_tombstone`).
 * **Update**: `apis/cli`, `protocol/wire-frames`, `protocol/profile-layout` - `papo leave`/`papo close`, frames `Bye`/`Close` and the `closed` marker file.
 

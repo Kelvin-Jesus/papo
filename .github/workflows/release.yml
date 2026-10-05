@@ -51,6 +51,7 @@ jobs:
         if: ${{ !matrix.zig }}
         run: cargo build --release --locked --target ${{ matrix.target }}
 
+      # scripts/install.sh downloads these exact names; rename there too.
       - name: Package (unix)
         if: runner.os != 'Windows'
         shell: bash

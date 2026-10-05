@@ -26,6 +26,7 @@ Full reference: `knowledge/playbooks/cut-a-release.md`. Workflow: `.github/workf
    gh release view vX.Y.Z -R Kelvin-Jesus/papo --json assets -q '.assets[].name'
    ```
    Expected archives: `papo-vX.Y.Z-{x86_64,aarch64}-unknown-linux-musl.tar.gz`, `papo-vX.Y.Z-{x86_64,aarch64}-apple-darwin.tar.gz`, `papo-vX.Y.Z-x86_64-pc-windows-msvc.zip`.
-7. Optionally smoke-test the Linux asset: download, `tar xzf`, `./papo --version`.
+7. Smoke-test the installer against the new release: `sh scripts/install.sh --dir "$(mktemp -d)"` must
+   print the new version (it resolves the latest tag and checks the `.sha256`).
 
 Dry run without publishing: `gh workflow run release --ref main -R Kelvin-Jesus/papo`, then `gh run download <id>`.
