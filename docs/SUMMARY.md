@@ -47,7 +47,8 @@
 - [Desenvolvimento](engenharia/desenvolvimento.md)
 - [Validação com o Claude Code](engenharia/validacao-claude-code.md)
 - [Notas de release]()
-  - [v0.1.0 (rascunho)](releases/v0.1.0.md)
+  - [v0.2.0](releases/v0.2.0.md)
+  - [v0.1.0](releases/v0.1.0.md)
 
 # Para contribuidores e agentes
 
