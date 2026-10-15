@@ -106,3 +106,20 @@ test('without a live papo server for this session the band stays out of the way'
   expect(await ui.find({ type: 'Text', text: /codando/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('on Windows the profiles are found under USERPROFILE', async ($, on) => {
+  const read: string[] = []
+  mock.env(on, { USERPROFILE: 'C:/Users/voce' })
+  mock.clock(on, { now: NOW })
+  on('session.cwd', async () => ({ value: '/projeto' }))
+  on('fs.list', async (_$, e) => {
+    read.push(e.path)
+    return { value: [] }
+  })
+  on('fs.write', async () => ({ value: undefined }))
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+
+  await $.session.start({ cwd: '/projeto', surface: 'terminal', isInteractive: true })
+  // Off Windows the kit reads `C:/` as relative and prefixes the plugin's folder.
+  expect(read.some(p => p.endsWith('C:/Users/voce/.papo/profiles'))).toBe(true)
+})

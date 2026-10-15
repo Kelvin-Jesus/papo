@@ -38,7 +38,10 @@ const S = {
  */
 async function poll($: EngineInterface): Promise<boolean> {
   const now = await $.clock.now()
-  const base = (await $.env.get('PAPO_HOME')) ?? `${await $.env.get('HOME')}/.papo`
+  // papo's own rule: PAPO_HOME, else the user's home. Windows has no HOME
+  // (outside Git Bash); its home is USERPROFILE.
+  const home = (await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE'))
+  const base = (await $.env.get('PAPO_HOME')) ?? `${home}/.papo`
   const root = `${base}/profiles`
   const cwd = await $.session.cwd()
   const live: { dir: string; a: Activity }[] = []
