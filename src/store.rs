@@ -12,6 +12,8 @@
 //!   log.jsonl      append-only conversation log (what `papo log` shows)
 //!   closed         marker: a member closed the room (absent normally)
 //!   lock           held by the running MCP server for this profile
+//!   working        "1" while the agent is mid-turn; written by the Claude Code mod
+//!   activity.json  who is working right now, refreshed by the running MCP server
 //! ```
 //!
 //! A stable identity matters: peers remember our endpoint id and redial it when either
@@ -82,6 +84,40 @@ pub enum LogEntry {
         ts: u64,
     },
 }
+
+/// Snapshot for local readers (the Claude Code mod that draws the robots): which session
+/// this server belongs to, and who in the room is working right now.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Activity {
+    pub pid: u32,
+    /// The server's working directory, which is the Claude Code session's: lets a mod
+    /// pick its own profile when several servers run on one machine.
+    pub cwd: String,
+    pub name: String,
+    pub working: bool,
+    pub members: Vec<MemberActivity>,
+    /// Rewritten periodically even when nothing changed, so a reader can tell a live
+    /// server from the file a crashed one left behind.
+    pub updated_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MemberActivity {
+    pub name: String,
+    pub online: bool,
+    pub working: bool,
+}
+
+impl Activity {
+    /// Equal apart from the refresh timestamp.
+    pub fn same_state(&self, other: &Activity) -> bool {
+        Activity { updated_ms: other.updated_ms, ..self.clone() } == *other
+    }
+}
+
+/// How long a `working` marker counts. The mod rewrites it every few seconds while a turn
+/// runs, so a session that died mid-turn stops showing as working on its own.
+pub const WORKING_MARKER_TTL: std::time::Duration = std::time::Duration::from_secs(30);
 
 #[derive(Debug, Clone)]
 pub struct Store {
@@ -171,7 +207,7 @@ impl Store {
     /// Leaves only what is needed to answer "this room is closed" to members who come back
     /// later: identity and room secret. History, queues and members are dropped.
     pub fn into_tombstone(&self) -> Result<()> {
-        for stale in ["peers.json", "inbox.json", "outbox.json", "log.jsonl"] {
+        for stale in ["peers.json", "inbox.json", "outbox.json", "log.jsonl", "activity.json", "working"] {
             let _ = fs::remove_file(self.path(stale));
         }
         self.mark_closed()
@@ -266,6 +302,27 @@ impl Store {
         };
         // Tolerate a torn last line (crash mid-write) rather than hiding the whole history.
         Ok(BufReader::new(file).lines().map_while(|l| l.ok()).filter_map(|l| serde_json::from_str(&l).ok()).collect())
+    }
+
+    /// Whether the local agent is mid-turn, as the Claude Code mod last wrote it. A marker
+    /// older than `WORKING_MARKER_TTL` is stale: the session that wrote it is gone.
+    pub fn read_working(&self, now: std::time::SystemTime) -> bool {
+        let path = self.path("working");
+        let Ok(text) = fs::read_to_string(&path) else {
+            return false;
+        };
+        let fresh = fs::metadata(&path)
+            .and_then(|m| m.modified())
+            .is_ok_and(|t| now.duration_since(t).unwrap_or_default() < WORKING_MARKER_TTL);
+        fresh && text.trim() == "1"
+    }
+
+    pub fn save_activity(&self, activity: &Activity) -> Result<()> {
+        write_atomic(&self.path("activity.json"), &serde_json::to_vec_pretty(activity)?)
+    }
+
+    pub fn activity(&self) -> Result<Option<Activity>> {
+        read_json(&self.path("activity.json"))
     }
 
     /// Exclusive lock for the lifetime of the returned file. Two processes sharing one

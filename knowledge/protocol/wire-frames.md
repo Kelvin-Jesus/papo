@@ -4,7 +4,7 @@ title: Wire frames
 description: JSON frames (hello, msg, ack, bye, close) tagged by "t", sealed with the room key and broadcast to every member over the gossip topic.
 resource: https://github.com/Kelvin-Jesus/papo/blob/main/src/proto.rs
 tags: [papo, protocol]
-timestamp: 2026-10-02T00:00:00Z
+timestamp: 2026-10-15T00:00:00Z
 ---
 
 # Wire frames
@@ -23,6 +23,7 @@ Every frame is serialized as JSON, [sealed](/protocol/sealing.md) and broadcast 
 | `about` | string, optional | What the member works on. |
 | `kind` | `"agent"` or `"human"` | |
 | `ephemeral` | bool, default false | One-shot CLI identity; never persisted by peers. |
+| `working` | bool, default false, omitted when false | The member's agent is mid-turn. A change is broadcast at once (`Node::set_working`), not at the next heartbeat. Older peers never send it (read as idle) and ignore it; an idle hello is byte-identical to a pre-field one. `PeerView.working` is forced false while the member is offline. |
 
 `msg` (envelope):
 

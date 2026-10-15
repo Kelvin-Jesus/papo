@@ -30,7 +30,7 @@ use tokio::{
 use crate::{
     node::{Node, NodeEvent, PeerView, SendOutcome},
     proto::{Envelope, now_ms},
-    store::{LogEntry, Profile, Store},
+    store::{Activity, LogEntry, MemberActivity, Profile, Store},
 };
 
 /// Protocol revisions this server speaks, newest first. Deliberately excludes newer
@@ -43,6 +43,10 @@ const MAX_WAIT_SECS: u64 = 1200;
 // Claude Code aborts a stdio tool call that stays silent for 30 minutes.
 const _: () = assert!(MAX_WAIT_SECS < 30 * 60, "wait must stay under Claude Code's stdio idle timeout");
 const PROGRESS_EVERY: Duration = Duration::from_secs(15);
+/// How often the working marker is read and `activity.json` checked for changes.
+const ACTIVITY_POLL: Duration = Duration::from_secs(1);
+/// `activity.json` is rewritten at least this often, as a liveness signal for readers.
+const ACTIVITY_REFRESH: Duration = Duration::from_secs(5);
 const ACK_TIMEOUT: Duration = Duration::from_secs(8);
 const RATE_WINDOW: Duration = Duration::from_secs(600);
 const DEFAULT_MAX_SENDS_PER_WINDOW: usize = 40;
@@ -177,6 +181,7 @@ where
 
     let (initialized_tx, initialized_rx) = watch::channel(false);
     let pump = tokio::spawn(channel_pump(ready_rx.clone(), initialized_rx, out.clone()));
+    let activity = tokio::spawn(activity_bridge(ready_rx.clone()));
     let inflight: Arc<Mutex<HashMap<String, AbortHandle>>> = Arc::default();
     let instructions = instructions(identity.as_ref());
 
@@ -231,6 +236,7 @@ where
 
     // stdin closed: Claude Code ended the session.
     pump.abort();
+    activity.abort();
     for (_, handle) in inflight.lock().unwrap().drain() {
         handle.abort();
     }
@@ -550,6 +556,50 @@ fn ago(ms: u64) -> String {
 }
 
 /// Forwards incoming messages as channel notifications once the client is initialized.
+/// Bridges the Claude Code mod and the room: the mod's `working` marker goes out in our
+/// hellos, and who is working comes back in `activity.json`. Files rather than an MCP
+/// tool, so the model never sees (or calls) any of it.
+async fn activity_bridge(mut ready: Ready) {
+    let ctx = match ready.wait_for(Option::is_some).await {
+        Ok(state) => match state.clone() {
+            Some(Ok(ctx)) => ctx,
+            _ => return,
+        },
+        Err(_) => return,
+    };
+    let cwd = std::env::current_dir().map(|d| d.display().to_string()).unwrap_or_default();
+    let mut last: Option<Activity> = None;
+    let mut ticker = tokio::time::interval(ACTIVITY_POLL);
+    loop {
+        ticker.tick().await;
+        let working = ctx.store.read_working(std::time::SystemTime::now());
+        ctx.node.set_working(working).await;
+        let next = activity_snapshot(std::process::id(), &cwd, ctx.node.name(), working, &ctx.node.peers(), now_ms());
+        let stale = last.as_ref().is_none_or(|prev| {
+            !prev.same_state(&next)
+                || next.updated_ms.saturating_sub(prev.updated_ms) >= ACTIVITY_REFRESH.as_millis() as u64
+        });
+        if stale {
+            if let Err(e) = ctx.store.save_activity(&next) {
+                eprintln!("papo: could not write activity.json: {e:#}");
+            }
+            last = Some(next);
+        }
+    }
+}
+
+fn activity_snapshot(pid: u32, cwd: &str, name: &str, working: bool, peers: &[PeerView], now: u64) -> Activity {
+    let mut members: Vec<MemberActivity> = peers
+        .iter()
+        .filter(|p| !p.ephemeral)
+        .filter_map(|p| {
+            p.name.as_ref().map(|name| MemberActivity { name: name.clone(), online: p.online, working: p.working })
+        })
+        .collect();
+    members.sort_by(|a, b| a.name.cmp(&b.name));
+    Activity { pid, cwd: cwd.to_owned(), name: name.to_owned(), working, members, updated_ms: now }
+}
+
 async fn channel_pump(mut ready: Ready, mut initialized: watch::Receiver<bool>, out: Out) {
     if initialized.wait_for(|v| *v).await.is_err() {
         return;
@@ -674,8 +724,22 @@ mod helper_tests {
             ephemeral: false,
             neighbor: online,
             online,
+            working: false,
             last_seen_ms,
         }
+    }
+
+    #[test]
+    fn activity_lists_named_members_sorted_and_skips_cli_nodes() {
+        let mut colega = view(Some("colega"), true, 1);
+        colega.working = true;
+        let mut cli = view(Some("humano"), true, 1);
+        cli.ephemeral = true;
+        let peers = [view(Some("zeta"), false, 1), colega, cli, view(None, true, 1)];
+        let a = activity_snapshot(7, "/tmp/p", "voce", false, &peers, 5);
+        let names: Vec<_> = a.members.iter().map(|m| (m.name.as_str(), m.online, m.working)).collect();
+        assert_eq!(names, [("colega", true, true), ("zeta", false, false)]);
+        assert_eq!((a.pid, a.cwd.as_str(), a.name.as_str(), a.working, a.updated_ms), (7, "/tmp/p", "voce", false, 5));
     }
 
     #[test]

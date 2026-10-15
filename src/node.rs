@@ -105,6 +105,8 @@ pub struct PeerView {
     /// Directly connected in the gossip mesh right now.
     pub neighbor: bool,
     pub online: bool,
+    /// Its agent said it is mid-turn in its last hello; always false while offline.
+    pub working: bool,
     pub last_seen_ms: u64,
 }
 
@@ -146,6 +148,8 @@ struct Inner {
     closing: AtomicBool,
     /// A member closed the room: no more dialing or heartbeats.
     closed: AtomicBool,
+    /// Our agent is mid-turn; announced in every hello.
+    working: AtomicBool,
 }
 
 pub struct Node {
@@ -212,6 +216,7 @@ impl Node {
             subscribed: AtomicBool::new(true),
             closing: AtomicBool::new(false),
             closed: AtomicBool::new(closed),
+            working: AtomicBool::new(false),
         });
 
         let tasks = vec![
@@ -374,6 +379,7 @@ impl Node {
                         ephemeral: false,
                         neighbor: false,
                         online: false,
+                        working: false,
                         last_seen_ms: k.last_seen_ms,
                     },
                 )
@@ -388,17 +394,21 @@ impl Node {
                 ephemeral: false,
                 neighbor: false,
                 online: false,
+                working: false,
                 last_seen_ms: 0,
             });
             view.name = Some(p.presence.name.clone());
             view.about = p.presence.about.clone();
             view.kind = Some(p.presence.kind);
             view.ephemeral = p.presence.ephemeral;
+            view.working = p.presence.working;
             view.last_seen_ms = view.last_seen_ms.max(p.last_seen_ms);
         }
         for view in views.values_mut() {
             view.neighbor = state.neighbors.contains(&view.node);
             view.online = view.neighbor || now.saturating_sub(view.last_seen_ms) < ONLINE_WINDOW_MS;
+            // A member that vanished mid-turn is not still typing.
+            view.working &= view.online;
         }
         views.into_values().collect()
     }
@@ -429,6 +439,14 @@ impl Node {
         self.inner.closed.load(Ordering::Relaxed)
     }
 
+    /// Whether our agent is mid-turn. A change is announced right away instead of waiting
+    /// for the next heartbeat, so members see it within a round trip.
+    pub async fn set_working(&self, working: bool) {
+        if self.inner.working.swap(working, Ordering::Relaxed) != working && !self.inner.opts.ephemeral {
+            self.inner.broadcast(&Frame::Hello(self.inner.presence())).await;
+        }
+    }
+
     pub async fn shutdown(&self) {
         // Router shutdown closes the endpoint, which lets peers see us leave promptly
         // instead of waiting for a QUIC idle timeout.
@@ -450,6 +468,7 @@ impl Inner {
             about: self.opts.about.clone(),
             kind: self.opts.kind,
             ephemeral: self.opts.ephemeral,
+            working: self.working.load(Ordering::Relaxed),
         }
     }
 

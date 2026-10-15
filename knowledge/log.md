@@ -1,5 +1,8 @@
 # Log
 
+## 2026-10-15
+* **Update**: `protocol/wire-frames`, `protocol/profile-layout` - optional `working` flag in `hello` (backward compatible), the `working` marker the Claude Code mod writes and the `activity.json` snapshot the MCP server writes; together they let the `papo-robos` mod draw who in the room is mid-turn.
+
 ## 2026-10-05
 * **Update**: `playbooks/cut-a-release` - `scripts/install.sh` depends on the archive naming, layout and `.sha256` format; smoke it after each release.
 * **Update**: `apis/cli`, `protocol/*` - owner leaving closes the room; with nobody online a tombstone profile is kept and answers `close` to returning members (`Profile.owner`, `Store::into_tombstone`).

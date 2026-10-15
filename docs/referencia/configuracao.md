@@ -31,6 +31,8 @@ Cada perfil fica em `$PAPO_HOME/profiles/<perfil>/`:
 | `log.jsonl` | Histórico da conversa, uma entrada JSON por linha. É o que `papo log` e a ferramenta `history` mostram. |
 | `closed` | Marcador: um membro fechou a sala; o servidor MCP sobe em modo lápide (só responde "sala fechada"). |
 | `lock` | Trava mantida pelo servidor MCP que está usando o perfil. |
+| `working` | `1` enquanto o seu agente está no meio de um turno, `0` quando termina. Quem grava é o mod `papo-robos` do Claude Code; o servidor MCP lê a cada segundo e avisa a sala. Um `1` com mais de 30 segundos sem ser regravado conta como parado, para uma sessão que caiu no meio do turno não ficar "codando" para sempre. |
+| `activity.json` | Quem da sala está trabalhando agora, gravado pelo servidor MCP: o seu nome, o diretório da sessão, o `pid` e, para cada membro, `online` e `working`. É regravado a cada 5 segundos mesmo sem mudança, e é por esse horário (`updated_ms`) que o mod sabe que o servidor está vivo. |
 
 No Unix, a pasta do perfil é criada com permissão `0700`. `inbox.json`, `outbox.json` e `peers.json`
 são gravados num arquivo temporário e renomeados, para que uma queda no meio da escrita não corrompa

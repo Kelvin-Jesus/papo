@@ -138,3 +138,19 @@ async fn human_cli_can_talk_but_is_not_remembered_as_member() {
     colega.send("oi voce", None, None, Duration::from_millis(500)).await.unwrap();
     assert!(voce.unread().is_empty());
 }
+
+#[tokio::test]
+async fn working_status_reaches_members_and_ends_with_the_turn() {
+    let net = LocalNet::new().await;
+    let voce = net.agent("voce", vec![]).await;
+    let colega = net.agent("colega", vec![voce.id()]).await;
+    assert!(colega.wait_for_neighbor(STEP).await, "colega never joined voce");
+    let voce_working = || colega.peers().iter().any(|p| p.node == voce.id() && p.working);
+    eventually("colega sees voce", || colega.peers().iter().any(|p| p.node == voce.id() && p.online)).await;
+    assert!(!voce_working(), "nobody is working before a turn starts");
+
+    voce.set_working(true).await;
+    eventually("colega sees voce working", voce_working).await;
+    voce.set_working(false).await;
+    eventually("colega sees voce idle again", || !voce_working()).await;
+}

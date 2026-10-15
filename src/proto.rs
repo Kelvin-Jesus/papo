@@ -69,6 +69,10 @@ pub struct Presence {
     /// Short-lived CLI identities: never persisted as known peers and never redialed.
     #[serde(default)]
     pub ephemeral: bool,
+    /// The agent behind this endpoint is in the middle of a turn. Optional on the wire so
+    /// older peers (which never send it) read as idle and ignore it when we send it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub working: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -172,6 +176,20 @@ mod tests {
             ts: now_ms(),
             body: "qual o formato do payload do webhook?".into(),
         }
+    }
+
+    #[test]
+    fn working_is_optional_on_the_wire() {
+        // A hello from a peer that predates the field reads as idle...
+        let old = r#"{"t":"hello","node":"n","name":"colega","kind":"agent"}"#;
+        let Frame::Hello(p) = serde_json::from_str(old).unwrap() else { panic!("not a hello") };
+        assert!(!p.working);
+        // ...and an idle hello looks exactly like one from before the field existed.
+        let idle = serde_json::to_string(&Frame::Hello(p.clone())).unwrap();
+        assert!(!idle.contains("working"), "{idle}");
+        let busy = Frame::Hello(Presence { working: true, ..p });
+        let room = RoomSecret::generate();
+        assert_eq!(decode(&room, &encode(&room, &busy).unwrap()).unwrap(), busy);
     }
 
     #[test]
