@@ -7,7 +7,7 @@ use iroh::SecretKey;
 use papo::{
     proto::{Envelope, PeerKind},
     room::RoomSecret,
-    store::{KnownPeer, LogEntry, Profile, Store, validate_profile_name},
+    store::{Activity, KnownPeer, LogEntry, MemberActivity, Profile, Store, WORKING_MARKER_TTL, validate_profile_name},
 };
 
 fn profile(name: &str) -> Profile {
@@ -230,4 +230,42 @@ fn profile_names_are_restricted_to_safe_directory_names() {
         assert!(validate_profile_name(bad).is_err(), "{bad}");
     }
     assert!(Store::dir_for("../escape").is_err());
+}
+
+#[test]
+fn working_marker_counts_only_while_fresh_and_set() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = new_store(dir.path());
+    let now = std::time::SystemTime::now();
+    assert!(!store.read_working(now), "no marker means idle");
+
+    fs::write(store.dir().join("working"), "1\n").unwrap();
+    assert!(store.read_working(now));
+    // A session that died mid-turn leaves the marker behind; it expires on its own.
+    assert!(!store.read_working(now + WORKING_MARKER_TTL + std::time::Duration::from_secs(1)));
+
+    fs::write(store.dir().join("working"), "0").unwrap();
+    assert!(!store.read_working(now));
+}
+
+#[test]
+fn activity_roundtrips_and_compares_without_the_timestamp() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = new_store(dir.path());
+    assert_eq!(store.activity().unwrap(), None);
+    let activity = Activity {
+        pid: 42,
+        cwd: "/tmp/projeto".into(),
+        name: "voce".into(),
+        working: true,
+        members: vec![MemberActivity { name: "colega".into(), online: true, working: false }],
+        updated_ms: 1,
+    };
+    store.save_activity(&activity).unwrap();
+    assert_eq!(store.activity().unwrap().as_ref(), Some(&activity));
+
+    let later = Activity { updated_ms: 99, ..activity.clone() };
+    assert!(activity.same_state(&later));
+    let changed = Activity { working: false, ..later };
+    assert!(!activity.same_state(&changed));
 }

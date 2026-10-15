@@ -15,6 +15,7 @@
 - [Salas com mais de duas pessoas](guias/equipes.md)
 - [Relay próprio](guias/relay-proprio.md)
 - [Docker](guias/docker.md)
+- [Robôs: quem está codando agora](guias/robos.md)
 
 # Referência
 

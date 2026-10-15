@@ -107,6 +107,7 @@ async fn foreign_and_garbage_frames_are_dropped_and_the_node_keeps_working() {
         about: None,
         kind: PeerKind::Agent,
         ephemeral: false,
+        working: false,
     }))
     .await;
 

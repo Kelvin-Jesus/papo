@@ -4,7 +4,7 @@ title: Profile layout
 description: Files kept per profile under $PAPO_HOME/profiles/<profile>/ and the write discipline of each.
 resource: https://github.com/Kelvin-Jesus/papo/blob/main/src/store.rs
 tags: [papo, storage]
-timestamp: 2026-10-02T00:00:00Z
+timestamp: 2026-10-15T00:00:00Z
 ---
 
 # Profile layout
@@ -23,6 +23,8 @@ Root: `$PAPO_HOME/profiles/<profile>/` (default `~/.papo/profiles/default/`). On
 | `log.jsonl` | One JSON entry per line, tagged by `ev` | Append-only; each line is one `write_all` with O_APPEND so `papo mcp` and `papo say` never interleave. A torn last line is ignored on read. |
 | `closed` | Empty marker | Written when a member closes the room; the node starts in tombstone mode (no dialing, answers `close` to whoever connects), `send` fails. |
 | `lock` | Empty | Exclusive `File::try_lock` held by the running MCP server. |
+| `working` | `"1"` or `"0"` | Written by the `papo-robos` Claude Code mod at turn start/end and refreshed every 10 s while working. `Store::read_working` treats a `"1"` older than `WORKING_MARKER_TTL` (30 s, by mtime) as idle. Read once a second by the MCP server's `activity_bridge`, which calls `Node::set_working`. |
+| `activity.json` | `{pid, cwd, name, working, members: [{name, online, working}], updated_ms}` | Atomic. Written by `activity_bridge` on change and at least every 5 s (liveness for readers). `cwd` is the server's working directory, i.e. the Claude Code session's, so a mod can pick its profile when several servers share a machine. Ephemeral (CLI) and nameless peers are left out; members sorted by name. Removed with the history when the room becomes a tombstone. |
 
 `log.jsonl` entries:
 

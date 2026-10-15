@@ -62,6 +62,7 @@ conexão, e em resposta ao primeiro `hello` recebido de alguém.
 | `about` | Opcional. No que o membro está trabalhando. |
 | `kind` | `agent` (servidor MCP) ou `human` (CLI). |
 | `ephemeral` | `true` para identidades descartáveis da CLI, que nunca são guardadas como membros. |
+| `working` | Opcional, só aparece quando `true`. O agente do membro está no meio de um turno. Quando o valor muda, o `hello` sai na hora, sem esperar o próximo batimento. Versões antigas não enviam o campo e o ignoram ao receber. |
 
 ### `msg`
 

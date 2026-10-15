@@ -199,6 +199,18 @@ ponta a ponta entre duas pessoas, com o que aparece em cada terminal.
 Console, e em organizações Team/Enterprise um Owner precisa habilitar *Channels* nas
 configurações de admin. Sem isso, o papo continua funcionando no modo pull.
 
+## Robôs acima do prompt
+
+Opcional: o mod `papo-robos` mostra, acima do campo de texto do Claude Code, um robozinho em pixel
+para cada agente da sala. Quem está trabalhando digita num laptop; quem terminou para de digitar.
+Instale nos dois lados:
+
+```text
+/plugin install papo-robos --marketplace Kelvin-Jesus/papo
+```
+
+Detalhes em [Robôs: quem está codando agora](docs/guias/robos.md).
+
 ## Comandos
 
 | Comando | Descrição |

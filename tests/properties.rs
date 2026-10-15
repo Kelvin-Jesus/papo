@@ -44,9 +44,22 @@ fn arb_frame() -> impl Strategy<Value = Frame> {
     prop_oneof![
         arb_envelope().prop_map(Frame::Msg),
         ("[0-9a-f]{10}", "[a-z]{1,32}").prop_map(|(id, by)| Frame::Ack { id, by }),
-        ("[0-9a-f]{64}", "[a-z]{1,32}", proptest::option::of(any::<String>()), arb_kind(), any::<bool>()).prop_map(
-            |(node, name, about, kind, ephemeral)| Frame::Hello(Presence { node, name, about, kind, ephemeral })
-        ),
+        (
+            "[0-9a-f]{64}",
+            "[a-z]{1,32}",
+            proptest::option::of(any::<String>()),
+            arb_kind(),
+            any::<bool>(),
+            any::<bool>()
+        )
+            .prop_map(|(node, name, about, kind, ephemeral, working)| Frame::Hello(Presence {
+                node,
+                name,
+                about,
+                kind,
+                ephemeral,
+                working
+            })),
     ]
 }
 

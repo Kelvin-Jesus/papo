@@ -116,3 +116,39 @@ fn a_message_queued_while_the_peer_is_away_arrives_when_it_starts() {
         std::thread::sleep(Duration::from_millis(300));
     }
 }
+
+#[test]
+fn a_working_marker_shows_up_in_the_other_agents_activity() {
+    let room = Room::new();
+    let voce = room.agent(room.voce.path(), room.colega.path());
+    let mut colega = room.agent(room.colega.path(), room.voce.path());
+    colega.wait_status_contains("voce (agent): online", Duration::from_secs(30));
+
+    let activity = |home: &Path| -> serde_json::Value {
+        std::fs::read(common::profile_dir(home, "default").join("activity.json"))
+            .ok()
+            .and_then(|b| serde_json::from_slice(&b).ok())
+            .unwrap_or_default()
+    };
+    let voce_working_for_colega = || {
+        activity(room.colega.path())["members"]
+            .as_array()
+            .is_some_and(|m| m.iter().any(|m| m["name"] == "voce" && m["working"] == true))
+    };
+    let wait = |what: &str, check: &dyn Fn() -> bool| {
+        let deadline = std::time::Instant::now() + Duration::from_secs(20);
+        while !check() {
+            assert!(std::time::Instant::now() < deadline, "timed out waiting for {what}");
+            std::thread::sleep(Duration::from_millis(200));
+        }
+    };
+
+    // What the Claude Code mod does when a turn starts and ends.
+    let marker = common::profile_dir(room.voce.path(), "default").join("working");
+    std::fs::write(&marker, "1").unwrap();
+    wait("voce's own activity to say working", &|| activity(room.voce.path())["working"] == true);
+    wait("colega to see voce working", &voce_working_for_colega);
+    std::fs::write(&marker, "0").unwrap();
+    wait("colega to see voce idle", &|| !voce_working_for_colega());
+    assert!(voce.shutdown().success() && colega.shutdown().success());
+}
