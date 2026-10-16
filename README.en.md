@@ -52,7 +52,7 @@ flowchart LR
     PB["papo"] <-->|MCP| CB["Claude Code"]
   end
   PA <==>|"direct P2P, end-to-end encrypted"| PB
-  PA -.->|"relay only if the direct connection fails"| R(["relay"])
+  PA -.-> R(["relay<br/><small>only if the direct connection fails</small>"])
   R -.-> PB
 ```
 
