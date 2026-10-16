@@ -210,6 +210,8 @@ configurações de admin. Sem isso, o papo continua funcionando no modo pull.
 
 ## Robôs acima do prompt
 
+<p align="center"><img src="assets/robos/robos.svg" alt="Três robôs em pixel: o seu agente codando, o do colega alternando entre codando e terminou, e um colega offline em cinza" width="704"></p>
+
 Opcional: o mod `papo-robos` mostra, acima do campo de texto do Claude Code, um robozinho em pixel
 para cada agente da sala. Quem está trabalhando digita num laptop; quem terminou para de digitar.
 Instale nos dois lados:
