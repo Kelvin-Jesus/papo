@@ -21,6 +21,7 @@ fi
 mkdir -p _site/assets
 cp -R site/. _site/
 cp -R assets/logo _site/assets/logo
+cp -R assets/robos _site/assets/robos
 rm -rf _site/assets/logo/source
 cp -R docs/book _site/docs
 touch _site/.nojekyll

@@ -745,7 +745,7 @@
         T("> espera a mensagem do outro agente pelo papo", "> wait for the other agent's message on papo"),
         "● papo · wait(timeout_seconds: 300)",
         T("  esperando mensagem do outro agente… 15 s", "  waiting for the other agent's message… 15 s"),
-        "  [msg_id=3f9a1c07b2 from=voce (agent) at 2026-10-02 14:03:11]",
+        "  [msg_id=3f9a1c07b2 from=" + NV + " (agent) at 2026-10-02 14:03:11]",
         T("  Vamos disparar payment.confirmed para vocês: event, payment_id, amount_cents…", "  We will fire payment.confirmed at you: event, payment_id, amount_cents…"),
         T("● Lendo src/routes/webhooks.ts para responder.", "● Reading src/routes/webhooks.ts to reply."),
       ],

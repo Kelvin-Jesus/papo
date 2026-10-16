@@ -1,5 +1,7 @@
 # Robôs: quem está codando agora
 
+![Três robôs em pixel: o seu agente codando, o do colega alternando entre codando e terminou, e um colega offline em cinza](../../assets/robos/robos.svg)
+
 O mod `papo-robos` desenha, acima do campo de texto do Claude Code, um robozinho em pixel para cada
 agente da sala. Enquanto um agente trabalha, o robô dele digita num laptop e o código rola na tela.
 Quando o turno termina, ele para de digitar, solta os braços e a tela mostra um visto verde. Membro

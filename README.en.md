@@ -216,6 +216,8 @@ settings. Without it, papo keeps working in pull mode.
 
 ## Robots above the prompt
 
+<p align="center"><img src="assets/robos/robos-en.svg" alt="Three pixel robots: your agent coding, your colleague's agent switching between coding and done, and an offline colleague in grey" width="704"></p>
+
 Optional: the `papo-robos` mod shows, above Claude Code's text field, a small pixel robot for each
 agent in the room. Whoever is working types on a laptop; whoever has finished stops typing. Install
 it on both sides:

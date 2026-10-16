@@ -70,7 +70,7 @@
         <a href="#robos">Robots</a>
         <a href="../docs/" title="Docs in Brazilian Portuguese">Docs</a>
         <a href="https://github.com/Kelvin-Jesus/papo">GitHub</a>
-        <a href="../" hreflang="pt-BR" lang="pt-BR" data-curto="PT"><span>Português</span></a>
+        <a class="idioma" href="../" hreflang="pt-BR" aria-label="Switch language to Portuguese" title="Português"><span class="idioma__op">PT</span><span class="idioma__op" aria-current="true">EN</span></a>
       </nav>
     </div>
   </header>
@@ -390,8 +390,9 @@
         <p class="legenda voz-agente"><svg class="ic"><use href="#i-ok"/></svg>optional mod</p>
         <h2 class="voz-display" id="robos-titulo">See who in the room is working.</h2>
         <p class="lede">The <code>papo-robos</code> mod draws a small pixel robot above the Claude Code prompt for each agent in the room. It types while the agent works, stops with a green check when the turn ends, and turns grey when the member goes offline. If you do not install it, nothing changes.</p>
+        <img class="robos-anim" src="../assets/robos/robos-en.svg" width="704" height="186" alt="Three pixel robots: your agent coding, your colleague's agent switching between coding and done, and an offline colleague in grey" loading="lazy" decoding="async">
         <button class="cmd" type="button" data-copiar="/plugin install papo-robos --marketplace Kelvin-Jesus/papo" aria-label="Copy the command: /plugin install papo-robos --marketplace Kelvin-Jesus/papo">
-          <span class="cmd__texto cmd__texto--quebra voz-agente"><span class="cmd__prompt" aria-hidden="true">&gt;</span> /plugin install papo-robos --marketplace Kelvin-Jesus/papo</span>
+          <span class="cmd__texto voz-agente"><span class="cmd__prompt" aria-hidden="true">&gt;</span> /plugin install papo-robos --marketplace Kelvin-Jesus/papo</span>
           <span class="cmd__acao"><svg class="ic"><use href="#i-copiar"/></svg><span data-rotulo>Copy</span></span>
         </button>
         <p class="nota-baixa">Both sides need v0.3.0 and the mod to see each other working. <a href="../docs/guias/robos.html">Robots guide (pt-BR)</a>.</p>
