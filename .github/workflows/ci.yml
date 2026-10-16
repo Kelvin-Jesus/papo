@@ -138,7 +138,7 @@ jobs:
       - name: Local links and anchors (site + book)
         run: python3 scripts/check-book-links.py _site
       - name: Every Mermaid diagram renders
-        run: python3 scripts/check-mermaid.py README.md docs/arquitetura.md docs/engenharia/diagramas.md
+        run: python3 scripts/check-mermaid.py README.md README.pt-BR.md docs/arquitetura.md docs/engenharia/diagramas.md
       - uses: actions/upload-artifact@v4
         with:
           name: site
@@ -162,7 +162,7 @@ jobs:
       - name: Package-manager manifests (scripts/pacotes.py)
         run: python3 -m unittest discover -s scripts/tests
       - name: Valid HTML (html-validate, rules in .htmlvalidate.json)
-        run: npx --yes html-validate@11.16.1 site/index.html
+        run: npx --yes html-validate@11.16.1 site/index.html site/pt/index.html
       # Desktop preset, median of 3 runs: performance >= 0.9, accessibility >= 0.95,
       # best practices >= 0.95, SEO >= 0.9 and no color-contrast failure (.lighthouserc.json).
       - name: Lighthouse CI

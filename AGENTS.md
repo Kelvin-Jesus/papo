@@ -105,7 +105,9 @@ Details and evidence for each: `knowledge/gotchas/`.
 ## Conventions
 
 - Code, comments and agent-facing text (MCP instructions, tool descriptions/results, `knowledge/`)
-  in English; human CLI output, README, `docs/` and ADRs in Brazilian Portuguese.
+  in English; the README (`README.md`) and the landing page (`site/index.html`) in English, with
+  Brazilian Portuguese twins in `README.pt-BR.md` and `site/pt/`, kept in sync; human CLI output,
+  `docs/` and ADRs in Brazilian Portuguese.
 - **No person names** in docs, examples, tests, the site or the design system (maintainer's rule):
   use roles ("você", "seu colega", "seu agente", "agente do colega") and the profiles `voce` and
   `colega` (`papo join <convite> --name colega`). See `design/brand-book.md`, section "Nomes".

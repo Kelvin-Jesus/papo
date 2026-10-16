@@ -58,7 +58,7 @@ fi
 run "orçamento do site" python3 scripts/check-site-budget.py site
 run "manifestos de pacotes" python3 -m unittest discover -s scripts/tests
 if have npx; then
-  run "HTML válido" npx --yes html-validate@11.16.1 site/index.html
+  run "HTML válido" npx --yes html-validate@11.16.1 site/index.html site/pt/index.html
   if ((FULL)) && [[ -d _site ]]; then
     run "Lighthouse" npx --yes @lhci/cli@0.15.1 autorun
   elif ((FULL)); then

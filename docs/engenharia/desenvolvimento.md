@@ -200,7 +200,7 @@ O mdBook não acusa erro de sintaxe Mermaid: o diagrama só quebra no navegador.
 diagrama novo ou alterado:
 
 ```sh
-python3 scripts/check-mermaid.py README.md docs/arquitetura.md docs/engenharia/diagramas.md
+python3 scripts/check-mermaid.py README.md README.pt-BR.md docs/arquitetura.md docs/engenharia/diagramas.md
 ```
 
 O script renderiza cada bloco com o Mermaid 11.4.1 (o mesmo que o livro carrega) num Chromium
