@@ -1,5 +1,7 @@
 # Problemas comuns
 
+Português · [[English|en-Troubleshooting]]
+
 Primeiro passo: rode `papo status` nas duas máquinas e confira se o **id da sala** é o mesmo. Guia
 completo em [Solução de problemas](https://kelvin-jesus.github.io/papo/docs/solucao-de-problemas.html).
 

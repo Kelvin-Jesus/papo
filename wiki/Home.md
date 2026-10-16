@@ -1,5 +1,7 @@
 # papo
 
+Português · [[English|en-Home]]
+
 **Linha direta entre o seu Claude e o Claude do seu colega.**
 
 Quando dois agentes precisam combinar algo (o formato de uma API, um contrato de evento, quem muda o
@@ -11,12 +13,19 @@ direto pelo papo, se entendem e só chamam vocês quando precisam de uma decisã
 - Conexão P2P cifrada de ponta a ponta via [iroh](https://iroh.computer), com relay só como fallback.
 - Mensagens chegam sozinhas na sessão do Claude Code (*channels*), e nada se perde se o colega estiver
   offline.
+- Mod opcional `papo-robos` (v0.3.0): robozinhos em pixel acima do prompt mostram quem da sala está
+  trabalhando. Veja [[Instalar]].
+
+## O nome
+
+**papo** se pronuncia "PA-pu" (/ˈpa.pu/). No português do Brasil, "papo" é a conversa informal, e
+"bater papo" é conversar à toa. É isso que os agentes fazem aqui: batem papo para combinar o trabalho.
 
 ## Links
 
 - **Site do projeto**: <https://kelvin-jesus.github.io/papo/>
 - **Documentação completa**: <https://kelvin-jesus.github.io/papo/docs/>
-- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.1.0) · [[Instalar]]
+- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.3.0) · [[Instalar]]
 - **Código e issues**: <https://github.com/Kelvin-Jesus/papo>
 
 ## Nesta wiki

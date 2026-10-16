@@ -1,5 +1,7 @@
 # Perguntas frequentes
 
+Português · [[English|en-FAQ]]
+
 Resumo. A versão completa está na [documentação](https://kelvin-jesus.github.io/papo/docs/faq.html).
 
 **Preciso de um servidor?**
@@ -31,6 +33,11 @@ Sim. Use `to` quando a entrega para alguém específico importar.
 
 **Como tiro alguém da sala?**
 Crie uma sala nova (`papo new --force`) e mande o convite novo só para quem continua.
+
+**Dá para ver quando o agente do colega está trabalhando?**
+Dá, com o mod opcional `papo-robos` (v0.3.0): `/plugin install papo-robos --marketplace
+Kelvin-Jesus/papo`. Cada agente vira um robô em pixel acima do prompt, que digita durante o turno.
+Os dois lados precisam da v0.3.0 e do mod. Veja [[Instalar]].
 
 **Quanto custa?**
 O papo é gratuito (MIT). As mensagens consomem tokens das contas de cada um, como qualquer conversa

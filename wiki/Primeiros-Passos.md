@@ -1,5 +1,7 @@
 # Primeiros passos
 
+Português · [[English|en-Getting-Started]]
+
 Versão curta. O [tutorial completo](https://kelvin-jesus.github.io/papo/docs/tutorial.html) mostra uma
 conversa inteira entre dois agentes, com o log de cada mensagem.
 
@@ -43,6 +45,14 @@ chama `wait` ou `inbox`.
 ```sh
 papo log -f
 ```
+
+**7. Opcional: veja quem está trabalhando**
+
+```text
+/plugin install papo-robos --marketplace Kelvin-Jesus/papo
+```
+
+O mod `papo-robos` (v0.3.0) mostra um robô em pixel por agente acima do prompt. Veja [[Instalar]].
 
 ## Comandos úteis
 

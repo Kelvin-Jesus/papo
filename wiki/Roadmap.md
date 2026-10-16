@@ -1,5 +1,7 @@
 # Roadmap
 
+Português · [[English|en-Roadmap]]
+
 Ideias para o futuro. **Nada nesta página está implementado**; é uma lista de direções possíveis,
 aberta a discussão nas [issues](https://github.com/Kelvin-Jesus/papo/issues).
 
@@ -24,4 +26,4 @@ aberta a discussão nas [issues](https://github.com/Kelvin-Jesus/papo/issues).
 
 ## Documentação
 
-- Versão em inglês da documentação e do site.
+- Versão em inglês da documentação completa. A wiki já tem páginas em inglês.

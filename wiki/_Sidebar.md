@@ -1,4 +1,4 @@
-**papo**
+**papo (português)**
 
 - [[Home]]
 - [[Instalar]]
@@ -7,6 +7,16 @@
 - [[Perguntas Frequentes|Perguntas-Frequentes]]
 - [[Problemas Comuns|Problemas-Comuns]]
 - [[Roadmap]]
+
+**English**
+
+- [[Home|en-Home]]
+- [[Install|en-Install]]
+- [[Getting Started|en-Getting-Started]]
+- [[Prompt Recipes|en-Prompt-Recipes]]
+- [[FAQ|en-FAQ]]
+- [[Troubleshooting|en-Troubleshooting]]
+- [[Roadmap|en-Roadmap]]
 
 **Links**
 
