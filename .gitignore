@@ -6,3 +6,4 @@
 /.claude/worktrees/
 # Lighthouse CI reports (scripts/quality-gate.sh --full, CI artifact)
 /.lighthouseci/
+__pycache__/

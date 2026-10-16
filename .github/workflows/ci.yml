@@ -159,6 +159,8 @@ jobs:
           node-version: 22
       - name: Weight budget (gzip HTML <= 30 KB, CSS <= 15 KB, JS <= 20 KB)
         run: python3 scripts/check-site-budget.py site
+      - name: Package-manager manifests (scripts/pacotes.py)
+        run: python3 -m unittest discover -s scripts/tests
       - name: Valid HTML (html-validate, rules in .htmlvalidate.json)
         run: npx --yes html-validate@11.16.1 site/index.html
       # Desktop preset, median of 3 runs: performance >= 0.9, accessibility >= 0.95,

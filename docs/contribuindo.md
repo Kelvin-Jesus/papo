@@ -120,7 +120,7 @@ todos os jobs abaixo passarem; um job pulado ou cancelado também reprova.
 | `rustdoc` | documentação da API sem avisos (links internos quebrados reprovam) | `RUSTDOCFLAGS="-D warnings" cargo doc --no-deps` |
 | `supply-chain` | sem vulnerabilidades conhecidas, licenças e fontes permitidas (`deny.toml`) | `cargo deny check` |
 | `docs` | livro sem nenhum aviso do mdBook, zero links quebrados no site + livro, todos os diagramas Mermaid renderizando | `scripts/build-site.sh` e `python3 scripts/check-book-links.py _site` |
-| `site` | orçamento de peso (gzip: HTML até 30 KB, CSS até 15 KB, JS até 20 KB), HTML válido e Lighthouse no desktop: desempenho ≥ 90, acessibilidade ≥ 95, boas práticas ≥ 95, SEO ≥ 90, sem falha de contraste | `python3 scripts/check-site-budget.py` e `npx @lhci/cli autorun` |
+| `site` | orçamento de peso (gzip: HTML até 30 KB, CSS até 15 KB, JS até 20 KB), HTML válido, Lighthouse no desktop (desempenho ≥ 90, acessibilidade ≥ 95, boas práticas ≥ 95, SEO ≥ 90, sem falha de contraste) e os testes do gerador de manifestos de pacotes | `python3 scripts/check-site-budget.py`, `npx @lhci/cli autorun` e `python3 -m unittest discover -s scripts/tests` |
 | `rules` | nenhum nome de pessoa no repositório e mensagens de commit no formato `tipo(escopo): descrição` | `scripts/check-names.sh` e `python3 scripts/check-commits.py` |
 | `secrets` | nenhum segredo em todo o histórico (gitleaks) | `gitleaks git --redact .` |
 | `lint (workflows and scripts)` | workflows válidos (actionlint) e scripts de shell sem problemas (shellcheck) | `actionlint` e `shellcheck scripts/*.sh .githooks/*` |

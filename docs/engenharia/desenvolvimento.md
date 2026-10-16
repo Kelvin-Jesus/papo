@@ -169,6 +169,9 @@ exige. A tabela do que cada job garante está em
 - **Orçamento do site** (`scripts/check-site-budget.py`) usa gzip nível 9, os mesmos limites da
   pesquisa de UI/UX (seção 5.7) e um teto de 160 KB para a fonte. Medido em 2026-10-02: HTML 7,9 KB,
   CSS 7,1 KB, JS 11,8 KB, fonte 139 KB.
+- **Manifestos de pacotes** (`scripts/pacotes.py`) saem dos `.sha256` da release, nunca à mão: um
+  checksum trocado entre plataformas instalaria o binário errado sem erro nenhum. Os testes conferem que
+  cada URL vai com o checksum do próprio alvo.
 - **HTML válido** com o html-validate (regras recomendadas, `.htmlvalidate.json`); a única exceção é
   aceitar o `<!doctype html>` em minúsculas.
 - **Nomes de pessoas** (`scripts/check-names.sh`) é a regra do mantenedor virando check: lista de
