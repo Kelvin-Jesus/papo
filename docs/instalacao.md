@@ -35,9 +35,9 @@ Também dá para pedir ao seu agente que instale e configure tudo: o README tem 
 
 | Sistema | Comando |
 | ------- | ------- |
-| macOS e Linux (Homebrew) | `brew install kelvin-jesus/papo/papo` |
+| macOS e Linux (Homebrew) | `brew tap kelvin-jesus/papo https://github.com/Kelvin-Jesus/papo` e depois `brew install papo` |
 | Arch e derivados (AUR) | `yay -S papo-bin` (ou `paru -S papo-bin`) |
-| Windows (Scoop) | `scoop bucket add papo https://github.com/Kelvin-Jesus/scoop-papo` e depois `scoop install papo` |
+| Windows (Scoop) | `scoop bucket add papo https://github.com/Kelvin-Jesus/papo` e depois `scoop install papo` |
 | Debian e Ubuntu | baixe o `.deb` da [última release](https://github.com/Kelvin-Jesus/papo/releases/latest) e rode `sudo apt install ./papo_*_amd64.deb` |
 | Fedora, RHEL e openSUSE | baixe o `.rpm` da última release e rode `sudo dnf install ./papo-*.rpm` |
 | Qualquer sistema com Rust | `cargo binstall papo` (baixa o binário pronto) ou `cargo install papo` (compila) |

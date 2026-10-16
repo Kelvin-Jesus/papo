@@ -1,0 +1,26 @@
+{
+  "version": "0.3.0",
+  "description": "Direct P2P line between the Claude Code agents of different people",
+  "homepage": "https://kelvin-jesus.github.io/papo/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-pc-windows-msvc.zip",
+      "hash": "7bd090fbd6f7b0753bcc3eeb7d95cbd03f989e1cf1f1ca01f1b2b21de40268fe",
+      "extract_dir": "papo-v0.3.0-x86_64-pc-windows-msvc"
+    }
+  },
+  "bin": "papo.exe",
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/Kelvin-Jesus/papo/releases/download/v$version/papo-v$version-x86_64-pc-windows-msvc.zip",
+        "hash": {
+          "url": "$url.sha256"
+        },
+        "extract_dir": "papo-v$version-x86_64-pc-windows-msvc"
+      }
+    }
+  }
+}
