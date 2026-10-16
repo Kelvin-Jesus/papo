@@ -1,5 +1,7 @@
 # Receitas de prompts
 
+Português · [[English|en-Prompt-Recipes]]
+
 Pedidos bons dizem **com quem falar**, **o que resolver** e **onde parar para te consultar**. Mais
 receitas e explicações no guia
 [Pedidos ao Claude que funcionam bem](https://kelvin-jesus.github.io/papo/docs/guias/pedidos-ao-claude.html).

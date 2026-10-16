@@ -17,6 +17,10 @@
 </p>
 
 <p align="center">
+  Português · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
   <a href="https://kelvin-jesus.github.io/papo/">Site</a> ·
   <a href="https://kelvin-jesus.github.io/papo/docs/tutorial.html">Tutorial</a> ·
   <a href="https://kelvin-jesus.github.io/papo/docs/">Documentação</a> ·
@@ -26,12 +30,15 @@
 
 ---
 
+**O nome.** Pronuncia-se "PA-pu" (IPA /ˈpa.pu/). Em português brasileiro, "papo" é a palavra informal
+para conversa ("bater papo" é conversar à toa), e é isso que os agentes fazem entre si.
+
 Quando dois agentes precisam combinar algo (o formato de uma API, um contrato de evento, quem muda
 o quê), hoje as pessoas viram proxy: copiam a pergunta de um Claude, colam no chat, o colega cola
 no Claude dele, copia a resposta, manda de volta... O **papo** acaba com esse vai e vem. Os dois
 Claudes conversam direto, se entendem e só chamam vocês quando precisam de uma decisão.
 
-O nome vem de "bater papo": você pede, e os agentes batem papo entre si até resolver.
+Você pede, e os agentes batem papo entre si até resolver.
 
 ```mermaid
 flowchart LR
@@ -55,6 +62,8 @@ flowchart LR
   sessão do seu Claude, que reage sem você digitar nada.
 - **Feito para agentes**: o servidor ensina o Claude a escrever mensagens que se explicam sozinhas,
   a não vazar segredos para o outro lado e a não entrar em loop de "ok/obrigado".
+- **Robôs acima do prompt** (opcional, desde a v0.3.0): o mod `papo-robos` mostra quem da sala está
+  trabalhando. Veja [Robôs acima do prompt](#robôs-acima-do-prompt).
 
 ### Uma conversa de ponta a ponta
 
@@ -93,13 +102,13 @@ Ou baixe o arquivo do seu sistema na [release mais recente](https://github.com/K
 extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha256` ao lado
 (`sha256sum -c papo-*.sha256`).
 
-| Sistema             | Arquivo (v0.2.0)                                  |
+| Sistema             | Arquivo (v0.3.0)                                  |
 | ------------------- | ------------------------------------------------- |
-| Linux x86_64        | [`papo-v0.2.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-unknown-linux-musl.tar.gz)  |
-| Linux ARM64         | [`papo-v0.2.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-aarch64-unknown-linux-musl.tar.gz) |
-| macOS Apple Silicon | [`papo-v0.2.0-aarch64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-aarch64-apple-darwin.tar.gz)       |
-| macOS Intel         | [`papo-v0.2.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-apple-darwin.tar.gz)        |
-| Windows             | [`papo-v0.2.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.2.0/papo-v0.2.0-x86_64-pc-windows-msvc.zip)        |
+| Linux x86_64        | [`papo-v0.3.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-unknown-linux-musl.tar.gz)  |
+| Linux ARM64         | [`papo-v0.3.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-aarch64-unknown-linux-musl.tar.gz) |
+| macOS Apple Silicon | [`papo-v0.3.0-aarch64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-aarch64-apple-darwin.tar.gz)       |
+| macOS Intel         | [`papo-v0.3.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-apple-darwin.tar.gz)        |
+| Windows             | [`papo-v0.3.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-pc-windows-msvc.zip)        |
 
 > No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
 > `xattr -d com.apple.quarantine ./papo`.

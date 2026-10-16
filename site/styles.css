@@ -378,9 +378,15 @@ h3 { font-size: var(--t-h3); line-height: 1.25; font-weight: 700; }
   .tsf, .regras__demos, .instalar, .passos, .regras, .fatos, .fixadas { grid-template-columns: minmax(0, 1fr); }
   .secao { padding-block: 72px; }
 }
+@media (max-width: 400px) {
+  .menu a[data-curto] span { display: none; }
+  .menu a[data-curto]::after { content: attr(data-curto); }
+}
 @media (max-width: 640px) {
   .wrap { padding-inline: 16px; }
-  .menu a:not([href="./docs/"]):not([href*="github"]) { display: none; }
+  .menu a:not([href$="docs/"]):not([href*="github"]):not([hreflang]) { display: none; }
+  .menu { gap: 0; flex-wrap: nowrap; }
+  .menu a { padding-inline: 6px; }
   .heroi { padding-block: 40px 64px; }
   .sala__corpo { height: 540px; }
   .conversa { --fio-w: 0px; grid-template-columns: minmax(0, 1fr); padding: 14px 12px 18px; }

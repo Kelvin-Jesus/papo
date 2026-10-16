@@ -1,5 +1,7 @@
 # Instalar
 
+Português · [[English|en-Install]]
+
 As duas pessoas que vão conversar precisam do `papo` instalado. Detalhes na
 [documentação de instalação](https://kelvin-jesus.github.io/papo/docs/instalacao.html).
 
@@ -30,6 +32,19 @@ Com Rust 1.91+:
 ```sh
 cargo install --git https://github.com/Kelvin-Jesus/papo
 ```
+
+## Mod de robôs (opcional)
+
+A partir da v0.3.0 existe o mod `papo-robos`, que desenha acima do prompt do Claude Code um robô em
+pixel para cada agente da sala: ele digita enquanto o agente trabalha e mostra um visto verde quando o
+turno acaba. No Claude Code:
+
+```text
+/plugin install papo-robos --marketplace Kelvin-Jesus/papo
+```
+
+Para ver o colega trabalhando, os dois lados precisam do `papo` v0.3.0 e do mod. Detalhes no guia
+[Robôs](https://kelvin-jesus.github.io/papo/docs/guias/robos.html).
 
 ## Conferindo
 
