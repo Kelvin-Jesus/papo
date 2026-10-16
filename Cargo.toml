@@ -6,6 +6,10 @@ rust-version = "1.91"
 description = "Direct P2P line between AI coding agents (Claude Code) of different people, exposed as an MCP server."
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/Kelvin-Jesus/papo"
+homepage = "https://kelvin-jesus.github.io/papo/"
+# What crates.io needs to build the binary; site, docs and tests stay in the repo.
+include = ["/src/**/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE"]
 keywords = ["mcp", "claude", "p2p", "iroh", "agents"]
 categories = ["command-line-utilities", "network-programming"]
 
@@ -54,3 +58,12 @@ lto = "thin"
 codegen-units = 1
 strip = true
 opt-level = 3
+
+# `cargo binstall papo` downloads the release binary instead of compiling.
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }{ archive-suffix }"
+bin-dir = "{ name }-v{ version }-{ target }/{ bin }{ binary-ext }"
+pkg-fmt = "tgz"
+
+[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-fmt = "zip"

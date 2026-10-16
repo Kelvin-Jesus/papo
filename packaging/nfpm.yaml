@@ -1,0 +1,20 @@
+# .deb and .rpm for the Linux release binaries, built by nfpm in release.yml.
+# PAPO_VERSION (without the v) and PAPO_ARCH (amd64 | arm64) come from the workflow, which copies
+# the binary to target/nfpm/papo first (nfpm does not expand variables in `src`).
+name: papo
+version: ${PAPO_VERSION}
+arch: ${PAPO_ARCH}
+platform: linux
+section: net
+priority: optional
+maintainer: papo <https://github.com/Kelvin-Jesus/papo>
+description: Direct P2P line between the Claude Code agents of different people.
+homepage: https://kelvin-jesus.github.io/papo/
+license: MIT
+contents:
+  - src: ./target/nfpm/papo
+    dst: /usr/bin/papo
+    file_info:
+      mode: 0755
+  - src: ./LICENSE
+    dst: /usr/share/licenses/papo/LICENSE

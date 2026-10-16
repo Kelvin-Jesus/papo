@@ -1,7 +1,7 @@
 ---
 type: Playbook
 title: Cut a release
-description: Bump the version, push a vX.Y.Z tag and verify the five platform archives and checksums published by the release workflow.
+description: Bump the version, push a vX.Y.Z tag, verify the archives, deb/rpm and checksums, and the package-manager publication.
 resource: https://github.com/Kelvin-Jesus/papo/blob/main/.github/workflows/release.yml
 tags: [papo, release, ci]
 timestamp: 2026-10-02T00:00:00Z
@@ -23,6 +23,21 @@ Each archive is `papo-<tag>-<target>` containing the binary, `README.md` and `LI
 
 `scripts/install.sh` (the `curl | sh` installer in the README) builds these names itself and resolves the latest tag by following the `/releases/latest` redirect. Changing the archive naming, the `<dir>/papo` layout inside the tarball or the `.sha256` format breaks it; after a release, smoke it with `sh scripts/install.sh --dir "$(mktemp -d)"`.
 
+Linux builds also ship `papo_<version>_<amd64|arm64>.deb` and `papo-<version>-1.<x86_64|aarch64>.rpm` (nfpm, `packaging/nfpm.yaml`), each with a `.sha256`.
+
+## Package managers
+
+After `publish`, the `pacotes` job runs `scripts/pacotes.py <tag> dist pacotes`, which turns the `.sha256` files into the Homebrew formula, the AUR `PKGBUILD`/`.SRCINFO` (`papo-bin`) and the Scoop manifest, then pushes each one. Every push step is skipped when its secret is missing, so a release never fails on a manager that is not set up yet.
+
+| Destination | Install command | Secret | One-time setup |
+|---|---|---|---|
+| `Kelvin-Jesus/homebrew-papo` (`Formula/papo.rb`) | `brew install kelvin-jesus/papo/papo` | `PACOTES_TOKEN` | create the public repo |
+| `Kelvin-Jesus/scoop-papo` (`bucket/papo.json`) | `scoop bucket add papo https://github.com/Kelvin-Jesus/scoop-papo` then `scoop install papo` | `PACOTES_TOKEN` | create the public repo |
+| AUR `papo-bin` | `yay -S papo-bin` | `AUR_SSH_KEY` | AUR account with that key's public half |
+| crates.io `papo` | `cargo install papo` / `cargo binstall papo` | `CARGO_REGISTRY_TOKEN` | crates.io account, token scoped to `publish-new`/`publish-update` |
+
+`PACOTES_TOKEN` is a fine-grained token with contents read/write on the two repos above. To check a manifest before pushing: `python3 scripts/pacotes.py vX.Y.Z <dir with the .sha256 files> /tmp/pacotes`, then `makepkg --printsrcinfo | diff - .SRCINFO` and `makepkg -f` in `/tmp/pacotes/aur`.
+
 # Examples
 
 ```sh
@@ -37,7 +52,7 @@ git push origin main vX.Y.Z
 
 # 3. Watch and verify
 gh run watch "$(gh run list --workflow release --limit 1 --json databaseId -q '.[0].databaseId')"
-gh release view vX.Y.Z --json assets -q '.assets[].name'   # expect 10 files
+gh release view vX.Y.Z --json assets -q '.assets[].name'   # expect 18 files (10 archives/checksums + 4 deb/rpm + 4 checksums)
 ```
 
 Dry run without publishing: `gh workflow run release --ref main`, then `gh run download <run-id>`. Artifacts are named after the ref (`papo-main-<target>`).

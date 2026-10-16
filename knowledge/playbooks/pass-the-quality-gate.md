@@ -23,7 +23,7 @@ is the one to require on `main`.
 | `rustdoc` | any rustdoc warning (`RUSTDOCFLAGS=-D warnings`) |
 | `supply-chain` | cargo-deny: advisory, license, ban or source violation (`deny.toml`) |
 | `docs` | any mdBook warning, any broken local link/anchor in `_site` (site + book), any Mermaid diagram that fails to render |
-| `site` | gzip budget exceeded (HTML 30 KB, CSS 15 KB, JS 20 KB; font 160 KB raw), invalid HTML (html-validate recommended), Lighthouse desktop median under perf 0.90 / a11y 0.95 / best practices 0.95 / SEO 0.90, or any color-contrast failure |
+| `site` | package-manager manifest tests failing (`python3 -m unittest discover -s scripts/tests`), gzip budget exceeded (HTML 30 KB, CSS 15 KB, JS 20 KB; font 160 KB raw), invalid HTML (html-validate recommended), Lighthouse desktop median under perf 0.90 / a11y 0.95 / best practices 0.95 / SEO 0.90, or any color-contrast failure |
 | `rules` | a person name from the denylist anywhere in tracked files; a commit subject not matching `tipo(escopo): descrição` |
 | `secrets` | gitleaks finds a secret anywhere in history |
 | `lint (workflows and scripts)` | actionlint (with shellcheck on `run:` blocks) or shellcheck on `scripts/*.sh` and `.githooks/*` |
