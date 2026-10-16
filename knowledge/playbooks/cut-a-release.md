@@ -31,12 +31,12 @@ After `publish`, the `pacotes` job runs `scripts/pacotes.py <tag> dist pacotes`,
 
 | Destination | Install command | Secret | One-time setup |
 |---|---|---|---|
-| `Kelvin-Jesus/homebrew-papo` (`Formula/papo.rb`) | `brew install kelvin-jesus/papo/papo` | `PACOTES_TOKEN` | create the public repo |
-| `Kelvin-Jesus/scoop-papo` (`bucket/papo.json`) | `scoop bucket add papo https://github.com/Kelvin-Jesus/scoop-papo` then `scoop install papo` | `PACOTES_TOKEN` | create the public repo |
+| this repo, `Formula/papo.rb` | `brew tap kelvin-jesus/papo https://github.com/Kelvin-Jesus/papo` then `brew install papo` | `PACOTES_DEPLOY_KEY` | done: deploy key with write access, allowed to bypass the `main` ruleset |
+| this repo, `bucket/papo.json` | `scoop bucket add papo https://github.com/Kelvin-Jesus/papo` then `scoop install papo` | `PACOTES_DEPLOY_KEY` | same key |
 | AUR `papo-bin` | `yay -S papo-bin` | `AUR_SSH_KEY` | AUR account with that key's public half |
 | crates.io `papo` | `cargo install papo` / `cargo binstall papo` | `CARGO_REGISTRY_TOKEN` | crates.io account, token scoped to `publish-new`/`publish-update` |
 
-`PACOTES_TOKEN` is a fine-grained token with contents read/write on the two repos above. To check a manifest before pushing: `python3 scripts/pacotes.py vX.Y.Z <dir with the .sha256 files> /tmp/pacotes`, then `makepkg --printsrcinfo | diff - .SRCINFO` and `makepkg -f` in `/tmp/pacotes/aur`.
+The formula and the manifest live in this repo because Homebrew taps and Scoop buckets can be any git repo; `main` requires the quality gate and GitHub Actions cannot bypass rulesets on a personal repo, so the commit uses the `PACOTES_DEPLOY_KEY` deploy key, which the ruleset lists as a bypass actor. To check a manifest before pushing: `python3 scripts/pacotes.py vX.Y.Z <dir with the .sha256 files> /tmp/pacotes`, then `makepkg --printsrcinfo | diff - .SRCINFO` and `makepkg -f` in `/tmp/pacotes/aur`.
 
 # Examples
 
