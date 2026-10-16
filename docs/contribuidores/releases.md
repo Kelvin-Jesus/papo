@@ -13,7 +13,7 @@ A mecânica (versão no `Cargo.toml`, tag, workflow, conferência dos arquivos) 
    ([Trabalhando com o mantenedor](trabalhando-com-o-mantenedor.md)).
 3. **Versão no código e no site.** Suba `version` no `Cargo.toml` (e o `Cargo.lock`), a constante
    `VERSAO` em `site/app.js` e os links de download do README, do botão do hero e da aba de sistemas
-   em `site/index.html`: os nomes dos arquivos levam a versão (`papo-vX.Y.Z-<alvo>`).
+   em `site/index.html` e `site/pt/index.html`: os nomes dos arquivos levam a versão (`papo-vX.Y.Z-<alvo>`).
 4. **Tag.** Commit e push de `main` com o `quality gate` verde, depois
    `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`. O workflow `release` recusa a tag se
    `docs/releases/vX.Y.Z.md` não existir, ainda disser "rascunho" ou tiver campos por preencher;
