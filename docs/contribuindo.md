@@ -156,7 +156,7 @@ Em emergência, `--no-verify` pula o hook local; a CI continua barrando.
 ## Convenções
 
 - Código, comentários e textos lidos pelo agente (instruções do servidor, descrições e respostas das
-  ferramentas) em inglês. Saída da CLI, README e documentação em português.
+  ferramentas) em inglês. Saída da CLI e documentação em português. README e site em inglês por padrão, com a versão em português em `README.pt-BR.md` e `site/pt/`, sempre atualizadas juntas.
 - Comentários explicam o porquê, não o quê.
 - Erros sobem com contexto (`anyhow::Context`); falhas de gravação em segundo plano vão para o stderr.
 - O stdout do `papo mcp` é exclusivo do JSON-RPC.

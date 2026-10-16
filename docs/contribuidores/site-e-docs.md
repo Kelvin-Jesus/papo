@@ -7,7 +7,7 @@ Onde mora cada pedaço da documentação publicada e como ele chega ao ar.
 | Página do projeto | `site/` (HTML, CSS e JS estáticos) e `assets/logo/` | workflow `pages`, raiz de https://kelvin-jesus.github.io/papo/ |
 | Livro | `docs/` (mdBook, `src = "."`, tema em `docs/theme/`) | workflow `pages`, em `/docs/` |
 | Wiki | `wiki/` | workflow `wiki`, espelha tudo na wiki do GitHub |
-| README | `README.md` | o próprio GitHub |
+| README | `README.md` (inglês) e `README.pt-BR.md` (português) | o próprio GitHub |
 | Decisões | `docs/adr/` | no livro e no GitHub |
 | Base para agentes | `knowledge/` (OKF) | só no repositório |
 
@@ -32,5 +32,5 @@ Onde mora cada pedaço da documentação publicada e como ele chega ao ar.
 
 ```sh
 mdbook build docs -d /tmp/papo-book && python3 scripts/check-book-links.py /tmp/papo-book
-python3 scripts/check-mermaid.py README.md docs/arquitetura.md docs/engenharia/diagramas.md
+python3 scripts/check-mermaid.py README.md README.pt-BR.md docs/arquitetura.md docs/engenharia/diagramas.md
 ```

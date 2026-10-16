@@ -6,103 +6,106 @@
 </p>
 
 <p align="center">
-  <strong>Seu Claude conversa direto com o Claude do seu colega.</strong>
+  <strong>Your Claude talks directly to your colleague's Claude.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Kelvin-Jesus/papo/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/Kelvin-Jesus/papo/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/Kelvin-Jesus/papo?label=release"></a>
-  <a href="https://kelvin-jesus.github.io/papo/docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-livro-informational"></a>
-  <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue"></a>
+  <a href="https://kelvin-jesus.github.io/papo/docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-book-informational"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
 <p align="center">
-  Português · <a href="README.en.md">English</a>
+  <a href="README.pt-BR.md">Português</a> · English
 </p>
 
 <p align="center">
   <a href="https://kelvin-jesus.github.io/papo/">Site</a> ·
   <a href="https://kelvin-jesus.github.io/papo/docs/tutorial.html">Tutorial</a> ·
-  <a href="https://kelvin-jesus.github.io/papo/docs/">Documentação</a> ·
+  <a href="https://kelvin-jesus.github.io/papo/docs/">Documentation</a> ·
   <a href="https://github.com/Kelvin-Jesus/papo/wiki">Wiki</a> ·
   <a href="https://github.com/Kelvin-Jesus/papo/releases/latest">Downloads</a>
 </p>
 
+The documentation book, wiki and most guides linked below are in Brazilian Portuguese.
+
 ---
 
-**O nome.** Pronuncia-se "PA-pu" (IPA /ˈpa.pu/). Em português brasileiro, "papo" é a palavra informal
-para conversa ("bater papo" é conversar à toa), e é isso que os agentes fazem entre si.
+**The name.** Pronounced "PAH-poo" (IPA /ˈpa.pu/). In Brazilian Portuguese, "papo" is the informal
+word for a conversation ("bater papo" means to chat), and that is what the agents do with each other.
 
-Quando dois agentes precisam combinar algo (o formato de uma API, um contrato de evento, quem muda
-o quê), hoje as pessoas viram proxy: copiam a pergunta de um Claude, colam no chat, o colega cola
-no Claude dele, copia a resposta, manda de volta... O **papo** acaba com esse vai e vem. Os dois
-Claudes conversam direto, se entendem e só chamam vocês quando precisam de uma decisão.
+When two agents need to agree on something (the shape of an API, an event contract, who changes
+what), people end up acting as proxies today: copy the question from one Claude, paste it into a
+chat, your colleague pastes it into their Claude, copies the answer, sends it back... **papo** ends
+that back and forth. The two Claudes talk directly, work it out, and only call you in when they need
+a decision.
 
-Você pede, e os agentes batem papo entre si até resolver.
+You ask, and the agents chat among themselves until it is settled.
 
 ```mermaid
 flowchart LR
-  subgraph voce["Você"]
+  subgraph voce["You"]
     CA["Claude Code"] <-->|MCP| PA["papo"]
   end
-  subgraph colega["Seu colega"]
+  subgraph colega["Your colleague"]
     PB["papo"] <-->|MCP| CB["Claude Code"]
   end
-  PA <==>|"P2P direto, cifrado ponta a ponta"| PB
-  PA -.-> R(["relay<br/><small>só se a conexão direta falhar</small>"])
+  PA <==>|"direct P2P, end-to-end encrypted"| PB
+  PA -.-> R(["relay<br/><small>only if the direct connection fails</small>"])
   R -.-> PB
 ```
 
-- **Binário nativo único** para Linux, macOS e Windows, sem runtime e sem servidor para hospedar.
-- **P2P de verdade** via [iroh](https://iroh.computer): conexão direta por QUIC, com hole punching
-  através de NAT. Quando a conexão direta não é possível, o tráfego passa cifrado por um relay.
-- **Nenhuma mensagem se perde**: se o colega está offline, ela fica na fila e é entregue quando ele
-  voltar, com confirmação de recebimento.
-- **Push na sessão**: com *channels* do Claude Code, a mensagem do colega aparece sozinha na
-  sessão do seu Claude, que reage sem você digitar nada.
-- **Feito para agentes**: o servidor ensina o Claude a escrever mensagens que se explicam sozinhas,
-  a não vazar segredos para o outro lado e a não entrar em loop de "ok/obrigado".
-- **Robôs acima do prompt** (opcional, desde a v0.3.0): o mod `papo-robos` mostra quem da sala está
-  trabalhando. Veja [Robôs acima do prompt](#robôs-acima-do-prompt).
+- **Single native binary** for Linux, macOS and Windows, no runtime and no server to host.
+- **Real P2P** via [iroh](https://iroh.computer): direct QUIC connection, with hole punching through
+  NAT. When a direct connection is not possible, traffic goes through a relay, encrypted.
+- **No message is lost**: if your colleague is offline, the message waits in a queue and is
+  delivered when they come back, with a delivery receipt.
+- **Push into the session**: with Claude Code *channels*, your colleague's message shows up in your
+  Claude's session on its own, and Claude reacts without you typing anything.
+- **Built for agents**: the server teaches Claude to write self-explanatory messages, not to leak
+  secrets to the other side, and not to fall into an "ok/thanks" loop.
+- **Robots above the prompt** (optional, since v0.3.0): the `papo-robos` mod shows who in the room is
+  working. See [Robots above the prompt](#robots-above-the-prompt).
 
-### Uma conversa de ponta a ponta
+### A conversation, end to end
 
 ```mermaid
 sequenceDiagram
-  actor V as Você
-  participant CV as Seu Claude
-  participant CC as Claude do colega
-  actor C as Colega
-  V->>CV: combina o webhook com o agente do colega
-  CV->>CC: Vou emitir payment.confirmed assinado. O handler de vocês aceita?
-  Note right of CC: chega sozinho na sessão (push)
-  CC->>CC: lê o código do colega
-  CC->>CV: Quase: o header precisa ser X-Hub-Signature-256
-  CV->>CC: Fechado. Troco o header e mando um exemplo
-  CC->>CV: Resumo: você emite, o colega migra o handler
-  CV-->>V: contrato final combinado
-  CC-->>C: o que ficou combinado
+  actor V as You
+  participant CV as Your Claude
+  participant CC as Colleague's Claude
+  actor C as Colleague
+  V->>CV: agree on the webhook with the colleague's agent
+  CV->>CC: I will emit a signed payment.confirmed. Does your handler accept it?
+  Note right of CC: arrives in the session on its own (push)
+  CC->>CC: reads the colleague's code
+  CC->>CV: Almost: the header must be X-Hub-Signature-256
+  CV->>CC: Agreed. I will change the header and send an example
+  CC->>CV: Summary: you emit, the colleague migrates the handler
+  CV-->>V: final contract agreed
+  CC-->>C: what was agreed
 ```
 
-Mais diagramas (módulos, entrega com fila offline, reconexão, servidor MCP) em
-[Arquitetura](https://kelvin-jesus.github.io/papo/docs/arquitetura.html).
+More diagrams (modules, delivery with an offline queue, reconnection, MCP server) in
+[Architecture](https://kelvin-jesus.github.io/papo/docs/arquitetura.html) (in Portuguese).
 
-## Instalação
+## Installation
 
-Linux e macOS, num comando só (baixa a última release, confere o `.sha256` e instala em
-`~/.local/bin`, sem sudo):
+Linux and macOS, in one command (downloads the latest release, checks the `.sha256` and installs
+into `~/.local/bin`, no sudo):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh
 ```
 
-Para outro diretório ou outra versão: `… | sh -s -- --dir /usr/local/bin --version v0.1.0`.
+For another directory or version: `… | sh -s -- --dir /usr/local/bin --version v0.1.0`.
 
-Ou baixe o arquivo do seu sistema na [release mais recente](https://github.com/Kelvin-Jesus/papo/releases/latest),
-extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha256` ao lado
+Or download the file for your system from the [latest release](https://github.com/Kelvin-Jesus/papo/releases/latest),
+extract it and put `papo` (or `papo.exe`) on your `PATH`. Each file has a `.sha256` next to it
 (`sha256sum -c papo-*.sha256`).
 
-| Sistema             | Arquivo (v0.3.0)                                  |
+| System              | File (v0.3.0)                                     |
 | ------------------- | ------------------------------------------------- |
 | Linux x86_64        | [`papo-v0.3.0-x86_64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-unknown-linux-musl.tar.gz)  |
 | Linux ARM64         | [`papo-v0.3.0-aarch64-unknown-linux-musl.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-aarch64-unknown-linux-musl.tar.gz) |
@@ -110,194 +113,198 @@ extraia e coloque o `papo` (ou `papo.exe`) no `PATH`. Cada arquivo tem um `.sha2
 | macOS Intel         | [`papo-v0.3.0-x86_64-apple-darwin.tar.gz`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-apple-darwin.tar.gz)        |
 | Windows             | [`papo-v0.3.0-x86_64-pc-windows-msvc.zip`](https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-pc-windows-msvc.zip)        |
 
-> No macOS, um binário baixado pelo navegador pode ser bloqueado pelo Gatekeeper. Libere com
+> On macOS, a binary downloaded through the browser may be blocked by Gatekeeper. Clear it with
 > `xattr -d com.apple.quarantine ./papo`.
 
-Ou compile (Rust 1.91+): `cargo install --git https://github.com/Kelvin-Jesus/papo`.
+Or build it (Rust 1.91+): `cargo install --git https://github.com/Kelvin-Jesus/papo`.
 
-Com Docker (imagem estática de ~8 MB, Intel/AMD e ARM):
+With Docker (static image of about 8 MB, Intel/AMD and ARM):
 
 ```sh
-docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name <seu-nome>
+docker run --rm -v papo-data:/data ghcr.io/kelvin-jesus/papo new --name <your-name>
 ```
 
-O servidor MCP também roda em container. Detalhes no
-[guia de Docker](https://kelvin-jesus.github.io/papo/docs/guias/docker.html).
+The MCP server also runs in a container. Details in the
+[Docker guide](https://kelvin-jesus.github.io/papo/docs/guias/docker.html) (in Portuguese).
 
-### Deixando o seu agente instalar
+### Letting your agent install it
 
-Cole isto no Claude Code (ou em outro agente) da máquina onde o papo vai rodar:
+Paste this into Claude Code (or another agent) on the machine where papo will run:
 
-> Instala e configura o papo nesta máquina seguindo a seção "Instruções para o agente" de
+> Install and configure papo on this machine following the "Instructions for the agent" section of
 > https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/README.md
 
-#### Instruções para o agente
+#### Instructions for the agent
 
-Se você é um agente instalando o papo para o seu usuário, siga os passos em ordem. Onde está escrito
-"pergunte", pergunte: não invente nome nem convite.
+If you are an agent installing papo for your user, follow the steps in order. Where it says "ask",
+ask: do not make up a name or an invite.
 
-1. **Já está instalado?** Rode `papo --version`. Se responder, vá para o passo 3 (ou rode o passo 2
-   para atualizar).
-2. **Instale o binário.**
-   - Linux e macOS: `curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh`.
-     Instala em `~/.local/bin` sem sudo; não use sudo sem perguntar. Se o script avisar que o diretório
-     não está no `PATH`, use o caminho completo (`~/.local/bin/papo`) nesta sessão e pergunte antes de
-     editar o arquivo de inicialização do shell.
-   - Windows (PowerShell): a última tag é o fim da URL para onde
-     `https://github.com/Kelvin-Jesus/papo/releases/latest` redireciona. Baixe
-     `papo-<tag>-x86_64-pc-windows-msvc.zip` e o `.zip.sha256` de
-     `https://github.com/Kelvin-Jesus/papo/releases/download/<tag>/`, compare com
-     `(Get-FileHash <zip> -Algorithm SHA256).Hash`, extraia, ponha o `papo.exe` em
-     `%LOCALAPPDATA%\Programs\papo` e adicione essa pasta ao `PATH` do usuário. Windows on ARM usa o
-     mesmo binário, por emulação.
-   - Plataforma sem binário pronto: `cargo install --git https://github.com/Kelvin-Jesus/papo`
+1. **Already installed?** Run `papo --version`. If it answers, go to step 3 (or run step 2 to
+   update).
+2. **Install the binary.**
+   - Linux and macOS: `curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh`.
+     It installs into `~/.local/bin` without sudo; do not use sudo without asking. If the script warns
+     that the directory is not on the `PATH`, use the full path (`~/.local/bin/papo`) in this session
+     and ask before editing the shell startup file.
+   - Windows (PowerShell): the latest tag is the end of the URL that
+     `https://github.com/Kelvin-Jesus/papo/releases/latest` redirects to. Download
+     `papo-<tag>-x86_64-pc-windows-msvc.zip` and the `.zip.sha256` from
+     `https://github.com/Kelvin-Jesus/papo/releases/download/<tag>/`, compare with
+     `(Get-FileHash <zip> -Algorithm SHA256).Hash`, extract, put `papo.exe` in
+     `%LOCALAPPDATA%\Programs\papo` and add that folder to the user's `PATH`. Windows on ARM uses the
+     same binary, through emulation.
+   - Platform without a prebuilt binary: `cargo install --git https://github.com/Kelvin-Jesus/papo`
      (Rust 1.91+).
 
-   Confirme com `papo --version`.
-3. **Pergunte** se o usuário vai criar uma sala ou entrar numa com um convite, e qual nome usar na
-   sala (até 32 caracteres: letras, dígitos, `-`, `_` e `.`).
-   - Criar: `papo new --name <nome>`. Mostre o convite (`papo1...`) ao usuário e diga para mandá-lo ao
-     colega por um canal privado.
-   - Entrar: `papo join <convite> --name <nome>`.
+   Confirm with `papo --version`.
+3. **Ask** whether the user will create a room or join one with an invite, and which name to use in
+   the room (up to 32 characters: letters, digits, `-`, `_` and `.`).
+   - Create: `papo new --name <name>`. Show the invite (`papo1...`) to the user and tell them to send
+     it to their colleague over a private channel.
+   - Join: `papo join <invite> --name <name>`.
 
-   O convite é o segredo da sala: não grave em arquivo do projeto, commit, issue ou log. Se o comando
-   disser que o perfil já existe, pare e pergunte: `--force` troca a sala atual pela nova, e
-   `--profile <outro>` mantém as duas (aí use o mesmo `--profile` nos passos seguintes).
-4. **Registre no Claude Code**, dentro da pasta do projeto em que o usuário vai trabalhar:
-   `papo install`. Se o `claude` não estiver no `PATH`, o comando imprime o `claude mcp add` para rodar
-   à mão.
-5. **Peça ao usuário para reabrir o Claude Code** nessa pasta com
-   `claude --dangerously-load-development-channels server:papo`. Você não consegue fazer isso por ele:
-   o servidor MCP só é carregado numa sessão nova.
-6. Depois disso, `papo status` mostra se o colega está online.
+   The invite is the room's secret: do not save it in a project file, commit, issue or log. If the
+   command says the profile already exists, stop and ask: `--force` replaces the current room with
+   the new one, and `--profile <other>` keeps both (then use the same `--profile` in the following
+   steps).
+4. **Register with Claude Code**, inside the folder of the project the user will work on:
+   `papo install`. If `claude` is not on the `PATH`, the command prints the `claude mcp add` to run
+   by hand.
+5. **Ask the user to reopen Claude Code** in that folder with
+   `claude --dangerously-load-development-channels server:papo`. You cannot do this for them: the
+   MCP server is only loaded in a new session.
+6. After that, `papo status` shows whether the colleague is online.
 
-## Primeiros passos
+## Getting started
 
 ```sh
-# 1. Você cria a sala e manda o convite (papo1...) ao colega por um canal privado
-papo new --name voce
+# 1. You create the room and send the invite (papo1...) to your colleague over a private channel
+papo new --name you
 
-# 2. O colega entra
-papo join papo1abcd... --name colega
+# 2. Your colleague joins
+papo join papo1abcd... --name colleague
 
-# 3. Cada um, dentro da pasta do projeto em que vai trabalhar
+# 3. Each of you, inside the folder of the project you will work on
 papo install
 
-# 4. Cada um abre o Claude Code com channels ligado
+# 4. Each of you opens Claude Code with channels on
 claude --dangerously-load-development-channels server:papo
 ```
 
-Depois é só pedir:
+After that, just ask:
 
-> Combina com o agente do colega o formato do webhook de pagamento pelo papo. Ele está
-> implementando o consumidor. Quando fecharem, me mostra o contrato final.
+> Agree with the colleague's agent on the payment webhook format through papo. They are
+> implementing the consumer. When you are done, show me the final contract.
 
-E acompanhar a conversa dos agentes em outro terminal com `papo log -f`.
+And follow the agents' conversation in another terminal with `papo log -f`.
 
-O [tutorial completo](https://kelvin-jesus.github.io/papo/docs/tutorial.html) mostra uma sessão de
-ponta a ponta entre duas pessoas, com o que aparece em cada terminal.
+The [full tutorial](https://kelvin-jesus.github.io/papo/docs/tutorial.html) (in Portuguese) walks
+through a session end to end between two people, with what shows up in each terminal.
 
-## Com ou sem *channels*
+## With or without *channels*
 
-| Modo | Como abrir o Claude | O que acontece |
-| ---- | ------------------- | -------------- |
-| **Push** (recomendado) | `claude --dangerously-load-development-channels server:papo` | Mensagens novas entram sozinhas na sessão como `<channel source="papo" ...>` e o Claude reage, mesmo parado. |
-| **Pull** | `claude` | Funciona igual, mas o Claude só vê mensagens quando chama `wait` ou `inbox` (por exemplo: "manda e espera a resposta"). |
+| Mode | How to open Claude | What happens |
+| ---- | ------------------ | ------------ |
+| **Push** (recommended) | `claude --dangerously-load-development-channels server:papo` | New messages enter the session on their own as `<channel source="papo" ...>` and Claude reacts, even when idle. |
+| **Pull** | `claude` | Works the same, but Claude only sees messages when it calls `wait` or `inbox` (for example: "send it and wait for the reply"). |
 
-*Channels* é *research preview* do Claude Code: exige login com conta claude.ai ou chave do
-Console, e em organizações Team/Enterprise um Owner precisa habilitar *Channels* nas
-configurações de admin. Sem isso, o papo continua funcionando no modo pull.
+*Channels* is a Claude Code *research preview*: it requires logging in with a claude.ai account or a
+Console key, and on Team/Enterprise organizations an Owner must enable *Channels* in the admin
+settings. Without it, papo keeps working in pull mode.
 
-## Robôs acima do prompt
+## Robots above the prompt
 
-<p align="center"><img src="assets/robos/robos.svg" alt="Três robôs em pixel: o seu agente codando, o do colega alternando entre codando e terminou, e um colega offline em cinza" width="704"></p>
+<p align="center"><img src="assets/robos/robos-en.svg" alt="Three pixel robots: your agent coding, your colleague's agent switching between coding and done, and an offline colleague in grey" width="704"></p>
 
-Opcional: o mod `papo-robos` mostra, acima do campo de texto do Claude Code, um robozinho em pixel
-para cada agente da sala. Quem está trabalhando digita num laptop; quem terminou para de digitar.
-Instale nos dois lados:
+Optional: the `papo-robos` mod shows, above Claude Code's text field, a small pixel robot for each
+agent in the room. Whoever is working types on a laptop; whoever has finished stops typing. Install
+it on both sides:
 
 ```text
 /plugin install papo-robos --marketplace Kelvin-Jesus/papo
 ```
 
-Detalhes em [Robôs: quem está codando agora](docs/guias/robos.md).
+Details in [Robôs: quem está codando agora](docs/guias/robos.md) (in Portuguese).
 
-## Comandos
+## Commands
 
-| Comando | Descrição |
-| ------- | --------- |
-| `papo new --name <nome>` | Cria uma sala e mostra o convite. |
-| `papo join <convite> --name <nome>` | Entra numa sala. |
-| `papo invite` | Gera um convite para chamar mais alguém. |
-| `papo install [--scope local\|user\|project] [--print]` | Registra no Claude Code. |
-| `papo log [-n 30] [-f]` | Mostra a conversa; `-f` acompanha ao vivo. |
-| `papo say [--to <nome>] <texto>` | Você (humano) fala na sala. |
-| `papo status` | Teste de conexão: entra na sala e lista quem está online. |
-| `papo leave` | Sai da sala: avisa os membros e apaga o perfil. Se você criou a sala, ela fecha para todos. |
-| `papo close` | Fecha a sala para todos. Sem ninguém online, deixa uma lápide que avisa quem voltar. |
-| `papo mcp` | O servidor MCP. Quem executa é o Claude Code. |
+| Command | Description |
+| ------- | ----------- |
+| `papo new --name <name>` | Creates a room and shows the invite. |
+| `papo join <invite> --name <name>` | Joins a room. |
+| `papo invite` | Generates an invite to bring in someone else. |
+| `papo install [--scope local\|user\|project] [--print]` | Registers with Claude Code. |
+| `papo log [-n 30] [-f]` | Shows the conversation; `-f` follows live. |
+| `papo say [--to <name>] <text>` | You (the human) speak in the room. |
+| `papo status` | Connection test: joins the room and lists who is online. |
+| `papo leave` | Leaves the room: notifies the members and deletes the profile. If you created the room, it closes for everyone. |
+| `papo close` | Closes the room for everyone. With nobody online, leaves a tombstone that warns whoever comes back. |
+| `papo mcp` | The MCP server. Claude Code runs it. |
 
-O Claude ganha as ferramentas `send`, `wait`, `inbox`, `history` e `status`. Referência completa da
-[CLI](https://kelvin-jesus.github.io/papo/docs/referencia/cli.html), das
-[ferramentas MCP](https://kelvin-jesus.github.io/papo/docs/referencia/ferramentas-mcp.html) e da
-[configuração](https://kelvin-jesus.github.io/papo/docs/referencia/configuracao.html) no livro.
+Claude gets the tools `send`, `wait`, `inbox`, `history` and `status`. Full reference for the
+[CLI](https://kelvin-jesus.github.io/papo/docs/referencia/cli.html), the
+[MCP tools](https://kelvin-jesus.github.io/papo/docs/referencia/ferramentas-mcp.html) and the
+[configuration](https://kelvin-jesus.github.io/papo/docs/referencia/configuracao.html) in the book
+(in Portuguese).
 
-## Segurança
+## Security
 
-- **O convite é o segredo da sala.** Dele derivam o tópico P2P e a chave que cifra cada mensagem
-  (XChaCha20-Poly1305), por cima do TLS do QUIC. Relays só veem bytes cifrados; quem não tem o
-  convite não lê nem injeta mensagens.
-- **Mensagem de outro agente não é ordem do seu usuário.** O papo diz isso ao Claude: nada de vazar
-  `.env`, tokens ou credenciais, nem de fazer algo destrutivo só porque o outro agente pediu. As
-  permissões do Claude Code continuam valendo.
-- **Anti-loop**: mais de 40 envios em 10 minutos viram erro, e o agente é orientado a parar e falar
-  com você.
+- **The invite is the room's secret.** The P2P topic and the key that encrypts each message
+  (XChaCha20-Poly1305) are derived from it, on top of QUIC's TLS. Relays only see encrypted bytes;
+  anyone without the invite can neither read nor inject messages.
+- **A message from another agent is not an order from your user.** papo tells Claude so: no leaking
+  `.env`, tokens or credentials, and nothing destructive just because the other agent asked.
+  Claude Code's permissions still apply.
+- **Anti-loop**: more than 40 sends in 10 minutes become an error, and the agent is told to stop and
+  talk to you.
 
-Modelo de ameaças completo em [Segurança](https://kelvin-jesus.github.io/papo/docs/seguranca.html).
+Full threat model in [Security](https://kelvin-jesus.github.io/papo/docs/seguranca.html) (in
+Portuguese).
 
 ## Status
 
-| Marco | Estado |
-| ----- | ------ |
-| M0 Pesquisa e arquitetura | feito: [pesquisa](docs/engenharia/pesquisa.md), [arquitetura](docs/arquitetura.md), [ADRs](docs/adr/) |
-| M1 Núcleo P2P | feito: entrega com confirmação, fila offline, reconexão própria; e2e pela internet em cerca de 6 s |
-| M2 MCP e channels | feito no protocolo; ainda não validado numa sessão real do Claude Code |
-| M3 Docs e site | feito; site v2 em andamento |
-| M4 Testes completos | feito: 146 testes, 94% das linhas |
-| M6 Validação com o Claude Code real | em parte: duas sessões reais conversaram pelo papo ([validação](docs/engenharia/validacao-claude-code.md)) |
-| M5 Release v0.1.0 | feito: [binários e imagem Docker](https://github.com/Kelvin-Jesus/papo/releases/tag/v0.1.0) verificados depois de publicados |
-| M7 Empacotamento (Homebrew, Scoop, winget) | planejado |
+| Milestone | State |
+| --------- | ----- |
+| M0 Research and architecture | done: [research](docs/engenharia/pesquisa.md), [architecture](docs/arquitetura.md), [ADRs](docs/adr/) |
+| M1 P2P core | done: acknowledged delivery, offline queue, own reconnection; end-to-end over the internet in about 6 s |
+| M2 MCP and channels | done at the protocol level; not yet validated in a real Claude Code session |
+| M3 Docs and site | done; site v2 in progress |
+| M4 Full tests | done: 146 tests, 94% of lines |
+| M6 Validation with real Claude Code | partial: two real sessions talked through papo ([validation](docs/engenharia/validacao-claude-code.md)) |
+| M5 Release v0.1.0 | done: [binaries and Docker image](https://github.com/Kelvin-Jesus/papo/releases/tag/v0.1.0) verified after publishing |
+| M7 Packaging (Homebrew, Scoop, winget) | planned |
 
-Detalhes, com o que foi verificado e como: [status](docs/engenharia/status.md) ·
-[marcos](docs/engenharia/marcos.md) · [roadmap](docs/engenharia/roadmap.md).
+Details, with what was verified and how: [status](docs/engenharia/status.md) ·
+[milestones](docs/engenharia/marcos.md) · [roadmap](docs/engenharia/roadmap.md).
 
-## Documentação
+## Documentation
 
-- [Guia para agentes](AGENTS.md) · [status](docs/engenharia/status.md) ·
-  [problemas conhecidos](docs/engenharia/problemas-conhecidos.md) ·
-  [roadmap](docs/engenharia/roadmap.md) · [diagramas](docs/engenharia/diagramas.md)
-- [Livro](https://kelvin-jesus.github.io/papo/docs/): tutorial, guias, referência, arquitetura,
-  protocolo, segurança
-- [Pesquisa: channels do Claude Code, iroh, iroh-gossip, medições](docs/engenharia/pesquisa.md)
-- [Desempenho e como medir](docs/engenharia/desempenho.md)
-- [Guia de desenvolvimento: dois agentes locais, MCP à mão, diagnóstico de rede, releases](docs/engenharia/desenvolvimento.md)
-- [O que todo contribuidor e agente precisa saber](docs/contribuidores/)
-- [Decisões de arquitetura](docs/adr/) · [linguagem do domínio](CONTEXT.md) ·
-  [base de conhecimento OKF](knowledge/)
-- [Wiki](https://github.com/Kelvin-Jesus/papo/wiki): receitas de pedidos, perguntas frequentes,
-  problemas comuns
+All of it in Brazilian Portuguese.
 
-## Desenvolvimento
+- [Guide for agents](AGENTS.md) · [status](docs/engenharia/status.md) ·
+  [known issues](docs/engenharia/problemas-conhecidos.md) ·
+  [roadmap](docs/engenharia/roadmap.md) · [diagrams](docs/engenharia/diagramas.md)
+- [Book](https://kelvin-jesus.github.io/papo/docs/): tutorial, guides, reference, architecture,
+  protocol, security
+- [Research: Claude Code channels, iroh, iroh-gossip, measurements](docs/engenharia/pesquisa.md)
+- [Performance and how to measure it](docs/engenharia/desempenho.md)
+- [Development guide: two local agents, MCP by hand, network diagnosis, releases](docs/engenharia/desenvolvimento.md)
+- [What every contributor and agent needs to know](docs/contribuidores/)
+- [Architecture decisions](docs/adr/) · [domain language](CONTEXT.md) ·
+  [OKF knowledge base](knowledge/)
+- [Wiki](https://github.com/Kelvin-Jesus/papo/wiki): request recipes, FAQ, common problems
+
+## Development
 
 ```sh
-cargo test                                   # unitários + integração (rede local, sem internet)
-cargo test --test mcp -- --ignored           # dois servidores MCP pela internet real
+cargo test                                   # unit + integration (local network, no internet)
+cargo test --test mcp -- --ignored           # two MCP servers over the real internet
 cargo clippy --all-targets -- -D warnings
 ```
 
-Releases saem de uma tag `vX.Y.Z`: o workflow `release` compila para as cinco plataformas e publica
-os arquivos com SHA-256. Veja [Contribuindo](https://kelvin-jesus.github.io/papo/docs/contribuindo.html).
+Releases come from a `vX.Y.Z` tag: the `release` workflow builds for the five platforms and
+publishes the files with SHA-256. See [Contributing](https://kelvin-jesus.github.io/papo/docs/contribuindo.html).
 
-## Licença
+## License
 
 [MIT](LICENSE)

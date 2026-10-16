@@ -10,7 +10,7 @@
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)");
   const celular = matchMedia("(max-width: 640px)");
   const PARAR = Symbol("parar");
-  // The page language picks the UI strings: pt-BR by default, English under /en/.
+  // The page language picks the UI strings: English by default, pt-BR under /pt/.
   const EN = document.documentElement.lang === "en";
   const T = (pt, en) => (EN ? en : pt);
   const NV = T("voce", "you");
