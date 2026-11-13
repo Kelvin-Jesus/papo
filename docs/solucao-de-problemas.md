@@ -42,6 +42,10 @@ instalado com `--scope user`. Feche a outra sessão ou use outro perfil
 O Claude Code iniciou o `papo mcp`, mas o perfil não existe nessa máquina (ou o `PAPO_HOME` do
 Claude Code é diferente do seu terminal). Rode `papo new` ou `papo join` e reinicie a sessão.
 
+No terminal, o mais comum é o perfil ter outro nome: quem entrou com `--profile nova` precisa repetir
+a opção em todo comando (`papo --profile nova leave`) ou definir `PAPO_PROFILE=nova`. Quando há outros
+perfis, a mensagem lista os nomes (`existing profiles: nova`).
+
 ## O Claude não reage sozinho às mensagens
 
 - A sessão foi aberta sem `--dangerously-load-development-channels server:papo`.

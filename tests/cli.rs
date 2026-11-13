@@ -199,6 +199,20 @@ fn commands_on_an_unconfigured_profile_explain_the_setup() {
 }
 
 #[test]
+fn an_unconfigured_profile_points_to_the_ones_that_exist() {
+    let home = tempfile::tempdir().unwrap();
+    papo(home.path()).args(["--profile", "nova", "new", "--name", "voce"]).assert().success();
+    papo(home.path()).args(["--profile", "outra", "new", "--name", "voce"]).assert().success();
+    for args in [&["leave", "--yes"][..], &["close", "--yes"], &["status"]] {
+        papo(home.path()).args(args).assert().failure().stderr(
+            predicate::str::contains("profile 'default' is not configured")
+                .and(predicate::str::contains("existing profiles: nova, outra"))
+                .and(predicate::str::contains("papo --profile nova")),
+        );
+    }
+}
+
+#[test]
 fn say_and_status_fail_fast_when_nobody_is_known() {
     let home = tempfile::tempdir().unwrap();
     new_room(home.path(), "kj");
