@@ -160,12 +160,31 @@ impl Store {
     pub fn open(profile: &str) -> Result<Self> {
         let dir = Self::dir_for(profile)?;
         if !dir.join("profile.json").exists() {
+            let others = Self::list().unwrap_or_default();
+            if let Some(first) = others.first() {
+                bail!(
+                    "profile '{profile}' is not configured; existing profiles: {}. Pick one with \
+                     `papo --profile {first} <command>` (or set PAPO_PROFILE).",
+                    others.join(", ")
+                );
+            }
             bail!(
                 "profile '{profile}' is not configured. Run `papo new --name <you>` to create a room \
                  or `papo join <invite> --name <you>` to enter one."
             );
         }
         Ok(Self { dir })
+    }
+
+    /// Names of the configured profiles, sorted.
+    pub fn list() -> Result<Vec<String>> {
+        let mut names: Vec<String> = std::fs::read_dir(home()?.join("profiles"))?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().join("profile.json").exists())
+            .filter_map(|e| e.file_name().into_string().ok())
+            .collect();
+        names.sort();
+        Ok(names)
     }
 
     /// Opens a profile stored in an explicit directory (see [`Store::create_at`]).
