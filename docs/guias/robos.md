@@ -31,9 +31,10 @@ perfil:
 - `activity.json`: o servidor grava quem da sala está trabalhando. O mod lê o arquivo e redesenha os
   robôs.
 
-O perfil é escolhido pelo diretório da sessão: o mod procura o `activity.json` cujo `cwd` é o
-diretório em que o Claude Code está rodando. Com um único `papo mcp` vivo na máquina, usa esse.
-Sem nenhum, a faixa fica vazia e o mod não aparece.
+O perfil é escolhido pela conexão da própria sessão: o mod pergunta ao servidor MCP `papo` desta
+sessão qual é o endpoint dele (a ferramenta `status`) e só lê o `activity.json` que traz esse
+endpoint. Sem servidor conectado, ou sem arquivo que bata, a faixa fica vazia: outra sessão aberta
+no mesmo diretório, com ou sem papo, não ganha robôs de uma sala que não é a dela.
 
 Os pixels usam o elemento `Raster` do terminal. No app de desktop aparecem só os nomes e o estado
 de cada um ("codando…", "terminou ✓", "offline").

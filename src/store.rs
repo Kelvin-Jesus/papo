@@ -90,6 +90,10 @@ pub enum LogEntry {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Activity {
     pub pid: u32,
+    /// The node's short endpoint id, as the `status` tool prints it: the mod asks its own
+    /// session's server for it, so only the room this session is connected to animates.
+    #[serde(default)]
+    pub endpoint: String,
     /// The server's working directory, which is the Claude Code session's: lets a mod
     /// pick its own profile when several servers run on one machine.
     pub cwd: String,

@@ -255,6 +255,7 @@ fn activity_roundtrips_and_compares_without_the_timestamp() {
     assert_eq!(store.activity().unwrap(), None);
     let activity = Activity {
         pid: 42,
+        endpoint: "abc123".into(),
         cwd: "/tmp/projeto".into(),
         name: "voce".into(),
         working: true,
