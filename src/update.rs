@@ -240,6 +240,11 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn a_failed_download_fails_the_update_instead_of_running_nothing() {
+        // The snippet runs curl; the test-stage container has none.
+        if Command::new("curl").arg("--version").output().is_err() {
+            eprintln!("skipped: no curl");
+            return;
+        }
         let dir = tempfile::tempdir().unwrap();
         assert!(!run_script_step("file:///nonexistent/install.sh", dir.path()).success());
 
