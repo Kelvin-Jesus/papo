@@ -12,48 +12,61 @@ import { COLUMNS, ROWS, encode, scene, type Mood } from './sprites'
 //   activity.json  written by papo: who in the room is working right now
 
 type Member = { name: string; online: boolean; working: boolean }
-type Activity = { cwd: string; name: string; working: boolean; members: Member[]; updated_ms: number }
+type Activity = { endpoint?: string; cwd: string; name: string; working: boolean; members: Member[]; updated_ms: number }
 
 /** papo rewrites activity.json every 5 s; older than this, its server is gone. */
 const STALE_MS = 15_000
+/** The MCP server this session runs papo under, as /mcp lists it. */
+const PAPO_SERVER = 'papo'
+/** How often to ask our own papo server which endpoint it is (a reconnect may change it). */
+const ENDPOINT_REFRESH_MS = 15_000
 /** papo ignores a working marker older than 30 s; refresh well before. */
 const MARKER_REFRESH_MS = 10_000
 const FRAME_MS = 200
 const POLL_EVERY_FRAMES = 5
 const SCENE_GAP = 2
+/** Room for "name · terminou ✓" under a scene narrower than the label. */
+const LABEL_COLUMNS = 22
+const SLOT = Math.max(COLUMNS, LABEL_COLUMNS)
 
 /** Module state: a reload starts it over, which is what a fresh load should do. */
 const S = {
   frame: 0,
   profileDir: undefined as string | undefined,
   activity: undefined as Activity | undefined,
+  endpoint: undefined as string | undefined,
+  endpointAskedAt: Number.NEGATIVE_INFINITY,
   working: false,
   markerWrittenAt: 0,
 }
 
 /**
- * Finds our papo profile: the one whose live server runs in this session's
- * directory, or, with a single live server on the machine, that one. Answers
- * whether the room's members changed since the last poll.
+ * Finds our papo profile: the one served by the papo MCP server this session is
+ * connected to, told apart by its endpoint. A server elsewhere on the machine,
+ * even one in this same directory, belongs to another session, so without a
+ * match the band stays empty. Answers whether the room's members changed since
+ * the last poll.
  */
 async function poll($: EngineInterface): Promise<boolean> {
   const now = await $.clock.now()
+  if (!S.endpoint || now - S.endpointAskedAt >= ENDPOINT_REFRESH_MS) {
+    S.endpointAskedAt = now
+    S.endpoint = await ownEndpoint($)
+  }
   // papo's own rule: PAPO_HOME, else the user's home. Windows has no HOME
   // (outside Git Bash); its home is USERPROFILE.
   const home = (await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE'))
   const base = (await $.env.get('PAPO_HOME')) ?? `${home}/.papo`
   const root = `${base}/profiles`
-  const cwd = await $.session.cwd()
-  const live: { dir: string; a: Activity }[] = []
-  const entries = await $.fs.list(root).catch(() => [])
+  let mine: { dir: string; a: Activity } | undefined
+  const entries = S.endpoint ? await $.fs.list(root).catch(() => []) : []
   for (const entry of entries) {
     if (entry.kind !== 'dir') continue
     const dir = `${root}/${entry.name}`
     const text = await $.fs.read(`${dir}/activity.json`).catch(() => undefined)
     const a = parseActivity(text)
-    if (a && now - a.updated_ms < STALE_MS) live.push({ dir, a })
+    if (a && a.endpoint === S.endpoint && now - a.updated_ms < STALE_MS) mine = { dir, a }
   }
-  const mine = live.find(l => l.a.cwd === cwd) ?? (live.length === 1 ? live[0] : undefined)
   const changed = JSON.stringify(mine?.a.members) !== JSON.stringify(S.activity?.members)
   if (mine?.dir !== S.profileDir) {
     S.profileDir = mine?.dir
@@ -61,6 +74,19 @@ async function poll($: EngineInterface): Promise<boolean> {
   }
   S.activity = mine?.a
   return changed
+}
+
+/** Asks this session's own papo server who it is; undefined when it is not connected. */
+async function ownEndpoint($: EngineInterface): Promise<string | undefined> {
+  const result = await $.mcp.call(PAPO_SERVER, 'status').catch(() => undefined)
+  if (!result || result.isError) return undefined
+  const text = result.content.map(b => (b.type === 'text' ? b.text : '')).join('\n')
+  return parseEndpoint(text)
+}
+
+/** Reads `(endpoint abc123)` out of papo's status line. */
+export function parseEndpoint(text: string): string | undefined {
+  return /\(endpoint ([^)\s]+)\)/.exec(text)?.[1]
 }
 
 export function parseActivity(text: unknown): Activity | undefined {
@@ -137,21 +163,26 @@ export const register: Register = on => {
         mood: (!m.online ? 'offline' : m.working ? 'working' : 'done') as Mood,
       })),
     ]
-    const fit = Math.max(1, Math.floor((e.props.bodyColumns + SCENE_GAP) / (COLUMNS + SCENE_GAP)))
+    const fit = Math.max(1, Math.floor((e.props.bodyColumns + SCENE_GAP) / (SLOT + SCENE_GAP)))
     const shown = robots.slice(0, fit)
     const label = { working: 'codando…', done: 'terminou ✓', offline: 'offline' } as const
 
+    // The rest of the band (other mods, the engine's own) still draws, below the robots.
+    const rest = await next(e)
     return (
-      <Box flexDirection="row" columnGap={SCENE_GAP}>
-        {shown.map(r => (
-          <Box key={r.key} flexDirection="column" width={COLUMNS}>
-            {Raster ? <Raster key={r.key} columns={COLUMNS} rows={ROWS} cells={encode(scene(r.mood, S.frame))} /> : null}
-            <Text wrap="truncate-end" dimColor={r.mood !== 'working'} bold={r.mood === 'working'}>
-              {r.name} · {label[r.mood]}
-            </Text>
-          </Box>
-        ))}
-        {robots.length > shown.length ? <Text dimColor>+{robots.length - shown.length}</Text> : null}
+      <Box flexDirection="column">
+        <Box flexDirection="row" columnGap={SCENE_GAP}>
+          {shown.map(r => (
+            <Box key={r.key} flexDirection="column" width={SLOT}>
+              {Raster ? <Raster key={r.key} columns={COLUMNS} rows={ROWS} cells={encode(scene(r.mood, S.frame))} /> : null}
+              <Text wrap="truncate-end" dimColor={r.mood !== 'working'} bold={r.mood === 'working'}>
+                {r.name} · {label[r.mood]}
+              </Text>
+            </Box>
+          ))}
+          {robots.length > shown.length ? <Text dimColor>+{robots.length - shown.length}</Text> : null}
+        </Box>
+        {rest}
       </Box>
     )
   })

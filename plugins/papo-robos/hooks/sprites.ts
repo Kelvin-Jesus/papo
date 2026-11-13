@@ -1,10 +1,10 @@
 // Pixel art for the band: a little robot at a desk with a laptop. Drawn on a
-// 32x20 pixel grid and packed two pixels per terminal cell with half blocks
+// 16x10 pixel grid and packed two pixels per terminal cell with half blocks
 // ("▀" top in the foreground, bottom in the background), so one scene is
-// 32 columns by 10 rows.
+// 16 columns by 5 rows: small enough to sit above the prompt unnoticed.
 
-export const WIDTH = 32
-export const HEIGHT = 20
+export const WIDTH = 16
+export const HEIGHT = 10
 export const COLUMNS = WIDTH
 export const ROWS = HEIGHT / 2
 
@@ -22,20 +22,16 @@ export type Grid = Px[]
 
 const C = {
   deskTop: 0x9c6b46,
-  deskFront: 0x6e4a30,
   deskLeg: 0x553823,
   lid: 0x2b2e35,
   screen: 0x0f1726,
   screenOff: 0x1a1d23,
-  hinge: 0x7d838c,
   base: 0xc9ced6,
   baseShade: 0x9aa1ab,
   body: 0xeef3f8,
   bodyShade: 0xbac6d4,
   visor: 0x1d2535,
   eye: 0x5ce1e6,
-  cheek: 0xff8fb1,
-  stalk: 0x9aa1ab,
   bulbBusy: 0xff5c7a,
   bulbBusyDim: 0x8f3245,
   bulbDone: 0x7cd992,
@@ -79,81 +75,68 @@ function round(g: Grid, x: number, y: number, w: number, h: number, c: Px) {
 }
 
 /**
- * A deterministic line of "code" for screen row `n`: indentation and a few
- * colored tokens, the same every time so scrolling reads as a real file.
+ * A deterministic line of "code" for screen row `n`, at most `width` pixels:
+ * indentation and a few colored tokens, the same every time so scrolling reads
+ * as a real file.
  */
-function codeLine(n: number): { indent: number; tokens: { len: number; color: number }[] } {
+function codeLine(n: number, width: number): { indent: number; tokens: { len: number; color: number }[] } {
   const h = (n * 2654435761) >>> 0
-  const indent = pick([0, 1, 2, 2, 1, 3], h)
+  const indent = pick([0, 1, 1, 0], h)
   const tokens: { len: number; color: number }[] = []
-  let left = 9 - indent
+  let left = width - indent
   let k = h >>> 3
-  while (left > 1) {
-    const len = Math.min(left, 1 + (k % 4))
+  while (left > 0) {
+    const len = Math.min(left, 1 + (k % 2))
     tokens.push({ len, color: pick(CODE, k >>> 2) })
     left -= len + 1
     k = (k * 1103515245 + 12345) >>> 0
-    if (k % 5 === 0) break
+    if (k % 3 === 0) break
   }
   return { indent, tokens }
 }
 
 function desk(g: Grid) {
-  rect(g, 0, 17, WIDTH, 1, C.deskTop)
-  rect(g, 1, 18, WIDTH - 2, 1, C.deskFront)
-  rect(g, 2, 19, 2, 1, C.deskLeg)
-  rect(g, WIDTH - 4, 19, 2, 1, C.deskLeg)
+  rect(g, 0, 8, WIDTH, 1, C.deskTop)
+  put(g, 1, 9, C.deskLeg)
+  put(g, WIDTH - 2, 9, C.deskLeg)
 }
 
+const SX = 10
+const SY = 3
+const SW = 4
+const SH = 3
+
 function laptop(g: Grid, mood: Mood, frame: number) {
-  // Lid with the screen facing the robot, hinge, and the keyboard base.
-  rect(g, 18, 5, 12, 10, C.lid)
-  rect(g, 18, 15, 12, 1, C.hinge)
-  // The base reaches back under the robot's hands, so the keys are within reach.
-  rect(g, 13, 16, 17, 1, C.base)
-  put(g, 13, 16, C.baseShade)
-  const sx = 19
-  const sy = 6
-  const sw = 10
-  const sh = 8
-  rect(g, sx, sy, sw, sh, mood === 'offline' ? C.screenOff : C.screen)
+  // Lid with the screen facing the robot, and the keyboard base reaching back
+  // under the robot's hands.
+  rect(g, 9, 2, 6, 5, C.lid)
+  rect(g, 7, 7, 8, 1, C.base)
+  put(g, 7, 7, C.baseShade)
+  rect(g, SX, SY, SW, SH, mood === 'offline' ? C.screenOff : C.screen)
   if (mood === 'offline') return
 
   if (mood === 'done') {
-    // Code at rest, dimmed, under a big check mark.
-    for (let row = 0; row < sh; row++) {
-      const { indent, tokens } = codeLine(row + 3)
-      let x = sx + indent
-      for (const t of tokens) {
-        rect(g, x, sy + row, t.len, 1, 0x2c3a52)
-        x += t.len + 1
-      }
-    }
-    const check = [[21, 10], [22, 11], [23, 12], [24, 11], [25, 10], [26, 9], [27, 8]] as const
-    for (const [x, y] of check) {
-      put(g, x, y, C.check)
-      put(g, x, y + 1, C.check)
-    }
+    // A check mark across the screen.
+    for (const [x, y] of [[SX, SY + 1], [SX + 1, SY + 2], [SX + 2, SY + 1], [SX + 3, SY]] as const) put(g, x, y, C.check)
     return
   }
 
   // Working: the file scrolls up a line every other frame and the last line
   // grows as if being typed, with a blinking cursor at its end.
   const scroll = Math.floor(frame / 2)
-  for (let row = 0; row < sh; row++) {
-    const n = scroll + row
-    const { indent, tokens } = codeLine(n)
-    const typing = row === sh - 1
-    let budget = typing ? 1 + (frame % 2) * 2 + (scroll % 3) : Infinity
-    let x = sx + indent
+  for (let row = 0; row < SH; row++) {
+    const { indent, tokens } = codeLine(scroll + row, SW)
+    const typing = row === SH - 1
+    let budget = typing ? 1 + (frame % 2) : Infinity
+    let x = SX + indent
     for (const t of tokens) {
       const len = Math.min(t.len, budget)
       if (len <= 0) break
-      rect(g, x, sy + row, len, 1, t.color)
+      rect(g, x, SY + row, len, 1, t.color)
       budget -= len
       x += len + 1
       if (typing && budget <= 0) {
-        if (frame % 2 === 0) put(g, Math.min(x - 1, sx + sw - 1), sy + row, C.cursor)
+        if (frame % 2 === 0) put(g, Math.min(x - 1, SX + SW - 1), SY + row, C.cursor)
         break
       }
     }
@@ -165,71 +148,46 @@ function robot(g: Grid, mood: Mood, frame: number) {
   const body = off ? C.offBody : C.body
   const shade = off ? C.offShade : C.bodyShade
 
-  // Antenna: busy blinks red, done glows green, offline is dark.
-  put(g, 9, 2, C.stalk)
+  // Antenna bulb: busy blinks red, done glows green, offline is dark.
   const bulb = off ? C.offShade : mood === 'done' ? C.bulbDone : frame % 4 < 2 ? C.bulbBusy : C.bulbBusyDim
-  rect(g, 8, 1, 3, 1, bulb)
-  put(g, 9, 0, bulb)
+  put(g, 4, 0, bulb)
 
-  // Head and face.
-  round(g, 4, 3, 10, 8, body)
-  rect(g, 4, 4, 1, 6, shade)
-  round(g, 6, 5, 7, 4, off ? C.offVisor : C.visor)
+  // Head with a visor; the eyes look right, at the screen.
+  round(g, 1, 1, 6, 4, body)
+  rect(g, 1, 2, 1, 2, shade)
+  rect(g, 2, 2, 4, 2, off ? C.offVisor : C.visor)
   const eye = off ? C.offEye : C.eye
   const blink = !off && frame % 24 === 23
   if (off || blink) {
-    rect(g, 7, 7, 2, 1, eye)
-    rect(g, 10, 7, 2, 1, eye)
+    put(g, 3, 3, eye)
+    put(g, 5, 3, eye)
   } else if (mood === 'done') {
-    // Happy ^ ^ eyes.
-    put(g, 7, 7, eye)
-    put(g, 8, 6, eye)
-    put(g, 9, 7, eye)
-    put(g, 10, 7, eye)
-    put(g, 11, 6, eye)
-    put(g, 12, 7, eye)
+    // Content, half-closed eyes.
+    put(g, 3, 2, eye)
+    put(g, 5, 2, eye)
   } else {
-    // Looking right, at the screen.
-    rect(g, 8, 6, 2, 2, eye)
-    rect(g, 11, 6, 2, 2, eye)
-  }
-  if (!off) {
-    put(g, 6, 9, C.cheek)
-    put(g, 12, 9, C.cheek)
+    rect(g, 3, 2, 1, 2, eye)
+    rect(g, 5, 2, 1, 2, eye)
   }
 
-  // Body, a chest light, and the stool it sits on behind the desk.
-  round(g, 5, 11, 8, 6, body)
-  rect(g, 5, 12, 1, 4, shade)
-  put(g, 9, 13, off ? C.offShade : mood === 'done' ? C.bulbDone : C.eye)
+  // Body with a chest light.
+  rect(g, 2, 5, 4, 3, body)
+  put(g, 2, 6, shade)
+  put(g, 4, 6, off ? C.offShade : mood === 'done' ? C.bulbDone : C.eye)
 
   if (mood === 'working') {
-    // Two arms hammering the keyboard in turns: one hand strikes (and its
-    // key lights up) while the other is raised for the next key.
+    // Two hands hammering the keyboard in turns: one strikes while the other
+    // is raised for the next key.
     const left = frame % 2 === 0
-    arm(g, 12, 12, 16, left ? 11 : 14, shade, C.hand)
-    arm(g, 12, 14, 13, left ? 14 : 11, body, C.hand)
-    put(g, left ? 13 : 16, 16, C.key)
-    put(g, left ? 14 : 17, 16, C.key)
+    put(g, 6, 6, shade)
+    put(g, 7, left ? 7 : 6, C.hand)
+    put(g, 8, left ? 6 : 7, C.hand)
+    put(g, left ? 9 : 10, 7, C.key)
   } else {
-    // Arms resting at its sides.
-    rect(g, 13, 12, 1, 4, shade)
+    // Arm resting at its side.
+    put(g, 6, 6, shade)
+    put(g, 6, 7, shade)
   }
-}
-
-/**
- * A one-pixel arm from the shoulder to a 2x2 hand whose top-left is (hx, hy),
- * stepping one pixel at a time so diagonals stay connected.
- */
-function arm(g: Grid, sx: number, sy: number, hx: number, hy: number, color: number, hand: number) {
-  let x = sx
-  let y = sy
-  while (x !== hx || y !== hy) {
-    put(g, x, y, color)
-    if (x !== hx) x += Math.sign(hx - x)
-    if (y !== hy) y += Math.sign(hy - y)
-  }
-  rect(g, hx, hy, 2, 2, hand)
 }
 
 /** Pixels of one scene at animation `frame`. */

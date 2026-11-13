@@ -1,5 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 
+import { parseEndpoint } from './register'
 import { COLUMNS, ROWS, base64, encode, scene } from './sprites'
 
 const HOME = '/home/voce'
@@ -10,6 +11,7 @@ const DEFAULT_PROFILE = { name: 'default', kind: 'dir', size: 0, mtimeMs: 0, isL
 /** What `papo mcp` of profile `default` wrote: colega is mid-turn, outro is offline. */
 const ACTIVITY = JSON.stringify({
   pid: 1,
+  endpoint: 'abc123',
   cwd: '/projeto',
   name: 'voce',
   working: false,
@@ -18,6 +20,14 @@ const ACTIVITY = JSON.stringify({
     { name: 'outro', online: false, working: false },
   ],
   updated_ms: NOW - 1_000,
+})
+
+/** This session's own papo server answering `status`, as endpoint `endpoint`. */
+const papoStatus = (endpoint: string) => async () => ({
+  value: {
+    content: [{ type: 'text' as const, text: `You are "voce" in room cf940ea2 (endpoint ${endpoint}).` }],
+    isError: false,
+  },
 })
 
 const band = (isWorking: boolean) => ({
@@ -55,6 +65,7 @@ test('the band shows us and each room member, with what they are doing', async (
     return <Box key="engine" />
   })
   on('session.cwd', async () => ({ value: '/projeto' }))
+  on('mcp.call', papoStatus('abc123'))
   on('fs.list', async (_$, e) => ({ value: e.path === PROFILES ? [DEFAULT_PROFILE] : [] }))
   on('fs.read', async (_$, e) => {
     if (e.path === `${PROFILES}/default/activity.json`) return { value: ACTIVITY }
@@ -74,6 +85,8 @@ test('the band shows us and each room member, with what they are doing', async (
   expect((await ui.find({ type: 'Text', text: /colega · codando/ }))?.type).toBe('Text')
   expect((await ui.find({ type: 'Text', text: /outro · offline/ }))?.type).toBe('Text')
   expect((await ui.find({ type: 'Raster', key: 'm-colega' }))?.type).toBe('Raster')
+  // Other mods in the band keep drawing, under the robots.
+  expect((await ui.find({ type: 'Box', key: 'engine' }))?.type).toBe('Box')
   // The band saw our turn running before any turn event: papo is told right away.
   expect(written[`${PROFILES}/default/working`]).toBe('1')
   await ui.unmount()
@@ -94,6 +107,7 @@ test('without a live papo server for this session the band stays out of the way'
     return <Box key="engine" />
   })
   on('session.cwd', async () => ({ value: '/projeto' }))
+  on('mcp.call', papoStatus('abc123'))
   on('fs.list', async () => ({ value: [DEFAULT_PROFILE] }))
   // A file a crashed server left behind a minute ago.
   on('fs.read', async () => ({ value: JSON.stringify({ ...JSON.parse(ACTIVITY), updated_ms: NOW - 60_000 }) }))
@@ -112,6 +126,7 @@ test('on Windows the profiles are found under USERPROFILE', async ($, on) => {
   mock.env(on, { USERPROFILE: 'C:/Users/voce' })
   mock.clock(on, { now: NOW })
   on('session.cwd', async () => ({ value: '/projeto' }))
+  on('mcp.call', papoStatus('abc123'))
   on('fs.list', async (_$, e) => {
     read.push(e.path)
     return { value: [] }
@@ -123,3 +138,34 @@ test('on Windows the profiles are found under USERPROFILE', async ($, on) => {
   // Off Windows the kit reads `C:/` as relative and prefixes the plugin's folder.
   expect(read.some(p => p.endsWith('C:/Users/voce/.papo/profiles'))).toBe(true)
 })
+
+test('papo status names our endpoint', () => {
+  expect(parseEndpoint('You are "kj" in room cf940ea2 (endpoint 7f3a9c2e1b).\nPeers:')).toBe('7f3a9c2e1b')
+  expect(parseEndpoint('papo is not connected')).toBeUndefined()
+})
+
+for (const [why, mcpCall] of [
+  ['connected to another room', papoStatus('outro999')],
+  ['without papo connected', async () => ({ deny: 'server not connected' })],
+] as const) {
+  test(`a session in the same directory, ${why}, keeps the robots out of its band`, async ($, on) => {
+    mock.env(on, { HOME })
+    mock.clock(on, { now: NOW })
+    on('ui.render', async ($, e) => {
+      const { Box } = $.ui.resolve(e)
+      return <Box key="engine" />
+    })
+    on('session.cwd', async () => ({ value: '/projeto' }))
+    on('mcp.call', mcpCall)
+    on('fs.list', async () => ({ value: [DEFAULT_PROFILE] }))
+    on('fs.read', async () => ({ value: ACTIVITY }))
+    on('fs.write', async () => ({ value: undefined }))
+    on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+
+    await $.session.start({ cwd: '/projeto', surface: 'terminal', isInteractive: true })
+    const ui = await $.ui.mount({ ...band(true), surface: 'terminal' })
+    expect(await ui.find({ type: 'Raster' })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /você/ })).toBeUndefined()
+    await ui.unmount()
+  })
+}
