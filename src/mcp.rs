@@ -574,7 +574,16 @@ async fn activity_bridge(mut ready: Ready) {
         ticker.tick().await;
         let working = ctx.store.read_working(std::time::SystemTime::now());
         ctx.node.set_working(working).await;
-        let next = activity_snapshot(std::process::id(), &cwd, ctx.node.name(), working, &ctx.node.peers(), now_ms());
+        let endpoint = ctx.node.id().fmt_short().to_string();
+        let next = activity_snapshot(
+            std::process::id(),
+            &endpoint,
+            &cwd,
+            ctx.node.name(),
+            working,
+            &ctx.node.peers(),
+            now_ms(),
+        );
         let stale = last.as_ref().is_none_or(|prev| {
             !prev.same_state(&next)
                 || next.updated_ms.saturating_sub(prev.updated_ms) >= ACTIVITY_REFRESH.as_millis() as u64
@@ -588,7 +597,15 @@ async fn activity_bridge(mut ready: Ready) {
     }
 }
 
-fn activity_snapshot(pid: u32, cwd: &str, name: &str, working: bool, peers: &[PeerView], now: u64) -> Activity {
+fn activity_snapshot(
+    pid: u32,
+    endpoint: &str,
+    cwd: &str,
+    name: &str,
+    working: bool,
+    peers: &[PeerView],
+    now: u64,
+) -> Activity {
     let mut members: Vec<MemberActivity> = peers
         .iter()
         .filter(|p| !p.ephemeral)
@@ -597,7 +614,15 @@ fn activity_snapshot(pid: u32, cwd: &str, name: &str, working: bool, peers: &[Pe
         })
         .collect();
     members.sort_by(|a, b| a.name.cmp(&b.name));
-    Activity { pid, cwd: cwd.to_owned(), name: name.to_owned(), working, members, updated_ms: now }
+    Activity {
+        pid,
+        endpoint: endpoint.to_owned(),
+        cwd: cwd.to_owned(),
+        name: name.to_owned(),
+        working,
+        members,
+        updated_ms: now,
+    }
 }
 
 async fn channel_pump(mut ready: Ready, mut initialized: watch::Receiver<bool>, out: Out) {
@@ -736,9 +761,10 @@ mod helper_tests {
         let mut cli = view(Some("humano"), true, 1);
         cli.ephemeral = true;
         let peers = [view(Some("zeta"), false, 1), colega, cli, view(None, true, 1)];
-        let a = activity_snapshot(7, "/tmp/p", "voce", false, &peers, 5);
+        let a = activity_snapshot(7, "abc123", "/tmp/p", "voce", false, &peers, 5);
         let names: Vec<_> = a.members.iter().map(|m| (m.name.as_str(), m.online, m.working)).collect();
         assert_eq!(names, [("colega", true, true), ("zeta", false, false)]);
+        assert_eq!(a.endpoint, "abc123");
         assert_eq!((a.pid, a.cwd.as_str(), a.name.as_str(), a.working, a.updated_ms), (7, "/tmp/p", "voce", false, 5));
     }
 
