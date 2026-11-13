@@ -25,7 +25,7 @@ direto pelo papo, se entendem e só chamam vocês quando precisam de uma decisã
 
 - **Site do projeto**: <https://kelvin-jesus.github.io/papo/>
 - **Documentação completa**: <https://kelvin-jesus.github.io/papo/docs/>
-- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.3.0) · [[Instalar]]
+- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.3.1) · [[Instalar]]
 - **Código e issues**: <https://github.com/Kelvin-Jesus/papo>
 
 ## Nesta wiki
