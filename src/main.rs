@@ -16,6 +16,7 @@ use papo::{
     proto::{PeerKind, now_ms, validate_name},
     room::{Invite, RoomSecret},
     store::{KnownPeer, Profile, Store},
+    update,
 };
 
 /// Linha direta P2P entre os agentes de IA (Claude Code) de pessoas diferentes.
@@ -102,6 +103,12 @@ enum Cmd {
         #[arg(long)]
         yes: bool,
     },
+    /// Procura uma versão nova do papo e atualiza pelo mesmo caminho em que foi instalado.
+    Update {
+        /// Só diz se há versão nova, sem instalar.
+        #[arg(long)]
+        check: bool,
+    },
     /// Testa a conexão: entra na sala e lista quem está online.
     Status {
         /// Quantos segundos esperar por alguém.
@@ -158,6 +165,7 @@ async fn run(cli: Cli) -> Result<()> {
         Cmd::Leave { yes } => cmd_leave(&profile, yes, false).await,
         Cmd::Close { yes } => cmd_leave(&profile, yes, true).await,
         Cmd::Status { timeout } => cmd_status(&profile, timeout).await,
+        Cmd::Update { check } => cmd_update(check),
     }
 }
 
@@ -291,6 +299,42 @@ fn cmd_install(profile: &str, scope: Scope, print: bool) -> Result<()> {
             Ok(())
         }
     }
+}
+
+fn cmd_update(check: bool) -> Result<()> {
+    let current = env!("CARGO_PKG_VERSION");
+    let tag = update::latest_tag()?;
+    if !update::is_newer(current, &tag) {
+        println!("papo v{current} já é a versão mais nova.");
+        return Ok(());
+    }
+    println!("Versão nova: {tag} (você tem v{current}).");
+    // Resolve symlinks: Homebrew's bin/papo points into its Cellar.
+    let exe = std::env::current_exe().context("locate the papo executable")?;
+    let exe = exe.canonicalize().unwrap_or(exe);
+    let step = update::upgrade_step(&update::channel_for(&exe, cfg!(windows)), &tag);
+    let (program, args, label) = match step {
+        update::Step::Manual(how) => {
+            println!("\n{how}");
+            return Ok(());
+        }
+        update::Step::Run { program, args, label } => (program, args, label),
+    };
+    if check {
+        println!("Para instalar: papo update");
+        return Ok(());
+    }
+    println!("Rodando {label}…\n");
+    let status = Command::new(&program).args(&args).status().with_context(|| format!("rodar `{program}`"))?;
+    if !status.success() {
+        bail!(
+            "a atualização falhou ({status}). A versão {tag} também pode ser baixada em https://github.com/{}/releases",
+            update::REPO
+        );
+    }
+    println!("\nPronto. No Claude Code, reconecte o servidor (/mcp → papo → Reconnect) para usar a {tag}.");
+    println!("Os robôs acima do prompt atualizam com: claude plugin update papo-robos@papo");
+    Ok(())
 }
 
 /// `claude` is a .exe from the native installer but a .cmd shim when installed via npm

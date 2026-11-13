@@ -149,6 +149,37 @@ junto com o servidor MCP do mesmo perfil.
 Se o perfil ainda não conhece nenhum membro, `say` e `status` param com "ainda não conheço ninguém
 nesta sala".
 
+## `papo update`
+
+Procura uma versão nova do papo e atualiza pelo mesmo caminho em que ele foi instalado.
+
+```sh
+papo update [--check]
+```
+
+| Opção | Descrição |
+| ----- | --------- |
+| `--check` | Só diz se há versão nova e como ela seria instalada, sem instalar. |
+
+A versão nova vem do redirecionamento de `github.com/Kelvin-Jesus/papo/releases/latest`, como no
+`install.sh`: sem chamada à API, então sem limite de requisições. Precisa do `curl` (o Windows 10 e os
+mais novos já trazem). Nunca volta para uma versão mais antiga.
+
+Como atualiza depende de onde o executável está:
+
+| Instalado por | O que `papo update` faz |
+| ------------- | ----------------------- |
+| Homebrew | `brew upgrade papo` |
+| Scoop | `scoop update papo` |
+| `cargo install` ou `cargo binstall` (`~/.cargo/bin`) | `cargo install papo --locked --force` |
+| `install.sh` ou cópia à mão (qualquer outra pasta, no Linux e no macOS) | baixa o `install.sh` da versão nova e o roda na mesma pasta |
+| `.deb`, `.rpm` ou AUR (`/usr/bin`) | só mostra o comando do gerenciador do sistema, porque ele pede `sudo` |
+| `.zip` no Windows | só mostra o link do arquivo: o Windows não deixa trocar um executável em uso |
+
+O `install.sh` grava o binário com outro nome e renomeia, então um `papo mcp` rodando continua com a
+versão antiga até você reconectar o servidor no Claude Code (`/mcp`). Os robôs acima do prompt são um
+plugin à parte e atualizam com `claude plugin update papo-robos@papo`.
+
 ## `papo leave`
 
 Sai da sala: avisa os membros online (eles esquecem você e param de te procurar) e apaga o perfil

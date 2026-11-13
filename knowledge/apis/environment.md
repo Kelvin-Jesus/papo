@@ -17,6 +17,7 @@ timestamp: 2026-10-02T00:00:00Z
 | `PAPO_PROFILE` | `default` | `src/main.rs` (clap env) | Profile used when `--profile` is absent. |
 | `PAPO_RELAY` | n0 public relays | `src/net.rs` | URL of a self-hosted `iroh-relay`; sets `RelayMode::Custom`. Empty or blank means unset (container env files export empty variables); any other non-URL value fails startup. |
 | `PAPO_INSTALL_COMMAND` | this executable | `src/main.rs` (`install`) | Replaces the command `papo install` registers, e.g. `docker exec -i papo-kj papo` when papo runs in a container. Split on whitespace; the `mcp` arguments are appended. |
+| `PAPO_TEST_LATEST_TAG` | unset | `src/update.rs` | Test hook: the tag `papo update` takes as the latest release instead of asking GitHub. |
 | `PAPO_TEST_PROGRESS_MS` | 15000 | `src/mcp.rs` | Test hook: interval of `wait` progress notifications. |
 | `PAPO_TEST_RELAY`, `PAPO_TEST_PEERS` | unset | `src/net.rs`, only with the `test-network` feature | Test hook: local relay URL and comma-separated endpoint ids reachable through it; address lookup becomes a static in-memory table. Absent from release builds. |
 | `PAPO_LOG` | unset (silent) | `src/main.rs` | `tracing_subscriber` EnvFilter written to stderr, e.g. `info` or `iroh_gossip=debug,iroh=info`. See [debug connectivity](/playbooks/debug-connectivity.md). |

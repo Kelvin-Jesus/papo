@@ -2,6 +2,7 @@
 
 ## 2026-11-13
 * **Update**: `protocol/profile-layout` - `activity.json` carries the node's `endpoint`; the `papo-robos` mod matches it against its own session's `status` instead of the directory, so only the session connected to the room animates.
+* **Update**: `apis/cli`, `apis/environment` - `papo update [--check]` (`src/update.rs`) finds the latest release and upgrades through the channel papo was installed with; test hook `PAPO_TEST_LATEST_TAG`.
 
 ## 2026-10-15
 * **Update**: `playbooks/cut-a-release`, `playbooks/pass-the-quality-gate` - releases also ship .deb/.rpm (nfpm) and a `pacotes` job publishes to the Homebrew tap, the Scoop bucket, the AUR (`papo-bin`) and crates.io from `scripts/pacotes.py`, each step gated on its secret; the generator's tests run in the `site` job and in `scripts/quality-gate.sh`.

@@ -10,3 +10,4 @@ pub mod node;
 pub mod proto;
 pub mod room;
 pub mod store;
+pub mod update;

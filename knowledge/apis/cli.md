@@ -24,6 +24,7 @@ Global option: `--profile <name>` (env `PAPO_PROFILE`, default `default`). Error
 | `log` | `-n/--lines <N>` (default 30), `-f/--follow` | Prints the last N log entries; `--follow` polls the file every 500 ms. |
 | `status` | `--timeout <secs>` (default 20) | Ephemeral node that looks for members, then lists peers with online state and about text, plus queued/unread counts from disk. |
 
+| `update` | `--check` | `src/update.rs`. Latest tag from the `/releases/latest` redirect via `curl` (`PAPO_TEST_LATEST_TAG` replaces it in tests); never downgrades. The channel comes from the canonicalized executable path: Homebrew → `brew upgrade`, Scoop → `scoop update`, `~/.cargo/bin` → `cargo install --locked --force`, `/usr/bin` and the Windows zip → printed instructions only, anything else → the tag's `scripts/install.sh` run into the same directory (downloaded first, so a failed download fails the update). |
 | `leave` | `--yes` | Needs the profile lock. Ephemeral node broadcasts `Bye` (twice) as the real endpoint id, then deletes the profile dir. |
 | `close` | `--yes` | Same, but broadcasts `Close`: receivers forget everyone and write the `closed` marker. The room owner (`Profile.owner`, set by `new`) leaving counts as `close`. If no neighbor answered, `into_tombstone` keeps only `profile.json`, `secret.key` and `closed`; a second `leave` deletes it. |
 
@@ -38,5 +39,6 @@ papo install                 # inside the project directory
 papo log -f
 papo say --to colega "pergunta pro Claude do colega sobre o deploy"
 papo status --timeout 15
+papo update --check
 papo --profile time-pagamentos new --name voce
 ```

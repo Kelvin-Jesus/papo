@@ -377,3 +377,38 @@ fn the_owner_leaving_with_nobody_online_keeps_only_a_tombstone() {
     papo(home.path()).args(["leave", "--yes"]).assert().success();
     assert!(!dir.exists(), "leaving again removes the tombstone");
 }
+
+/// `PAPO_TEST_LATEST_TAG` stands in for GitHub's `/releases/latest`, so these never touch the network.
+fn update(home: &Path, latest: &str) -> Command {
+    let mut cmd = papo(home);
+    cmd.env("PAPO_TEST_LATEST_TAG", latest).arg("update");
+    cmd
+}
+
+#[test]
+fn update_says_when_this_is_already_the_latest_version() {
+    let home = tempfile::tempdir().unwrap();
+    let current = format!("v{}", env!("CARGO_PKG_VERSION"));
+    update(home.path(), &current).assert().success().stdout(predicate::str::contains("já é a versão mais nova"));
+    // An older tag (e.g. a release pulled back) never downgrades.
+    update(home.path(), "v0.0.1").assert().success().stdout(predicate::str::contains("já é a versão mais nova"));
+}
+
+#[test]
+fn update_check_reports_a_new_version_without_installing_it() {
+    let home = tempfile::tempdir().unwrap();
+    update(home.path(), "v99.0.0")
+        .arg("--check")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("v99.0.0").and(predicate::str::contains("papo update")));
+}
+
+#[test]
+fn update_explains_when_the_latest_version_cannot_be_found() {
+    let home = tempfile::tempdir().unwrap();
+    update(home.path(), "")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("erro:").and(predicate::str::contains("releases")));
+}

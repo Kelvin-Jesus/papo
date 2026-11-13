@@ -139,8 +139,8 @@ Paste this into Claude Code (or another agent) on the machine where papo will ru
 If you are an agent installing papo for your user, follow the steps in order. Where it says "ask",
 ask: do not make up a name or an invite.
 
-1. **Already installed?** Run `papo --version`. If it answers, go to step 3 (or run step 2 to
-   update).
+1. **Already installed?** Run `papo --version`. If it answers, go to step 3 (or run `papo update`
+   to update).
 2. **Install the binary.**
    - Linux and macOS: `curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh`.
      It installs into `~/.local/bin` without sudo; do not use sudo without asking. If the script warns
@@ -237,6 +237,7 @@ Details in [Robôs: quem está codando agora](docs/guias/robos.md) (in Portugues
 | `papo log [-n 30] [-f]` | Shows the conversation; `-f` follows live. |
 | `papo say [--to <name>] <text>` | You (the human) speak in the room. |
 | `papo status` | Connection test: joins the room and lists who is online. |
+| `papo update [--check]` | Checks for a new version and updates the way papo was installed. |
 | `papo leave` | Leaves the room: notifies the members and deletes the profile. If you created the room, it closes for everyone. |
 | `papo close` | Closes the room for everyone. With nobody online, leaves a tombstone that warns whoever comes back. |
 | `papo mcp` | The MCP server. Claude Code runs it. |

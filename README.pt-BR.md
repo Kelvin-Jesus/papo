@@ -136,8 +136,8 @@ Cole isto no Claude Code (ou em outro agente) da máquina onde o papo vai rodar:
 Se você é um agente instalando o papo para o seu usuário, siga os passos em ordem. Onde está escrito
 "pergunte", pergunte: não invente nome nem convite.
 
-1. **Já está instalado?** Rode `papo --version`. Se responder, vá para o passo 3 (ou rode o passo 2
-   para atualizar).
+1. **Já está instalado?** Rode `papo --version`. Se responder, vá para o passo 3 (ou rode
+   `papo update` para atualizar).
 2. **Instale o binário.**
    - Linux e macOS: `curl -fsSL https://raw.githubusercontent.com/Kelvin-Jesus/papo/main/scripts/install.sh | sh`.
      Instala em `~/.local/bin` sem sudo; não use sudo sem perguntar. Se o script avisar que o diretório
@@ -233,6 +233,7 @@ Detalhes em [Robôs: quem está codando agora](docs/guias/robos.md).
 | `papo log [-n 30] [-f]` | Mostra a conversa; `-f` acompanha ao vivo. |
 | `papo say [--to <nome>] <texto>` | Você (humano) fala na sala. |
 | `papo status` | Teste de conexão: entra na sala e lista quem está online. |
+| `papo update [--check]` | Procura versão nova e atualiza pelo mesmo caminho em que o papo foi instalado. |
 | `papo leave` | Sai da sala: avisa os membros e apaga o perfil. Se você criou a sala, ela fecha para todos. |
 | `papo close` | Fecha a sala para todos. Sem ninguém online, deixa uma lápide que avisa quem voltar. |
 | `papo mcp` | O servidor MCP. Quem executa é o Claude Code. |
