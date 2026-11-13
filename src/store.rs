@@ -14,6 +14,7 @@
 //!   lock           held by the running MCP server for this profile
 //!   working        "1" while the agent is mid-turn; written by the Claude Code mod
 //!   activity.json  who is working right now, refreshed by the running MCP server
+//! active.json      launch profile -> profile it switched to (`switch_room`, `join_room`)
 //! ```
 //!
 //! A stable identity matters: peers remember our endpoint id and redial it when either
@@ -31,8 +32,8 @@ use iroh::{EndpointId, SecretKey};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
-    proto::{Envelope, validate_name},
-    room::RoomSecret,
+    proto::{Envelope, now_ms, validate_name},
+    room::{Invite, RoomSecret},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,6 +147,46 @@ pub fn validate_profile_name(profile: &str) -> Result<()> {
     Ok(())
 }
 
+/// The profile a launch profile currently points to. `papo mcp --profile X` (and the CLI
+/// without `--profile`) start in the room the agent last switched to with `switch_room`
+/// or `join_room`, so moving between rooms never touches Claude Code's MCP config.
+/// Falls back to `launch` when there is no pointer or its target no longer exists.
+pub fn active_profile(launch: &str) -> String {
+    let target = home()
+        .ok()
+        .and_then(|h| read_json::<BTreeMap<String, String>>(&h.join("active.json")).ok().flatten())
+        .and_then(|map| map.get(launch).cloned());
+    match target {
+        Some(t) if Store::exists(&t).unwrap_or(false) => t,
+        _ => launch.to_owned(),
+    }
+}
+
+/// Points `launch` at `active`; `None` (or `active == launch`) removes the pointer.
+pub fn set_active_profile(launch: &str, active: Option<&str>) -> Result<()> {
+    let home = home()?;
+    let path = home.join("active.json");
+    let mut map: BTreeMap<String, String> = read_json(&path)?.unwrap_or_default();
+    match active {
+        Some(a) if a != launch => {
+            validate_profile_name(a)?;
+            map.insert(launch.to_owned(), a.to_owned());
+        }
+        _ => {
+            if map.remove(launch).is_none() {
+                return Ok(());
+            }
+        }
+    }
+    create_private_dir(&home)?;
+    write_atomic(&path, &serde_json::to_vec_pretty(&map)?)
+}
+
+/// Profile name for a room joined without an explicit one: `sala-<room id>`.
+pub fn profile_name_for_room(room: &RoomSecret) -> String {
+    format!("sala-{}", room.room_id())
+}
+
 impl Store {
     pub fn dir_for(profile: &str) -> Result<PathBuf> {
         validate_profile_name(profile)?;
@@ -185,6 +226,35 @@ impl Store {
             .collect();
         names.sort();
         Ok(names)
+    }
+
+    /// The configured profile that is already in the room with this secret, if any.
+    pub fn find_room(room: &RoomSecret) -> Result<Option<String>> {
+        let wanted = room.to_base32();
+        for name in Self::list().unwrap_or_default() {
+            if Self::open(&name)?.profile().is_ok_and(|p| p.room == wanted) {
+                return Ok(Some(name));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Creates a profile for the room in `invite` and remembers the members it names, so
+    /// the first start can dial them. Shared by `papo join` and the `join_room` tool.
+    pub fn join(profile: &str, invite: &Invite, name: &str, about: Option<String>, force: bool) -> Result<Self> {
+        validate_name(name)?;
+        let data = Profile {
+            name: name.to_owned(),
+            about,
+            room: invite.secret.to_base32(),
+            created_ms: now_ms(),
+            owner: false,
+        };
+        let store = Self::create(profile, &data, force)?;
+        let me = store.secret_key()?.public();
+        let known = invite.peers.iter().filter(|id| **id != me).map(|id| (*id, KnownPeer::default())).collect();
+        store.save_known_peers(&known)?;
+        Ok(store)
     }
 
     /// Opens a profile stored in an explicit directory (see [`Store::create_at`]).
@@ -346,6 +416,12 @@ impl Store {
 
     pub fn activity(&self) -> Result<Option<Activity>> {
         read_json(&self.path("activity.json"))
+    }
+
+    /// Drops `activity.json` when the server stops serving this profile, so local readers
+    /// do not keep drawing a room the session left.
+    pub fn remove_activity(&self) {
+        let _ = fs::remove_file(self.path("activity.json"));
     }
 
     /// Exclusive lock for the lifetime of the returned file. Two processes sharing one

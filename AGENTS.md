@@ -48,6 +48,7 @@ git config core.hooksPath .githooks      # once per clone: pre-commit, commit-ms
 | `tests/common/` | Shared harness: `McpClient` drives the binary over stdio; `localnet` = in-process relay + `RawPeer` that speaks the wire format. |
 | `tests/node.rs`, `tests/node_scenarios.rs` | Delivery over real iroh endpoints: acks, queue, duplicates, restarts, crash, ordering, multi-member. |
 | `tests/mcp.rs`, `tests/mcp_contract.rs` | MCP contract against the built binary; insta snapshots in `tests/snapshots/`. |
+| `tests/rooms.rs` | Room switching in a running server: `rooms`, `switch_room`, `join_room`, `leave_room`, `active.json`. |
 | `tests/cli.rs`, `tests/store.rs` | CLI commands/errors; on-disk profile state. |
 | `tests/properties.rs`, `tests/robustness.rs` | proptest invariants; arbitrary input never panics. |
 | `tests/e2e_local.rs` | Two `papo mcp` processes + CLI over a local relay (`test-network` feature). |

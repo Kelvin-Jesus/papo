@@ -1,6 +1,7 @@
 # Log
 
 ## 2026-11-13
+* **Add**: `apis/mcp-tools/rooms`, `switch_room`, `join_room`, `leave_room` - the MCP server moves between rooms while running (state behind a `watch` channel, `Rooms` in `src/mcp.rs`); `active.json` in `protocol/profile-layout` remembers the switch per launch profile, and the CLI without `--profile` follows it.
 * **Update**: `protocol/profile-layout` - `activity.json` carries the node's `endpoint`; the `papo-robos` mod matches it against its own session's `status` instead of the directory, so only the session connected to the room animates.
 * **Update**: `apis/cli`, `apis/environment` - `papo update [--check]` (`src/update.rs`) finds the latest release and upgrades through the channel papo was installed with; test hook `PAPO_TEST_LATEST_TAG`.
 

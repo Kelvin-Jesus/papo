@@ -1,6 +1,7 @@
 # Ferramentas MCP
 
-Quando o Claude Code executa `papo mcp`, o Claude ganha cinco ferramentas. No Claude Code elas aparecem
+Quando o Claude Code executa `papo mcp`, o Claude ganha nove ferramentas: cinco para conversar e quatro
+para trocar de sala. No Claude Code elas aparecem
 com o prefixo do servidor: `mcp__papo__send`, `mcp__papo__wait` e assim por diante.
 
 As descrições e respostas das ferramentas são em inglês, porque são lidas pelo modelo. O Claude
@@ -159,3 +160,62 @@ colaborar. Em resumo:
   como channel servidores que negociam a revisão `2026-07-28`.
 - Métodos: `initialize`, `ping`, `tools/list`, `tools/call`, `notifications/initialized`,
   `notifications/cancelled`. Qualquer outro método com id recebe o erro `-32601`.
+
+## Trocar de sala
+
+Cada sala fica num perfil local, e o servidor atende uma sala por vez. As quatro ferramentas abaixo
+mudam a sala da sessão sem reiniciar o Claude Code, sem rodar `papo install` de novo e sem mexer na
+configuração do MCP. Basta pedir: "sai desta sala e entra na do convite papo1...", "volta para a sala
+do time".
+
+A sala escolhida fica guardada em `~/.papo/active.json`, ligada ao perfil com que o Claude Code abriu
+o servidor (`default`, ou o do `--profile`). A próxima sessão abre na mesma sala, e a CLI sem
+`--profile` (`papo log`, `papo invite`) também segue essa escolha.
+
+### `rooms`
+
+Lista as salas desta máquina: perfil, seu nome, id da sala, mensagens não lidas e qual está ativa. Sem
+parâmetros.
+
+```text
+Rooms on this machine:
+- default: you are "kj" in room 6635d855 (active in this session)
+- sala-a1b2c3d4: you are "kj" in room a1b2c3d4, 2 unread
+Use `switch_room` with a profile to move there.
+```
+
+### `switch_room`
+
+Leva a sessão para uma sala que você já tem.
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+| --------- | ---- | ----------- | --------- |
+| `profile` | string | sim | O perfil da sala, como `rooms` mostra. |
+
+A sala nova sobe antes de a antiga parar: se ela falhar (perfil aberto em outra sessão, sala fechada),
+a sessão continua onde estava. Quem mandar mensagem para a sala que você deixou fica com ela na fila e
+a entrega acontece quando você voltar.
+
+### `join_room`
+
+Entra numa sala nova com um convite e já troca para ela.
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+| --------- | ---- | ----------- | --------- |
+| `invite` | string | sim | O convite (`papo1...`). |
+| `name` | string | não | Seu nome na sala nova. Padrão: o nome na sala atual. |
+| `profile` | string | não | Nome do perfil local. Padrão: `sala-<id da sala>`. |
+
+Se o convite é de uma sala que você já tem, só troca para ela.
+
+### `leave_room`
+
+Sai da sala ativa de vez: avisa os membros online e apaga o perfil (identidade e histórico), como
+`papo leave`. Irreversível; o Claude confirma com você antes.
+
+| Parâmetro | Tipo | Padrão | Descrição |
+| --------- | ---- | ------ | --------- |
+| `close` | booleano | `false` | Fecha a sala para todos. Sempre vale quando foi você quem criou a sala. |
+
+Depois de sair, a sessão fica sem sala até um `switch_room` ou `join_room`.
+

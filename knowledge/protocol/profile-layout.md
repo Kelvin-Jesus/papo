@@ -26,6 +26,8 @@ Root: `$PAPO_HOME/profiles/<profile>/` (default `~/.papo/profiles/default/`). On
 | `working` | `"1"` or `"0"` | Written by the `papo-robos` Claude Code mod at turn start/end and refreshed every 10 s while working. `Store::read_working` treats a `"1"` older than `WORKING_MARKER_TTL` (30 s, by mtime) as idle. Read once a second by the MCP server's `activity_bridge`, which calls `Node::set_working`. |
 | `activity.json` | `{pid, endpoint, cwd, name, working, members: [{name, online, working}], updated_ms}` | Atomic. Written by `activity_bridge` on change and at least every 5 s (liveness for readers). `endpoint` is the node's short id, as the `status` tool prints it: the `papo-robos` mod asks its own session's server for it and draws only the matching profile, so other sessions on the machine (even in the same directory) show nothing. `cwd` is the server's working directory, kept for diagnostics. Older files without `endpoint` read as `""`. Ephemeral (CLI) and nameless peers are left out; members sorted by name. Removed with the history when the room becomes a tombstone. |
 
+Outside the profiles, `$PAPO_HOME/active.json` maps a launch profile (the `--profile` Claude Code starts `papo mcp` with, `default` when absent) to the profile the agent last switched to with `switch_room`/`join_room`. Written atomically; an entry pointing at a missing profile is ignored, and `leave_room` removes its entry. `papo mcp` always follows it; the CLI only without an explicit `--profile`.
+
 `log.jsonl` entries:
 
 ```json

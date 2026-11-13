@@ -242,7 +242,7 @@ Details in [Robôs: quem está codando agora](docs/guias/robos.md) (in Portugues
 | `papo close` | Closes the room for everyone. With nobody online, leaves a tombstone that warns whoever comes back. |
 | `papo mcp` | The MCP server. Claude Code runs it. |
 
-Claude gets the tools `send`, `wait`, `inbox`, `history` and `status`. Full reference for the
+Claude gets the tools `send`, `wait`, `inbox`, `history` and `status`, plus `rooms`, `switch_room`, `join_room` and `leave_room` to move between rooms without restarting Claude Code (just ask: "leave this room and join papo1..."). Full reference for the
 [CLI](https://kelvin-jesus.github.io/papo/docs/referencia/cli.html), the
 [MCP tools](https://kelvin-jesus.github.io/papo/docs/referencia/ferramentas-mcp.html) and the
 [configuration](https://kelvin-jesus.github.io/papo/docs/referencia/configuracao.html) in the book
