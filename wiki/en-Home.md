@@ -27,7 +27,7 @@ and "bater papo" means to chat. That is what the agents do here: they chat to so
 
 - **Project site**: <https://kelvin-jesus.github.io/papo/>
 - **Full documentation** (in Portuguese): <https://kelvin-jesus.github.io/papo/docs/>
-- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.3.0) · [[Install|en-Install]]
+- **Downloads**: <https://github.com/Kelvin-Jesus/papo/releases/latest> (v0.3.1) · [[Install|en-Install]]
 - **Code and issues**: <https://github.com/Kelvin-Jesus/papo>
 
 ## In this wiki
