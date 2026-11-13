@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     io::{BufRead, BufReader, Seek, SeekFrom},
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::Command,
     time::Duration,
 };
@@ -10,7 +10,7 @@ use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
 use iroh::{EndpointId, SecretKey};
 use papo::{
-    mcp::{self, Identity, Started, format_log_entry},
+    mcp::{self, format_log_entry},
     net::bind_endpoint,
     node::{Node, NodeOptions, SendOutcome},
     proto::{PeerKind, now_ms, validate_name},
@@ -28,9 +28,9 @@ use papo::{
 #[command(name = "papo", bin_name = "papo", version)]
 struct Cli {
     /// Perfil a usar. Cada perfil é uma identidade numa sala; use vários para estar em
-    /// várias salas.
-    #[arg(long, global = true, env = "PAPO_PROFILE", default_value = "default")]
-    profile: String,
+    /// várias salas. Sem ele, vale a sala para onde o agente trocou por último (ou "default").
+    #[arg(long, global = true, env = "PAPO_PROFILE")]
+    profile: Option<String>,
 
     #[command(subcommand)]
     cmd: Cmd,
@@ -153,13 +153,20 @@ async fn main() {
 }
 
 async fn run(cli: Cli) -> Result<()> {
-    let profile = cli.profile;
+    // The MCP server follows `active.json` itself (it can switch rooms while running) and
+    // needs the launch profile to remember switches. The CLI follows it only without an
+    // explicit --profile, so `papo log` shows the room the agent is in.
+    let launch = cli.profile.clone().unwrap_or_else(|| "default".to_owned());
+    let profile = match &cli.profile {
+        Some(p) => p.clone(),
+        None => papo::store::active_profile(&launch),
+    };
     match cli.cmd {
         Cmd::New { name, about, force } => cmd_new(&profile, name, about, force),
         Cmd::Join { invite, name, about, force } => cmd_join(&profile, &invite, name, about, force),
         Cmd::Invite => cmd_invite(&profile),
         Cmd::Install { scope, print } => cmd_install(&profile, scope, print),
-        Cmd::Mcp => cmd_mcp(profile).await,
+        Cmd::Mcp => mcp::serve(launch).await,
         Cmd::Say { to, text } => cmd_say(&profile, to, text.join(" ")).await,
         Cmd::Log { lines, follow } => cmd_log(&profile, lines, follow).await,
         Cmd::Leave { yes } => cmd_leave(&profile, yes, false).await,
@@ -185,14 +192,8 @@ fn cmd_new(profile: &str, name: String, about: Option<String>, force: bool) -> R
 }
 
 fn cmd_join(profile: &str, code: &str, name: String, about: Option<String>, force: bool) -> Result<()> {
-    validate_name(&name)?;
     let invite = Invite::decode(code)?;
-    let data =
-        Profile { name: name.clone(), about, room: invite.secret.to_base32(), created_ms: now_ms(), owner: false };
-    let store = Store::create(profile, &data, force)?;
-    let me = store.secret_key()?.public();
-    let known = invite.peers.iter().filter(|id| **id != me).map(|id| (*id, KnownPeer::default())).collect();
-    store.save_known_peers(&known)?;
+    Store::join(profile, &invite, &name, about, force)?;
     println!("Você entrou na sala {} como \"{name}\" (perfil {profile}).", invite.secret.room_id());
     print_next_steps(profile);
     Ok(())
@@ -348,39 +349,6 @@ fn run_claude(args: &[String]) -> std::io::Result<std::process::ExitStatus> {
     }
 }
 
-async fn cmd_mcp(profile: String) -> Result<()> {
-    let identity = Store::open(&profile).ok().and_then(|s| s.profile().ok()).and_then(|p| {
-        let room_id = p.room_secret().ok()?.room_id();
-        Some(Identity { name: p.name, room_id })
-    });
-    mcp::serve(identity, start_agent(profile)).await
-}
-
-async fn start_agent(profile: String) -> Result<Started> {
-    let store = Store::open(&profile)?;
-    if store.is_closed() {
-        bail!(
-            "a sala foi fechada por um membro. Rode `papo leave` para limpar este perfil e `papo join` para entrar em outra."
-        );
-    }
-    let lock = store.lock()?;
-    let data = store.profile()?;
-    let room = data.room_secret()?;
-    // Claude Code starts MCP servers in the project directory, which tells peers what
-    // this agent is working on.
-    let about = data.about.clone().or_else(|| std::env::current_dir().ok().and_then(|d| about_from_dir(&d)));
-    let endpoint = bind_endpoint(store.secret_key()?).await?;
-    let opts =
-        NodeOptions { name: data.name.clone(), about, kind: PeerKind::Agent, ephemeral: false, bootstrap: vec![] };
-    let node = Node::spawn(endpoint, room, opts, Some(store.clone())).await?;
-    Ok(Started { node, store, profile: data, lock })
-}
-
-/// The project folder name is a good default for "what I'm working on".
-fn about_from_dir(dir: &Path) -> Option<String> {
-    dir.file_name().map(|n| n.to_string_lossy().into_owned()).filter(|s| !s.is_empty())
-}
-
 /// One-shot node with a throwaway identity, so it can run next to the MCP server that
 /// owns the profile's real identity.
 async fn ephemeral_node(store: &Store, data: &Profile) -> Result<Node> {
@@ -415,7 +383,9 @@ async fn cmd_say(profile: &str, to: Option<String>, text: String) -> Result<()> 
 /// keep redialing and recreate files we are about to delete.
 async fn cmd_leave(profile: &str, yes: bool, close: bool) -> Result<()> {
     let store = Store::open(profile)?;
-    let _lock = store.lock().context("feche o Claude Code que usa este perfil antes de sair da sala")?;
+    let _lock = store.lock().context(
+        "este perfil está aberto num Claude Code: peça a ele para sair da sala (ferramenta leave_room) ou feche-o antes",
+    )?;
     let data = store.profile()?;
     let verb = if close { "fechar a sala para todos" } else { "sair da sala" };
     if !yes {
@@ -589,12 +559,6 @@ mod tests {
         let (program, args) = install_command(Some(" docker  exec -i papo-kj papo "), "/bin/papo");
         assert_eq!(program, "docker");
         assert_eq!(args, ["exec", "-i", "papo-kj", "papo"]);
-    }
-
-    #[test]
-    fn about_defaults_to_the_folder_name() {
-        assert_eq!(about_from_dir(Path::new("/home/voce/api-pagamentos")).as_deref(), Some("api-pagamentos"));
-        assert_eq!(about_from_dir(Path::new("/")), None);
     }
 
     #[test]

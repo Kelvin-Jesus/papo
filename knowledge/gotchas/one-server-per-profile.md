@@ -20,3 +20,4 @@ Two processes with the same endpoint identity would compete for the same id on r
 * `papo install` defaults to `--scope local` (one project) so not every session grabs the lock.
 * `papo say` and `papo status` use throwaway identities and never take the lock, so they run next to the MCP server.
 * For parallel sessions in different rooms, use different profiles (`--profile`).
+* `switch_room` releases the old profile's lock as soon as the new room is up, so the profile it left is free for another session or `papo leave`.

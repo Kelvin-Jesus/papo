@@ -111,7 +111,7 @@ fn every_tool_schema_is_valid_json_schema_and_accepts_only_sane_arguments() {
     let home = tempfile::tempdir().unwrap();
     let mut client = McpClient::spawn(home.path());
     let schemas = tool_schemas(&mut client);
-    assert_eq!(schemas.len(), 5);
+    assert_eq!(schemas.len(), 9);
 
     let cases: &[(&str, Value, bool)] = &[
         ("send", json!({"message": "oi"}), true),
@@ -131,6 +131,15 @@ fn every_tool_schema_is_valid_json_schema_and_accepts_only_sane_arguments() {
         ("history", json!({"limit": 201}), false),
         ("status", json!({}), true),
         ("status", json!({"verbose": true}), false),
+        ("rooms", json!({}), true),
+        ("rooms", json!({"all": true}), false),
+        ("switch_room", json!({"profile": "outra"}), true),
+        ("switch_room", json!({}), false),
+        ("join_room", json!({"invite": "papo1x", "name": "voce", "profile": "trabalho"}), true),
+        ("join_room", json!({"name": "voce"}), false),
+        ("leave_room", json!({}), true),
+        ("leave_room", json!({"close": true}), true),
+        ("leave_room", json!({"close": "sim"}), false),
     ];
     for (name, schema) in &schemas {
         assert!(jsonschema::meta::is_valid(schema), "{name}: inputSchema is not valid JSON Schema");

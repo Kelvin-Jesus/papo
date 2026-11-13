@@ -101,6 +101,88 @@ expression: "tools[\"result\"]"
         "type": "object"
       },
       "name": "status"
+    },
+    {
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List rooms"
+      },
+      "description": "List the rooms your user has on this machine (one profile each): your name, the room id, unread messages, and which one this session is in. Use before `switch_room`.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "rooms"
+    },
+    {
+      "annotations": {
+        "openWorldHint": true,
+        "title": "Switch room"
+      },
+      "description": "Move this session to another room your user already has, without restarting Claude Code. The room you leave keeps its history, and messages sent to it while you are away arrive when you come back. The choice is remembered for the next session.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "description": "Profile of the room, as `rooms` lists it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile"
+        ],
+        "type": "object"
+      },
+      "name": "switch_room"
+    },
+    {
+      "annotations": {
+        "openWorldHint": true,
+        "title": "Join room with invite"
+      },
+      "description": "Enter a new room with an invite code (starts with papo1) that your user got from a colleague, and switch this session to it. If the invite is for a room your user already has, just switches to it.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "invite": {
+            "description": "The invite code, starting with papo1.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Your user's name in the new room. Default: the name in the current room.",
+            "type": "string"
+          },
+          "profile": {
+            "description": "Local profile name for the room (1-32 of a-z, 0-9, - and _). Default: sala-<room id>.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invite"
+        ],
+        "type": "object"
+      },
+      "name": "join_room"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": true,
+        "title": "Leave room"
+      },
+      "description": "Leave the active room for good: tells the members, then deletes this profile (identity and history). Irreversible, so confirm with your user first. To just go to another room, use `switch_room` instead.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "close": {
+            "description": "Also close the room for everyone. Default false (always true when your user created the room).",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "name": "leave_room"
     }
   ]
 }

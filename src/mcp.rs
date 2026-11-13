@@ -1,6 +1,6 @@
 //! MCP server over stdio (JSON-RPC 2.0, one message per line).
 //!
-//! Hand-rolled instead of using an SDK because the surface is tiny (five tools) and the
+//! Hand-rolled instead of using an SDK because the surface is tiny (nine tools) and the
 //! two features that matter here are outside what SDKs model well: the experimental
 //! `claude/channel` capability with its custom push notification, and long-polling tool
 //! calls that must stay cancellable and keep the client's idle timer alive.
@@ -14,12 +14,12 @@
 
 use std::{
     collections::{HashMap, HashSet, VecDeque},
-    future::Future,
+    path::Path,
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, bail};
 use serde_json::{Value, json};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -28,9 +28,11 @@ use tokio::{
 };
 
 use crate::{
-    node::{Node, NodeEvent, PeerView, SendOutcome},
-    proto::{Envelope, now_ms},
-    store::{Activity, LogEntry, MemberActivity, Profile, Store},
+    net::bind_endpoint,
+    node::{Node, NodeEvent, NodeOptions, PeerView, SendOutcome},
+    proto::{Envelope, PeerKind, now_ms, validate_name},
+    room::Invite,
+    store::{self, Activity, LogEntry, MemberActivity, Profile, Store},
 };
 
 /// Protocol revisions this server speaks, newest first. Deliberately excludes newer
@@ -53,22 +55,78 @@ const DEFAULT_MAX_SENDS_PER_WINDOW: usize = 40;
 const UNHEALTHY: &str = "WARNING: papo lost its network subscription and cannot receive messages. \
 Ask your user to restart this Claude Code session.";
 
+/// How long `leave_room` waits for a member to hear the goodbye when nobody is connected.
+const LEAVE_ANNOUNCE_WAIT: Duration = Duration::from_secs(10);
+
 /// Everything a running agent needs; produced asynchronously so `initialize` is answered
 /// immediately even while the endpoint is still binding.
 pub struct Started {
     pub node: Node,
     pub store: Store,
     pub profile: Profile,
-    /// Profile lock, held for the lifetime of the server.
+    /// Profile lock, held while this server serves the profile.
     pub lock: std::fs::File,
 }
 
+/// The room this server is serving right now. Replaced as a whole by `switch_room`,
+/// `join_room` and `leave_room`; tasks holding an old one see `node.shutdown()` and
+/// pick up the new one from the watch channel.
 struct Ctx {
+    profile_name: String,
     node: Node,
     store: Store,
     profile: Profile,
     sends: Mutex<RateLimiter>,
-    _lock: std::fs::File,
+    lock: Mutex<Option<std::fs::File>>,
+}
+
+impl Ctx {
+    fn new(profile_name: String, s: Started) -> Self {
+        Self {
+            profile_name,
+            node: s.node,
+            store: s.store,
+            profile: s.profile,
+            sends: Mutex::new(RateLimiter::from_env()),
+            lock: Mutex::new(Some(s.lock)),
+        }
+    }
+
+    /// Stops serving this profile: leaves the network and frees the profile lock, so a
+    /// `papo leave` or another session can take it right away.
+    async fn release(&self) {
+        self.node.shutdown().await;
+        self.store.remove_activity();
+        self.lock.lock().unwrap().take();
+    }
+}
+
+/// Starts the agent for `profile`: binds its endpoint identity, joins the room and takes
+/// the profile lock.
+pub async fn start_agent(profile: String) -> Result<Started> {
+    let store = Store::open(&profile)?;
+    if store.is_closed() {
+        bail!(
+            "room of profile '{profile}' was closed by a member. Use `leave_room` (or `papo leave`) to clean it up \
+             and `join_room` to enter another one."
+        );
+    }
+    let lock = store.lock()?;
+    let data = store.profile()?;
+    let room = data.room_secret()?;
+    // Claude Code starts MCP servers in the project directory, which tells peers what
+    // this agent is working on.
+    let about = data.about.clone().or_else(|| std::env::current_dir().ok().and_then(|d| about_from_dir(&d)));
+    let endpoint = bind_endpoint(store.secret_key()?).await?;
+    let opts =
+        NodeOptions { name: data.name.clone(), about, kind: PeerKind::Agent, ephemeral: false, bootstrap: vec![] };
+    let node = Node::spawn(endpoint, room, opts, Some(store.clone())).await?;
+    Ok(Started { node, store, profile: data, lock })
+}
+
+/// The project folder name is a good default for "what I'm working on".
+pub fn about_from_dir(dir: &Path) -> Option<String> {
+    dir.file_name().map(|n| n.to_string_lossy().into_owned()).filter(|s| !s.is_empty())
 }
 
 /// Sliding-window cap on outgoing messages. Two agents politely thanking each other
@@ -118,7 +176,50 @@ fn progress_interval() -> Duration {
         .unwrap_or(PROGRESS_EVERY)
 }
 
-type Ready = watch::Receiver<Option<Result<Arc<Ctx>, String>>>;
+type State = Option<Result<Arc<Ctx>, String>>;
+type Ready = watch::Receiver<State>;
+
+/// Moves the server between rooms without restarting Claude Code. `launch` is the profile
+/// Claude Code started us with; the room we switch to is remembered for it in
+/// `active.json`, so the next session opens in the same room.
+struct Rooms {
+    launch: String,
+    tx: watch::Sender<State>,
+    /// One room change at a time; also held while the first room starts.
+    switching: tokio::sync::Mutex<()>,
+}
+
+impl Rooms {
+    fn current(&self) -> Option<Arc<Ctx>> {
+        match &*self.tx.borrow() {
+            Some(Ok(ctx)) => Some(ctx.clone()),
+            _ => None,
+        }
+    }
+
+    /// Starts `profile` before stopping the current room, so a failure (profile in use by
+    /// another session, closed room) leaves the agent where it was.
+    async fn switch(&self, profile: &str) -> Result<String> {
+        let _guard = self.switching.lock().await;
+        if let Some(ctx) = self.current()
+            && ctx.profile_name == profile
+        {
+            return Ok(format!("Already in this room.\n{}", tool_status(&ctx)));
+        }
+        let started = start_agent(profile.to_owned()).await?;
+        let ctx = Arc::new(Ctx::new(profile.to_owned(), started));
+        let status = tool_status(&ctx);
+        let old = self.tx.send_replace(Some(Ok(ctx)));
+        if let Some(Ok(old)) = old {
+            old.release().await;
+        }
+        store::set_active_profile(&self.launch, Some(profile))?;
+        Ok(format!(
+            "Switched to profile {profile}. Messages sent to the room you left wait in the senders' queues and \
+             arrive when you switch back.\n{status}"
+        ))
+    }
+}
 
 #[derive(Clone)]
 struct Out(mpsc::UnboundedSender<Value>);
@@ -145,10 +246,17 @@ pub struct Identity {
     pub room_id: String,
 }
 
-pub async fn serve<F>(identity: Option<Identity>, start: F) -> Result<()>
-where
-    F: Future<Output = Result<Started>> + Send + 'static,
-{
+fn identity_of(profile: &str) -> Option<Identity> {
+    let data = Store::open(profile).ok()?.profile().ok()?;
+    let room_id = data.room_secret().ok()?.room_id();
+    Some(Identity { name: data.name, room_id })
+}
+
+/// Serves MCP over stdio. `launch` is the `--profile` Claude Code started us with; the
+/// first room is the one it points to in `active.json` (see [`store::active_profile`]).
+pub async fn serve(launch: String) -> Result<()> {
+    let active = store::active_profile(&launch);
+    let identity = identity_of(&active);
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Value>();
     let out = Out(out_tx);
     let writer = tokio::spawn(async move {
@@ -163,20 +271,15 @@ where
     });
 
     let (ready_tx, ready_rx) = watch::channel(None);
+    let rooms = Arc::new(Rooms { launch, tx: ready_tx, switching: tokio::sync::Mutex::new(()) });
+    let first = rooms.clone();
     tokio::spawn(async move {
-        let ready = start.await.map(|s| {
-            Arc::new(Ctx {
-                node: s.node,
-                store: s.store,
-                profile: s.profile,
-                sends: Mutex::new(RateLimiter::from_env()),
-                _lock: s.lock,
-            })
-        });
+        let _guard = first.switching.lock().await;
+        let ready = start_agent(active.clone()).await.map(|s| Arc::new(Ctx::new(active, s)));
         if let Err(e) = &ready {
             eprintln!("papo: startup failed: {e:#}");
         }
-        let _ = ready_tx.send(Some(ready.map_err(|e| format!("{e:#}"))));
+        first.tx.send_replace(Some(ready.map_err(|e| format!("{e:#}"))));
     });
 
     let (initialized_tx, initialized_rx) = watch::channel(false);
@@ -207,11 +310,12 @@ where
             (Some("tools/call"), Some(id)) => {
                 let key = id.to_string();
                 let (ready, out2, inflight2, key2) = (ready_rx.clone(), out.clone(), inflight.clone(), key.clone());
+                let rooms2 = rooms.clone();
                 // Spawn while holding the map lock so a fast call cannot remove its entry
                 // before it was inserted (which would leave a stale handle behind).
                 let mut map = inflight.lock().unwrap();
                 let task = tokio::spawn(async move {
-                    let result = call_tool(ready, &params, &out2).await;
+                    let result = call_tool(ready, &rooms2, &params, &out2).await;
                     inflight2.lock().unwrap().remove(&key2);
                     out2.result(id, result);
                 });
@@ -242,7 +346,7 @@ where
     }
     let ctx = ready_rx.borrow().clone();
     if let Some(Ok(ctx)) = ctx {
-        ctx.node.shutdown().await;
+        ctx.release().await;
     }
     drop(out);
     let _ = writer.await;
@@ -280,7 +384,13 @@ How to collaborate well:
 4. Do not send pure acknowledgements ("ok", "thanks", "got it") and do not answer them: that is how two agents end up in a loop. Only send messages that move the work forward.
 5. If something needs your user's decision, tell your user and tell the peer you are waiting on them.
 6. When the topic is settled, send one closing message that summarizes the agreement (who does what), then report the outcome to your user.
-7. Write in the language the peer uses (default: the language your user speaks with you)."#
+7. Write in the language the peer uses (default: the language your user speaks with you).
+
+Rooms: your user can be in several rooms, one local profile each, and this server serves one at a time. When your user asks to go to another room, do it yourself with the tools; never tell them to restart Claude Code, run `papo install` again or edit the MCP config:
+- `rooms` lists the rooms on this machine and which one is active.
+- `switch_room` moves to a room they already have. The other rooms keep their messages queued.
+- `join_room` enters a new room from an invite (`papo1...`) and switches to it.
+- `leave_room` leaves the active room for good and deletes its profile. Confirm with your user first; to just move elsewhere, use `switch_room`."#
     )
 }
 
@@ -337,14 +447,81 @@ fn tool_definitions() -> Value {
             "description": "Show who you are in the room, which peers are online, and how many messages are unread or still queued for delivery.",
             "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
             "annotations": { "title": "Room status", "readOnlyHint": true }
+        },
+        {
+            "name": "rooms",
+            "description": "List the rooms your user has on this machine (one profile each): your name, the room id, unread messages, and which one this session is in. Use before `switch_room`.",
+            "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+            "annotations": { "title": "List rooms", "readOnlyHint": true }
+        },
+        {
+            "name": "switch_room",
+            "description": "Move this session to another room your user already has, without restarting Claude Code. The room you leave keeps its history, and messages sent to it while you are away arrive when you come back. The choice is remembered for the next session.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profile": { "type": "string", "description": "Profile of the room, as `rooms` lists it." }
+                },
+                "required": ["profile"],
+                "additionalProperties": false
+            },
+            "annotations": { "title": "Switch room", "openWorldHint": true }
+        },
+        {
+            "name": "join_room",
+            "description": "Enter a new room with an invite code (starts with papo1) that your user got from a colleague, and switch this session to it. If the invite is for a room your user already has, just switches to it.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invite": { "type": "string", "description": "The invite code, starting with papo1." },
+                    "name": { "type": "string", "description": "Your user's name in the new room. Default: the name in the current room." },
+                    "profile": { "type": "string", "description": "Local profile name for the room (1-32 of a-z, 0-9, - and _). Default: sala-<room id>." }
+                },
+                "required": ["invite"],
+                "additionalProperties": false
+            },
+            "annotations": { "title": "Join room with invite", "openWorldHint": true }
+        },
+        {
+            "name": "leave_room",
+            "description": "Leave the active room for good: tells the members, then deletes this profile (identity and history). Irreversible, so confirm with your user first. To just go to another room, use `switch_room` instead.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "close": { "type": "boolean", "description": "Also close the room for everyone. Default false (always true when your user created the room)." }
+                },
+                "additionalProperties": false
+            },
+            "annotations": { "title": "Leave room", "destructiveHint": true, "openWorldHint": true }
         }
     ])
 }
 
-async fn call_tool(mut ready: Ready, params: &Value, out: &Out) -> Value {
+async fn call_tool(mut ready: Ready, rooms: &Rooms, params: &Value, out: &Out) -> Value {
     let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
     let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
     let progress_token = params.pointer("/_meta/progressToken").cloned();
+
+    // Room tools also work when no room is running (not configured, closed, left), since
+    // they are how the agent gets out of that state. They still wait for the first start
+    // to settle, so they see the room the session is in.
+    let is_room_tool = matches!(name, "rooms" | "switch_room" | "join_room" | "leave_room");
+    if is_room_tool && ready.wait_for(Option::is_some).await.is_err() {
+        return tool_error("papo is shutting down");
+    }
+    let room_tool = match name {
+        "rooms" => Some(tool_rooms(rooms)),
+        "switch_room" => Some(tool_switch_room(rooms, &args).await),
+        "join_room" => Some(tool_join_room(rooms, &args).await),
+        "leave_room" => Some(tool_leave_room(rooms, &args).await),
+        _ => None,
+    };
+    if let Some(result) = room_tool {
+        return match result {
+            Ok(text) => json!({"content": [{"type": "text", "text": text}]}),
+            Err(e) => tool_error(&format!("{e:#}")),
+        };
+    }
 
     let ctx = match ready.wait_for(Option::is_some).await {
         Ok(state) => state.clone().expect("wait_for guarantees Some"),
@@ -352,7 +529,7 @@ async fn call_tool(mut ready: Ready, params: &Value, out: &Out) -> Value {
     };
     let ctx = match ctx {
         Ok(ctx) => ctx,
-        Err(e) => return tool_error(&format!("papo is not running: {e}")),
+        Err(e) => return tool_error(&format!("papo is not in a room: {e}")),
     };
 
     let result = match name {
@@ -367,6 +544,113 @@ async fn call_tool(mut ready: Ready, params: &Value, out: &Out) -> Value {
         Ok(text) => json!({"content": [{"type": "text", "text": text}]}),
         Err(e) => tool_error(&format!("{e:#}")),
     }
+}
+
+fn tool_rooms(rooms: &Rooms) -> Result<String> {
+    let active = rooms.current().map(|c| c.profile_name.clone());
+    let profiles = Store::list().unwrap_or_default();
+    if profiles.is_empty() {
+        return Ok("No rooms on this machine yet. Use `join_room` with an invite (papo1...) from a colleague, \
+                   or ask your user to create a room with `papo new --name <name>`."
+            .into());
+    }
+    let mut lines = vec!["Rooms on this machine:".to_string()];
+    for name in &profiles {
+        let Ok(store) = Store::open(name) else { continue };
+        let Ok(data) = store.profile() else { continue };
+        let room = data.room_secret().map(|r| r.room_id()).unwrap_or_else(|_| "?".into());
+        let mut line = format!("- {name}: you are \"{}\" in room {room}", data.name);
+        if data.owner {
+            line.push_str(", created by you");
+        }
+        if store.is_closed() {
+            line.push_str(", closed by a member");
+        }
+        if active.as_deref() == Some(name.as_str()) {
+            line.push_str(" (active in this session)");
+        } else {
+            let unread = store.inbox().map(|i| i.len()).unwrap_or(0);
+            if unread > 0 {
+                line.push_str(&format!(", {unread} unread"));
+            }
+        }
+        lines.push(line);
+    }
+    if active.is_none() {
+        lines.push("This session is not in any room right now.".into());
+    }
+    lines.push("Use `switch_room` with a profile to move there.".into());
+    Ok(lines.join("\n"))
+}
+
+async fn tool_switch_room(rooms: &Rooms, args: &Value) -> Result<String> {
+    let profile = str_arg(args, "profile").ok_or_else(|| anyhow!("`profile` is required (see `rooms`)"))?;
+    rooms.switch(&profile).await
+}
+
+async fn tool_join_room(rooms: &Rooms, args: &Value) -> Result<String> {
+    let code = str_arg(args, "invite").ok_or_else(|| anyhow!("`invite` is required"))?;
+    let invite = Invite::decode(&code)?;
+    if let Some(existing) = Store::find_room(&invite.secret)? {
+        let switched = rooms.switch(&existing).await?;
+        return Ok(format!("You already have this room in profile {existing}.\n{switched}"));
+    }
+    let current = rooms.current().map(|c| c.profile.name.clone());
+    let name = str_arg(args, "name").or(current).ok_or_else(|| {
+        anyhow!("`name` is required: this session is not in a room, so there is no name to reuse. Ask your user.")
+    })?;
+    validate_name(&name)?;
+    let profile = str_arg(args, "profile").unwrap_or_else(|| store::profile_name_for_room(&invite.secret));
+    if Store::exists(&profile)? {
+        bail!("profile '{profile}' already exists for another room; pass a different `profile`");
+    }
+    Store::join(&profile, &invite, &name, None, false)?;
+    let switched = rooms.switch(&profile).await?;
+    Ok(format!("Joined room {} as \"{name}\" (profile {profile}).\n{switched}", invite.secret.room_id()))
+}
+
+async fn tool_leave_room(rooms: &Rooms, args: &Value) -> Result<String> {
+    let _guard = rooms.switching.lock().await;
+    let ctx = rooms.current().ok_or_else(|| anyhow!("this session is not in a room; nothing to leave"))?;
+    // The owner leaving ends the room for everybody, as with `papo leave`.
+    let close = args.get("close").and_then(Value::as_bool).unwrap_or(false) || ctx.profile.owner;
+    let known = ctx.store.known_peers()?;
+    let mut notified = false;
+    if !ctx.node.is_closed() && !known.is_empty() {
+        let reachable = ctx.node.neighbor_count() > 0 || ctx.node.wait_for_neighbor(LEAVE_ANNOUNCE_WAIT).await;
+        if reachable {
+            ctx.node.announce_leave(ctx.node.id(), close).await;
+            notified = true;
+        }
+    }
+    let room_id = ctx.node.room_id();
+    let (profile, store, was_closed) = (ctx.profile_name.clone(), ctx.store.clone(), ctx.node.is_closed());
+    let left = format!("left room {room_id}. Use `rooms`, `switch_room` or `join_room` to be in a room again.");
+    rooms.tx.send_replace(Some(Err(format!("you {left}"))));
+    ctx.release().await;
+    store::set_active_profile(&rooms.launch, None)?;
+
+    let mut lines = vec![];
+    if close && !notified && !was_closed && !known.is_empty() {
+        // Nobody heard us: keep a tombstone so members who were offline learn, when they
+        // reconnect to this identity, that the room no longer exists.
+        store.into_tombstone()?;
+        lines.push(format!(
+            "Closed room {room_id}, but nobody was online to hear it. Profile {profile} stays as a tombstone that \
+             tells returning members the room is gone; switch to it later, or leave it again to delete it."
+        ));
+    } else {
+        store.destroy()?;
+        let who = match (notified, close) {
+            (true, true) => "Closed the room for everyone",
+            (true, false) => "Told the online members you left",
+            (false, _) if known.is_empty() || was_closed => "Nobody to tell",
+            (false, _) => "Nobody was online; offline members keep looking for you until they leave too",
+        };
+        lines.push(format!("{who}. Profile {profile} deleted."));
+    }
+    lines.push(format!("You {left}"));
+    Ok(lines.join("\n"))
 }
 
 fn tool_error(text: &str) -> Value {
@@ -559,19 +843,22 @@ fn ago(ms: u64) -> String {
 /// Bridges the Claude Code mod and the room: the mod's `working` marker goes out in our
 /// hellos, and who is working comes back in `activity.json`. Files rather than an MCP
 /// tool, so the model never sees (or calls) any of it.
-async fn activity_bridge(mut ready: Ready) {
-    let ctx = match ready.wait_for(Option::is_some).await {
-        Ok(state) => match state.clone() {
-            Some(Ok(ctx)) => ctx,
-            _ => return,
-        },
-        Err(_) => return,
-    };
+async fn activity_bridge(ready: Ready) {
     let cwd = std::env::current_dir().map(|d| d.display().to_string()).unwrap_or_default();
     let mut last: Option<Activity> = None;
+    let mut serving: Option<String> = None;
     let mut ticker = tokio::time::interval(ACTIVITY_POLL);
     loop {
         ticker.tick().await;
+        // Re-read every tick: switching rooms swaps the context under us.
+        let ctx = match &*ready.borrow() {
+            Some(Ok(ctx)) => ctx.clone(),
+            _ => continue,
+        };
+        if serving.as_deref() != Some(ctx.profile_name.as_str()) {
+            serving = Some(ctx.profile_name.clone());
+            last = None;
+        }
         let working = ctx.store.read_working(std::time::SystemTime::now());
         ctx.node.set_working(working).await;
         let endpoint = ctx.node.id().fmt_short().to_string();
@@ -629,23 +916,39 @@ async fn channel_pump(mut ready: Ready, mut initialized: watch::Receiver<bool>, 
     if initialized.wait_for(|v| *v).await.is_err() {
         return;
     }
-    let ctx = match ready.wait_for(Option::is_some).await {
-        Ok(state) => match state.clone() {
-            Some(Ok(ctx)) => ctx,
-            _ => return,
-        },
-        Err(_) => return,
-    };
+    // Message ids are unique across rooms, so one set serves every room we pass through.
+    let mut pushed = HashSet::new();
+    loop {
+        let state = ready.borrow_and_update().clone();
+        if let Some(Ok(ctx)) = state {
+            pump_room(&ctx, &mut ready, &out, &mut pushed).await;
+        } else if ready.changed().await.is_err() {
+            return;
+        }
+    }
+}
+
+/// Pushes one room's messages until the server switches to another room.
+async fn pump_room(ctx: &Ctx, ready: &mut Ready, out: &Out, pushed: &mut HashSet<String>) {
     // Subscribe before replaying the backlog so nothing falls between the two; the
     // `pushed` set absorbs the overlap.
     let mut events = ctx.node.subscribe();
-    let mut pushed = HashSet::new();
     for msg in ctx.node.unread() {
-        push(&out, &msg, &mut pushed);
+        push(out, &msg, pushed);
     }
     loop {
-        match events.recv().await {
-            Ok(NodeEvent::Message(msg)) => push(&out, &msg, &mut pushed),
+        let event = tokio::select! {
+            changed = ready.changed() => {
+                if changed.is_err() {
+                    // Shutting down: keep pushing this room until the process ends.
+                    std::future::pending::<()>().await;
+                }
+                return;
+            }
+            event = events.recv() => event,
+        };
+        match event {
+            Ok(NodeEvent::Message(msg)) => push(out, &msg, pushed),
             Ok(NodeEvent::Delivered { .. }) => {}
             Ok(NodeEvent::Left { name, closed }) => {
                 let what =
@@ -657,10 +960,16 @@ async fn channel_pump(mut ready: Ready, mut initialized: watch::Receiver<bool>, 
             }
             Err(broadcast::error::RecvError::Lagged(_)) => {
                 for msg in ctx.node.unread() {
-                    push(&out, &msg, &mut pushed);
+                    push(out, &msg, pushed);
                 }
             }
-            Err(broadcast::error::RecvError::Closed) => return,
+            // The node shut down because we switched; wait for the next room.
+            Err(broadcast::error::RecvError::Closed) => {
+                if ready.changed().await.is_err() {
+                    std::future::pending::<()>().await;
+                }
+                return;
+            }
         }
     }
 }
@@ -686,6 +995,15 @@ fn push(out: &Out, msg: &Envelope, pushed: &mut HashSet<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn about_defaults_to_the_folder_name() {
+        assert_eq!(
+            about_from_dir(std::path::Path::new("/home/voce/api-pagamentos")).as_deref(),
+            Some("api-pagamentos")
+        );
+        assert_eq!(about_from_dir(std::path::Path::new("/")), None);
+    }
 
     #[test]
     fn negotiates_known_versions_and_falls_back_to_latest_supported() {

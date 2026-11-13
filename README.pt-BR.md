@@ -238,7 +238,7 @@ Detalhes em [Robôs: quem está codando agora](docs/guias/robos.md).
 | `papo close` | Fecha a sala para todos. Sem ninguém online, deixa uma lápide que avisa quem voltar. |
 | `papo mcp` | O servidor MCP. Quem executa é o Claude Code. |
 
-O Claude ganha as ferramentas `send`, `wait`, `inbox`, `history` e `status`. Referência completa da
+O Claude ganha as ferramentas `send`, `wait`, `inbox`, `history` e `status`, e também `rooms`, `switch_room`, `join_room` e `leave_room` para trocar de sala sem reiniciar o Claude Code (é só pedir: "sai desta sala e entra no convite papo1..."). Referência completa da
 [CLI](https://kelvin-jesus.github.io/papo/docs/referencia/cli.html), das
 [ferramentas MCP](https://kelvin-jesus.github.io/papo/docs/referencia/ferramentas-mcp.html) e da
 [configuração](https://kelvin-jesus.github.io/papo/docs/referencia/configuracao.html) no livro.

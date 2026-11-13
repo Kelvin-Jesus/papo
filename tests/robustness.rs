@@ -42,7 +42,19 @@ fn arb_line() -> impl Strategy<Value = String> {
         Just("notifications/cancelled".to_string()),
         "[a-z/]{0,16}",
     ];
-    let tools = prop_oneof![Just("inbox"), Just("status"), Just("history"), Just("wait"), Just("send"), Just("nope")];
+    // `leave_room` stays out: leaving is the correct answer to a valid call, and the
+    // configured case checks that the session is still in its room afterwards.
+    let tools = prop_oneof![
+        Just("inbox"),
+        Just("status"),
+        Just("history"),
+        Just("wait"),
+        Just("send"),
+        Just("rooms"),
+        Just("switch_room"),
+        Just("join_room"),
+        Just("nope")
+    ];
     prop_oneof![
         ".{0,80}".prop_map(|s| s.replace('\n', " ")),
         arb_json().prop_map(|v| v.to_string()),
@@ -102,7 +114,7 @@ proptest! {
         let pong = client.request_with_id(json!("still-alive"), "ping", json!({}));
         prop_assert_eq!(&pong["result"], &json!({}));
         let tools = client.request("tools/list", json!({}));
-        prop_assert_eq!(tools["result"]["tools"].as_array().map(Vec::len), Some(5));
+        prop_assert_eq!(tools["result"]["tools"].as_array().map(Vec::len), Some(9));
         // Give in-flight random calls a moment to finish; none may crash the server.
         std::thread::sleep(Duration::from_millis(1500));
         let pong = client.request_with_id(json!("still-alive-2"), "ping", json!({}));

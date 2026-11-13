@@ -24,10 +24,9 @@ Commands:
 
 Options:
       --profile <PROFILE>
-          Perfil a usar. Cada perfil é uma identidade numa sala; use vários para estar em várias salas
+          Perfil a usar. Cada perfil é uma identidade numa sala; use vários para estar em várias salas. Sem ele, vale a sala para onde o agente trocou por último (ou "default")
           
           [env: PAPO_PROFILE=]
-          [default: default]
 
   -h, --help
           Print help (see a summary with '-h')

@@ -21,7 +21,10 @@ fn speaks_mcp_and_advertises_the_channel_capability() {
     let tools = client.request("tools/list", json!({}));
     let names: Vec<&str> =
         tools["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
-    assert_eq!(names, ["send", "wait", "inbox", "history", "status"]);
+    assert_eq!(
+        names,
+        ["send", "wait", "inbox", "history", "status", "rooms", "switch_room", "join_room", "leave_room"]
+    );
 
     let (status, is_error) = client.call("status", json!({}));
     assert!(!is_error, "{status}");
