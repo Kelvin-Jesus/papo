@@ -43,7 +43,8 @@ Também dá para pedir ao seu agente que instale e configure tudo: o README tem 
 | Qualquer sistema com Rust | `cargo binstall papo` (baixa o binário pronto) ou `cargo install papo` (compila) |
 
 Todos instalam o mesmo binário das releases do GitHub, com o mesmo SHA-256. Cada release atualiza os
-gerenciadores sozinha.
+gerenciadores sozinha. Para atualizar, rode `papo update`: ele descobre por onde o papo foi instalado e
+usa o mesmo caminho ([referência](referencia/cli.md#papo-update)).
 
 ## Binário pronto
 

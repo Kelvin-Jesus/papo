@@ -1,5 +1,8 @@
 # Log
 
+## 2026-11-13
+* **Update**: `apis/cli`, `apis/environment` - `papo update [--check]` (`src/update.rs`) finds the latest release and upgrades through the channel papo was installed with; test hook `PAPO_TEST_LATEST_TAG`.
+
 ## 2026-10-15
 * **Update**: `playbooks/cut-a-release`, `playbooks/pass-the-quality-gate` - releases also ship .deb/.rpm (nfpm) and a `pacotes` job publishes to the Homebrew tap, the Scoop bucket, the AUR (`papo-bin`) and crates.io from `scripts/pacotes.py`, each step gated on its secret; the generator's tests run in the `site` job and in `scripts/quality-gate.sh`.
 * **Update**: `protocol/wire-frames`, `protocol/profile-layout` - optional `working` flag in `hello` (backward compatible), the `working` marker the Claude Code mod writes and the `activity.json` snapshot the MCP server writes; together they let the `papo-robos` mod draw who in the room is mid-turn.
