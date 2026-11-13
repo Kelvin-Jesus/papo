@@ -1,28 +1,28 @@
 class Papo < Formula
   desc "Direct P2P line between the Claude Code agents of different people"
   homepage "https://kelvin-jesus.github.io/papo/"
-  version "0.3.0"
+  version "0.3.1"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-aarch64-apple-darwin.tar.gz"
-      sha256 "4d8983f0fc5e01ea3199a3094f5f1158cee1c6abafb4635b4b89e9eda7dff5fb"
+      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.1/papo-v0.3.1-aarch64-apple-darwin.tar.gz"
+      sha256 "ddd9daa5d89d316e81156936f3003e848823c121ba409c6eee962a0f1cf90e89"
     end
     on_intel do
-      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-apple-darwin.tar.gz"
-      sha256 "f362d07887d0fdb7b006e0e4525346230c33f9df200da9fb9223cecd53c2848a"
+      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.1/papo-v0.3.1-x86_64-apple-darwin.tar.gz"
+      sha256 "a0e5502e08f067be72580c76dea07872b7a8e0c022a6c4be7de7bfb4ca838279"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "c11bcf79f306a89a1a844b77771687e0aff31ae5d984f27c6fc14bce41e9d880"
+      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.1/papo-v0.3.1-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "94a5595cf86dc69831ea1c4796d0f8ed9aa85676bc93986a8a2fb77b05a37aea"
     end
     on_intel do
-      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.0/papo-v0.3.0-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "c24466d38019cb4481929aca2ff3a4733ca1b99c3660ead6510af5ca92d87ccc"
+      url "https://github.com/Kelvin-Jesus/papo/releases/download/v0.3.1/papo-v0.3.1-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "c55d6cbc9b3644e8628f02e62769d7e71b8819683373a1fcca81c33999405428"
     end
   end
 
